@@ -1,0 +1,567 @@
+<title>Movement Tracker+ 重建分析</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+/* Layout: lab-notebook document — sticky contents rail on wide screens, one reading column, tables and diagrams scroll inside their own boxes. */
+:root {
+  --bg: #f2f5f4;
+  --surface: #ffffff;
+  --ink: #15201e;
+  --muted: #56645f;
+  --line: #d3dcd9;
+  --accent: #0d6b74;
+  --accent-soft: #dcecec;
+  --signal: #b8460f;
+  --ok: #2d7a4c;
+  --warn: #9a6a0c;
+  --bad: #b42318;
+  --ok-soft: #e1f0e6;
+  --warn-soft: #f6ecd6;
+  --bad-soft: #f8e1de;
+  --font-display: "Barlow Condensed", "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+  --font-body: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1514; --surface: #161f1e; --ink: #e4ecea; --muted: #98a8a3; --line: #2a3634;
+    --accent: #55b9c3; --accent-soft: #173a3d; --signal: #f0905a;
+    --ok: #63c38f; --warn: #e0b250; --bad: #f2786c;
+    --ok-soft: #173326; --warn-soft: #362b12; --bad-soft: #3a1c19;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1514; --surface: #161f1e; --ink: #e4ecea; --muted: #98a8a3; --line: #2a3634;
+  --accent: #55b9c3; --accent-soft: #173a3d; --signal: #f0905a;
+  --ok: #63c38f; --warn: #e0b250; --bad: #f2786c;
+  --ok-soft: #173326; --warn-soft: #362b12; --bad-soft: #3a1c19;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.7;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+.page { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 48px; }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; font-size: 13px; }
+nav.toc p { font-family: var(--font-display); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; counter-reset: toc; }
+nav.toc li { counter-increment: toc; }
+nav.toc a { display: block; padding: 4px 8px; border-radius: 6px; color: var(--muted); text-decoration: none; }
+nav.toc a::before { content: counter(toc, decimal-leading-zero) "  "; font-family: var(--font-mono); font-size: 11px; color: var(--accent); }
+nav.toc a:hover, nav.toc a:focus-visible { background: var(--accent-soft); color: var(--ink); outline: none; }
+main { min-width: 0; display: grid; gap: 56px; }
+section { min-width: 0; display: grid; gap: 16px; scroll-margin-top: 24px; }
+header.hero { display: grid; gap: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--ink); }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; color: var(--accent); margin: 0; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(36px, 6vw, 56px); line-height: 1.05; margin: 0; text-wrap: balance; letter-spacing: .01em; }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; display: flex; gap: 12px; align-items: baseline; }
+h2 .num { font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--accent); }
+h3 { font-family: var(--font-display); font-weight: 600; font-size: 21px; margin: 8px 0 0; text-wrap: balance; }
+p { margin: 0; max-width: 68ch; }
+.lede { font-size: 17px; color: var(--muted); max-width: 60ch; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 4px 0 8px; padding: 0; list-style: none; }
+.stats li { display: grid; }
+.stats b { font-family: var(--font-display); font-size: 28px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stats span { font-size: 12px; color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: .86em; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+ul.plain, ol.plain { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; max-width: 72ch; }
+.verdict { display: grid; gap: 10px; counter-reset: v; padding: 0; margin: 0; list-style: none; }
+.verdict li { counter-increment: v; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 8px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.verdict li::before { content: counter(v); font-family: var(--font-display); font-size: 24px; font-weight: 700; color: var(--accent); line-height: 1.2; }
+.verdict b { color: var(--ink); }
+.note { border-left: 3px solid var(--signal); padding: 4px 0 4px 14px; color: var(--muted); max-width: 72ch; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; line-height: 1.55; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+th { font-family: var(--font-display); font-weight: 600; font-size: 14px; letter-spacing: .04em; color: var(--muted); background: var(--bg); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.area { font-weight: 700; white-space: nowrap; }
+td.num, th.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.features td:nth-child(2) { min-width: 9em; }
+table.features td:nth-child(3), table.features td:nth-child(4) { min-width: 16em; }
+.chip { display: inline-block; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; margin-right: 4px; }
+.keep { background: var(--ok-soft); color: var(--ok); }
+.redo { background: var(--accent-soft); color: var(--accent); }
+.drop { background: var(--bad-soft); color: var(--bad); }
+.new { background: var(--warn-soft); color: var(--warn); }
+.sev-crit { background: var(--bad-soft); color: var(--bad); }
+.sev-high { background: var(--warn-soft); color: var(--warn); }
+.sev-mid { background: var(--accent-soft); color: var(--accent); }
+.stack { display: grid; gap: 6px; }
+.band { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; display: grid; gap: 4px; }
+.band small { font-family: var(--font-display); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.band.warn { border-color: var(--bad); }
+.band.core { border-color: var(--accent); background: var(--accent-soft); }
+.arrow { text-align: center; color: var(--muted); font-size: 12px; line-height: 1; }
+.compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.compare h3 { margin: 0 0 4px; }
+.pipeline { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 0; margin: 0; list-style: none; }
+.pipeline li { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; font-size: 13px; }
+.pipeline li + li::before { content: "→"; color: var(--muted); margin-right: 8px; margin-left: -2px; }
+.pipeline li.hot { border-color: var(--signal); color: var(--signal); }
+figure { margin: 0; display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+figure .svg-wrap { overflow-x: auto; }
+figure svg { display: block; width: 100%; max-width: 560px; height: auto; margin: 0 auto; min-width: 360px; }
+figcaption { font-size: 13px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 18px; height: 6px; border-radius: 3px; vertical-align: middle; margin-right: 6px; }
+.issues { display: grid; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.issues li { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.issues .chip { text-align: center; margin: 3px 0 0; }
+.issues p { color: var(--muted); font-size: 14px; }
+.issues b { display: block; color: var(--ink); font-weight: 700; }
+.states { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.state { border: 1.5px solid var(--accent); color: var(--accent); border-radius: 999px; padding: 3px 12px; font-size: 13px; font-weight: 700; background: var(--surface); }
+.state.loop { border-style: dashed; }
+.states .to { color: var(--muted); font-size: 13px; }
+.cols2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+.cols2 > div { min-width: 0; display: grid; gap: 8px; align-content: start; }
+footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 6px; }
+a { color: var(--accent); }
+@media (max-width: 860px) {
+  .page { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  nav.toc { position: static; }
+  nav.toc ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .compare, .cols2 { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="page">
+  <nav class="toc" aria-label="目录">
+    <p>Contents</p>
+    <ol>
+      <li><a href="#tldr">结论</a></li>
+      <li><a href="#what">项目是什么</a></li>
+      <li><a href="#features">功能地图</a></li>
+      <li><a href="#impl">实现方式</a></li>
+      <li><a href="#tracking">摄像头计数</a></li>
+      <li><a href="#engines">其他核心机制</a></li>
+      <li><a href="#issues">问题清单</a></li>
+      <li><a href="#rebuild">重建设计</a></li>
+      <li><a href="#decisions">需要你决定</a></li>
+      <li><a href="#roadmap">路线图</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <p class="eyebrow">CS440 · GROUP 6 · SPRING 2026 → REBUILD</p>
+      <h1>Movement Tracker+ 重建分析</h1>
+      <p class="lede">对原 Flutter 项目的完整拆解：它要解决什么，做了哪些功能，每块是怎么实现的，问题在哪里，以及从零重建时的设计方案。只描述行为和设计，不包含原代码。</p>
+      <ul class="stats">
+        <li><b>29.4k</b><span>行手写 Dart</span></li>
+        <li><b>119</b><span>个源文件</span></li>
+        <li><b>20</b><span>张 SQLite 表</span></li>
+        <li><b>3</b><span>个测试文件</span></li>
+        <li><b>2</b><span>个可追踪动作</span></li>
+      </ul>
+    </header>
+
+    <section id="tldr">
+      <h2><span class="num">01</span>结论</h2>
+      <ol class="verdict">
+        <li><span><b>产品方向是对的。</b>把训练记录、摄像头动作计数、饮食宏量、健康平台同步和 AI 教练放进一个 App。真正的差异点是摄像头计数，但只支持深蹲和卧推，而且每一次动作的数据算完就丢了。</span></li>
+        <li><span><b>功能面广，工程底子薄。</b>没有状态管理，十来个全局单例，好几个上千行的页面，所有数据库调用都同步跑在 UI 线程上。</span></li>
+        <li><span><b>三个硬伤必须在重建中根除：</b>API 密钥被打包进安装包；数据库版本号一变就删表重建（升级等于清空用户数据）；密码用无盐 SHA-256 在 UI 层哈希。</span></li>
+        <li><span><b>值得带走的是行为和思路。</b>目标推荐公式（有完整单测）、计数状态机的骨架、健康同步的"只导出本 App 数据 + 删除墓碑"规则、AI 结果按天/按周缓存。</span></li>
+        <li><span><b>建议：</b>继续用 Flutter 双平台，按功能分层，Riverpod + drift + 一个纯 Dart 的动作引擎包，外加一个持有密钥的轻量后端代理。平台选择需要你拍板，见第 09 节。</span></li>
+      </ol>
+    </section>
+
+    <section id="what">
+      <h2><span class="num">02</span>项目是什么</h2>
+      <div class="cols2">
+        <div>
+          <h3>要解决的问题</h3>
+          <p>健身用户的训练、饮食和体重数据分散在好几个 App 里，MyFitnessPal、Strong、Apple Fitness 各管一块，没有一个地方能把"今天练了什么、吃了什么、离目标还差多少"放在一起看。</p>
+        </div>
+        <div>
+          <h3>给出的方案</h3>
+          <p>一个 App 里完成：记录训练；用手机摄像头数次数并判断动作质量；记录饮食和宏量；设定目标后自动算出每日热量和宏量；与 Apple Health / Health Connect 双向同步；AI 教练给建议、能聊天。</p>
+        </div>
+        <div>
+          <h3>目标用户</h3>
+          <p>普通健身人群，使用 iOS 或 Android 手机。</p>
+        </div>
+        <div>
+          <h3>文档情况</h3>
+          <p>没有正式需求文档。只有两份场景文档（引导 + 目标设置；首页 / 开始训练 / 记录饮食）和一份实现报告。报告称产品最初由 Spring 23 的 Group 9 设计。</p>
+        </div>
+      </div>
+      <p class="note"><code>Design Project</code> 文件夹里的 CaveMap（可穿戴 LiDAR 洞穴测绘系统）是同学期的另一个项目，和这个 App 无关，重建不需要参考它。实现报告自述 44 个测试通过、1 个失败（加入 Chat 后 Tab 索引过期），本次没有重新运行。</p>
+    </section>
+
+    <section id="features">
+      <h2><span class="num">03</span>功能地图</h2>
+      <p>旧版五个 Tab：首页、训练、聊天、饮食、我的。下表是重建要覆盖的完整清单，右列是处理方式。</p>
+      <div class="legend">
+        <span><span class="chip keep">保留</span>行为不变，实现重写</span>
+        <span><span class="chip redo">重设计</span>保留意图，改行为</span>
+        <span><span class="chip new">新增</span>旧版缺失或损坏</span>
+        <span><span class="chip drop">放弃</span>不再实现</span>
+      </div>
+      <div class="table-wrap">
+        <table class="features">
+          <thead><tr><th>领域</th><th>功能</th><th>旧版现状</th><th>重建处理</th></tr></thead>
+          <tbody>
+            <tr><td class="area">账号</td><td>注册 / 登录</td><td>本地用户名 + 密码，另有一个预置默认账号</td><td><span class="chip drop">放弃</span>单一本地档案，可选系统生物识别解锁</td></tr>
+            <tr><td class="area">引导</td><td>首次设置</td><td>两步：身体数据 → 目标。第一步先存库，中途退出后再也不会进入目标设置</td><td><span class="chip redo">重设计</span>先选单位，一次性保存，草稿可恢复；存出生日期而不是年龄</td></tr>
+            <tr><td class="area">目标</td><td>目标与推荐</td><td>减脂 / 增肌 / 维持，自动算热量、宏量、有氧/无氧分钟和每周训练次数</td><td><span class="chip keep">保留</span><span class="chip new">新增</span>每周体重变化速率、输入校验、本地化说明、规划器版本号</td></tr>
+            <tr><td class="area">首页</td><td>今日看板</td><td>目标进度、活动热量、步数、体重、体脂、本周训练、AI 小贴士</td><td><span class="chip redo">重设计</span>只放"今天"，长期图表统一移到 Progress；写入后自动刷新</td></tr>
+            <tr><td class="area">训练</td><td>训练大厅</td><td>Push / Pull / Legs 内置模板 + 由历史训练生成的模板，可隐藏</td><td><span class="chip keep">保留</span></td></tr>
+            <tr><td class="area">训练</td><td>进行中训练</td><td>总计时、组/休息计时、加动作（客户端直连 API-Ninjas）、手动填次数和重量</td><td><span class="chip redo">重设计</span>显式状态机，每步写草稿，崩溃可恢复，结束时单事务保存</td></tr>
+            <tr><td class="area">训练</td><td>摄像头计数</td><td>深蹲、卧推；骨架叠加；每次好/坏判定；总结页；整段录像并可存相册</td><td><span class="chip redo">重设计</span>纯 Dart 引擎、数据驱动的动作规格、校准、回放测试、保存每次记录；录像先不做</td></tr>
+            <tr><td class="area">饮食</td><td>日视图</td><td>已吃/剩余热量与宏量，按早/午/晚/加餐分组，只能看最近 7 天</td><td><span class="chip keep">保留</span>可浏览任意日期</td></tr>
+            <tr><td class="area">饮食</td><td>搜索与记录</td><td>USDA 食物库，两层弹窗，10–500 g 滑块（会截断并覆盖原有数量）</td><td><span class="chip redo">重设计</span>单弹窗、数字输入、收藏；<span class="chip new">新增</span>条码扫描、"缺失"与 0 区分</td></tr>
+            <tr><td class="area">健康</td><td>平台同步</td><td>导入体重/体脂/训练/步数/活动热量；导出体重/训练/饮食</td><td><span class="chip redo">重设计</span>发件箱重试、重叠窗口导入、类型化错误、"上次同步"状态</td></tr>
+            <tr><td class="area">AI</td><td>教练卡片</td><td>每日贴士、训练建议、饮食建议、剩余宏量、每周目标调整、训练后反馈</td><td><span class="chip redo">重设计</span>经后端代理、结构化输出、每日调用预算、数据外发同意页</td></tr>
+            <tr><td class="area">AI</td><td>聊天</td><td>持久化会话；首条消息附带一次性用户数据快照，之后不再更新</td><td><span class="chip redo">重设计</span>每次会话刷新上下文，历史按 token 预算截断，失败可重试</td></tr>
+            <tr><td class="area">设置</td><td>偏好</td><td>单位、中英文、主题、健身水平、AI 开关、同步窗口、动作别名、退出登录</td><td><span class="chip keep">保留</span>统一类型化存储，区分设备级与档案级</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="impl">
+      <h2><span class="num">04</span>实现方式</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>层</th><th>旧版技术</th><th>主要问题</th></tr></thead>
+          <tbody>
+            <tr><td class="area">界面</td><td>Flutter <code>CupertinoApp</code>，纯 Cupertino 组件，<code>fl_chart</code> 加手绘图表</td><td>两套图表风格；自定义函数遮蔽了 Flutter 的 <code>TextStyle</code> 并悄悄改字号；大量硬编码颜色和英文</td></tr>
+            <tr><td class="area">状态</td><td><code>setState</code> + 十来个全局单例 + 少量 <code>ValueNotifier</code></td><td>各 Tab 拿着同一个过期的用户对象；无法注入测试替身</td></tr>
+            <tr><td class="area">数据</td><td><code>sqlite3</code> FFI 原生绑定，手写 SQL，20 张表；1087 行的门面类约 80 个转发方法，下挂 15 个仓库</td><td>同步执行、全在 UI 线程；版本号不符直接清库；业务规则写在 SQL 里</td></tr>
+            <tr><td class="area">姿态</td><td><code>google_mlkit_pose_detection</code>（accurate 模型）+ <code>camera</code></td><td>无帧率上限；计数逻辑和摄像头生命周期都写在页面里</td></tr>
+            <tr><td class="area">健康</td><td><code>health</code> 13.x：iOS HealthKit / Android Health Connect</td><td>几乎所有错误被吞掉、返回空列表</td></tr>
+            <tr><td class="area">AI</td><td><code>google_generative_ai</code>，模型 <code>gemini-3.1-flash-lite-preview</code></td><td>密钥在客户端；无超时、无重试、无限流</td></tr>
+            <tr><td class="area">食物</td><td>USDA FoodData Central（Open Food Facts 只在配置里出现，从未调用）</td><td>密钥放在 URL 查询参数里</td></tr>
+            <tr><td class="area">国际化</td><td>gen-l10n，中英 ARB 各 441 行</td><td>不少字符串绕过 l10n；缺 <code>l10n.yaml</code>；有一批废弃 key</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>数据模型（旧版 20 张表）</h3>
+      <div class="cols2">
+        <div><p><b>用户与目标</b> · <code>users</code>、<code>auth_local_accounts</code>、<code>user_goals</code>、<code>body_metric_logs</code>（体重、体脂、目标体重混在一张表，单位是自由文本）</p></div>
+        <div><p><b>训练</b> · <code>workout_sessions</code> → <code>workout_exercises</code> → <code>workout_sets</code>，<code>exercise_cache</code>（按名字做外键），<code>pose_templates</code> 和 <code>pose_score_logs</code>（从未被写入）</p></div>
+        <div><p><b>饮食</b> · <code>food_items</code>（全局共享，自定义食物不归属用户）、<code>meal_records</code>（存冗余合计）→ <code>meal_items</code></p></div>
+        <div><p><b>健康与 AI</b> · <code>daily_activity_logs</code>、<code>health_sync_links</code>（多态行 id，无外键）、<code>health_sync_cursors</code>、<code>chat_conversations</code> → <code>chat_messages</code>、<code>ai_trend_summaries</code>、<code>app_meta</code></p></div>
+      </div>
+      <p class="note">所有时间存为 UTC ISO 字符串，另存一份写入时按设备时区算出的 <code>local_date</code>；时区只记缩写（如 "CST"），不是 IANA 时区名。设置单独存在一个 JSON 文件里，读改写不是原子操作。</p>
+    </section>
+
+    <section id="tracking">
+      <h2><span class="num">05</span>摄像头计数是怎么工作的</h2>
+      <p>这是整个 App 最有特色的部分。用户把手机侧放拍全身侧面，App 实时识别骨架，按关节角度的变化数次数，每完成一次就判断动作是否合格。</p>
+      <ul class="pipeline" aria-label="旧版处理流程">
+        <li>720p 视频流</li>
+        <li>忙时丢帧</li>
+        <li>ML Kit 姿态</li>
+        <li>选最佳人体</li>
+        <li class="hot">每帧选置信度高的一侧</li>
+        <li>算关节角</li>
+        <li>5 点中位数平滑</li>
+        <li>状态机</li>
+        <li class="hot">只在最深一帧检查动作</li>
+        <li>计次 + 反馈 + 震动</li>
+      </ul>
+
+      <figure>
+        <div class="svg-wrap">
+        <svg viewBox="0 0 520 248" role="img" aria-labelledby="gauge-title gauge-desc">
+          <title id="gauge-title">计数阈值刻度盘</title>
+          <desc id="gauge-desc">关节角度从 0 到 180 度。低于 130 度判定开始下降，回到 155 度以上判定回到顶部，锁定角 160 度。深蹲深度目标 80 度，卧推 100 度。</desc>
+          <path d="M 90 210 A 170 170 0 0 1 289.5 42.6" fill="none" stroke="var(--accent)" stroke-width="14" stroke-linecap="butt"/>
+          <path d="M 289.5 42.6 A 170 170 0 0 1 369.3 79.8" fill="none" stroke="var(--line)" stroke-width="14"/>
+          <path d="M 369.3 79.8 A 170 170 0 0 1 414.1 138.2" fill="none" stroke="var(--muted)" stroke-width="14" opacity="0.55"/>
+          <path d="M 414.1 138.2 A 170 170 0 0 1 430 210" fill="none" stroke="var(--ok)" stroke-width="14"/>
+          <g stroke="var(--ink)" stroke-width="2">
+            <line x1="232.2" y1="52.4" x2="228.4" y2="30.8"/>
+            <line x1="287.8" y1="52.4" x2="291.6" y2="30.8"/>
+            <line x1="362.8" y1="87.4" x2="377.0" y2="70.6"/>
+            <line x1="405.0" y1="142.4" x2="424.9" y2="133.1"/>
+            <line x1="410.4" y1="155.3" x2="431.0" y2="147.8"/>
+          </g>
+          <g font-family="JetBrains Mono, ui-monospace, monospace" font-size="12" fill="var(--ink)">
+            <text x="224" y="21" text-anchor="end">80° 深蹲深度</text>
+            <text x="296" y="21" text-anchor="start">100° 卧推深度</text>
+            <text x="385" y="63" text-anchor="start">130° 开始下降</text>
+            <text x="398" y="128" text-anchor="end">155° 回到顶部</text>
+            <text x="436" y="150" text-anchor="start">160° 锁定</text>
+            <text x="90" y="234" text-anchor="middle" fill="var(--muted)">0°</text>
+            <text x="430" y="234" text-anchor="middle" fill="var(--muted)">180°</text>
+          </g>
+          <g font-family="Noto Sans SC, PingFang SC, sans-serif" text-anchor="middle">
+            <text x="260" y="178" font-size="15" font-weight="700" fill="var(--ink)">关节角度</text>
+            <text x="260" y="200" font-size="12" fill="var(--muted)">深蹲看膝角（髋–膝–踝）· 卧推看肘角（肩–肘–腕）</text>
+          </g>
+        </svg>
+        </div>
+        <div class="legend">
+          <span><i style="background: var(--accent)"></i>深度区（深蹲 ≤ 80°，卧推 ≤ 100° 才算到位）</span>
+          <span><i style="background: var(--muted); opacity: .55"></i>过渡区</span>
+          <span><i style="background: var(--ok)"></i>顶部 / 锁定区</span>
+        </div>
+        <figcaption>旧版两个动作共用同一组阈值：锁定 160°，最小动作幅度 30°，所以下降阈值 = 160 − 30 = 130°，顶部阈值 = 160 − 5 = 155°。</figcaption>
+      </figure>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>阶段</th><th>进入条件</th><th>备注</th></tr></thead>
+          <tbody>
+            <tr><td class="area">准备</td><td>初始状态，或一次动作结束后 250 ms 冷却</td><td>卧推额外要求起始姿势：躯干接近水平（±20°），手臂伸直竖起，连续 3 帧满足</td></tr>
+            <tr><td class="area">下降</td><td>平滑后角度连续 3 帧低于 130°</td><td>动作开始时间记为这串样本的第一帧</td></tr>
+            <tr><td class="area">上升</td><td>角度比本次最低点回升 ≥ 8°</td><td>再次跌破最低点会退回下降</td></tr>
+            <tr><td class="area">完成</td><td>连续 3 帧 ≥ 155°</td><td>时长须在 400–5000 ms；关键点置信度 &lt; 0.45 连续 3 帧或人体丢失则放弃本次</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>动作质量检查</h3>
+      <p>只在每次动作最深的那一帧检查一次。深蹲：深度不够、身体前倾过多（肩到髋的水平/垂直比 &gt; 0.60）、膝内扣（两膝间距 / 两髋间距 &lt; 0.75）。卧推：深度不够、肘外展（肩到肘的水平/垂直比 &gt; 1.5）。所有问题都算严重问题，合格率 = 合格次数 / 总次数，≥ 80 绿色，≥ 50 橙色。</p>
+
+      <h3>这一块的具体缺陷</h3>
+      <ul class="plain">
+        <li>深蹲深度只看膝夹角是否到 80°，提示语却说"大腿平行"。小腿正常前倾时，大腿平行对应的膝夹角只有约 60–70°，所以 80° 比平行宽松，高于平行的浅蹲也会被判合格（本报告初版把方向写反了，已更正）。更可靠的做法是直接比较髋和膝的高度。</li>
+        <li>App 要求侧面拍摄，但"膝内扣"要比较左右膝的水平间距。侧面视角下两膝在画面上几乎重叠，这个判断没有意义。卧推"肘外展"同理：侧面看外展体现在深度方向，而不是画面的水平方向。</li>
+        <li>用处理时刻的系统时间、按"连续 3 帧"判定，结果会随手机帧率变化。</li>
+        <li>每帧都可能换到另一侧且没有滞后，一次动作中途换侧会让角度跳变。</li>
+        <li>单次超过 5 秒就被拒绝，慢速离心或停顿的动作不计数；最后一次之后 5 秒没动作就自动结束这组。</li>
+        <li>每次的角度、问题、评分都没有保存，只把总次数带回训练页。数据库里两张姿态相关的表从来没被写入过。</li>
+        <li>摄像头和检测器释放顺序有竞态：可能在推理进行中关闭检测器。录像临时文件不会被清理。</li>
+      </ul>
+    </section>
+
+    <section id="engines">
+      <h2><span class="num">06</span>其他核心机制</h2>
+
+      <h3>目标推荐算法</h3>
+      <p>这是旧版设计最好的部分：纯函数、无副作用，并且有 7 组单元测试。</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>步骤</th><th>规则</th></tr></thead>
+          <tbody>
+            <tr><td class="area">基础代谢</td><td>19 岁及以上用 Mifflin–St Jeor：<code>10·kg + 6.25·cm − 5·age</code>，男 +5、女 −161、其他取中点 −78；19 岁以下用 Schofield 式公式。年龄夹在 13–100。</td></tr>
+            <tr><td class="area">活动系数</td><td>每周训练 1–2 次 ×1.375，3–4 次 ×1.55，5–6 次 ×1.725，7 次 ×1.9；TDEE 夹在 1400–5000 kcal。</td></tr>
+            <tr><td class="area">热量调整</td><td>按期限算紧迫度：≤ 42 天 1.0，≤ 84 天 0.7，更长 0.4。增肌 +TDEE×(0.06 + 0.12·紧迫度)，减脂 −TDEE×(0.08 + 0.10·紧迫度)。</td></tr>
+            <tr><td class="area">热量下限</td><td>男 1500，女 1200，其他 1350 kcal。</td></tr>
+            <tr><td class="area">宏量</td><td>蛋白质 g/kg：增肌 2.0，减脂 2.2，维持 1.8（给了体脂率就按瘦体重）。脂肪取三者最大：体重×系数、45 g、20% 热量。碳水 = 剩余热量 ÷ 4。</td></tr>
+            <tr><td class="area">训练分钟</td><td>按目标和"每周是否 ≥ 5 次"给出每日有氧/无氧分钟，例如减脂 30/25 或 35/30。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">缺口：没有"每周减/增多少公斤"的模型，而目标编辑页又另外假设每周 0.5 kg 来估算时长，两套口径不一致；身高体重不校验；体型小的用户宏量加起来会超过热量目标；允许 13 岁用户；说明文字只有英文。</p>
+
+      <div class="cols2">
+        <div>
+          <h3>健康平台同步</h3>
+          <ul class="plain">
+            <li>iOS 走 HealthKit，Android 走 Health Connect，平台差异封装在接口后面，这个结构值得保留。</li>
+            <li>只导出本 App 产生的数据，导入的数据不会回写，避免循环。</li>
+            <li>本地删掉的导入记录会留下墓碑，不会被再次导入。</li>
+            <li>游标就是"上次同步的时刻"，之后补录到更早时间的样本会漏掉。</li>
+            <li>删除一餐时，会删掉该时段 30 分钟内的全部营养样本，包括其他 App 写的。</li>
+            <li>本地修改过的记录不会再次导出，导出失败没有重试队列。</li>
+            <li>只在打开 App、手动同步、四个页面下拉刷新时触发，没有后台同步。</li>
+          </ul>
+        </div>
+        <div>
+          <h3>AI 教练</h3>
+          <ul class="plain">
+            <li>默认关闭，用户需手动开启。</li>
+            <li>六种卡片共用一个系统提示：简短、用 App 语言回答、少于 100 词、不用 Markdown。</li>
+            <li>用户提示由档案行（性别、身高、体重、年龄、水平）加各卡片数据拼成，六处重复。</li>
+            <li>结果按"功能 + 用户 + 语言 + 日/周"缓存在一个 JSON 文件里；饮食类再加餐食指纹。手动刷新可以绕过缓存，没有上限。</li>
+            <li>聊天只在第一条消息附带一次数据快照，之后数据变了也不更新；发送失败只显示一个笼统对话框。</li>
+          </ul>
+        </div>
+        <div>
+          <h3>食物搜索</h3>
+          <ul class="plain">
+            <li>先搜索 USDA（每页 20 条），再批量请求详情，只为拿到份量克数。</li>
+            <li>营养统一换算成每 100 g；非克数的份量（毫升、盎司）被忽略。</li>
+            <li>缺失的营养素记为 0，和真正的 0 无法区分。</li>
+            <li>离线时只能看"最近添加"，按关键词搜索必须联网。</li>
+          </ul>
+        </div>
+        <div>
+          <h3>启动与设置</h3>
+          <ul class="plain">
+            <li>启动画面固定等待约 2.9 秒，期间什么也不加载。</li>
+            <li>"是否完成引导"靠"身高是否为空"来判断。</li>
+            <li>设置存在一个 JSON 文件里，另有一个键绕开了设置模型直接读写。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="issues">
+      <h2><span class="num">07</span>问题清单</h2>
+      <ul class="issues">
+        <li><span class="chip sev-crit">严重</span><p><b>密钥随安装包发布</b><code>.env</code> 被声明为 Flutter asset，Gemini 和 USDA 的密钥会原样出现在 IPA/APK 里。全新克隆时这个文件缺失，构建还会直接失败。</p></li>
+        <li><span class="chip sev-crit">严重</span><p><b>升级即清库</b>存储的 schema 版本和代码不一致时删除全部表再重建，没有任何数据迁移。</p></li>
+        <li><span class="chip sev-crit">严重</span><p><b>训练中途崩溃全丢</b>训练只在点"结束"时保存，且每条插入各自独立、不在事务里，失败会留下孤儿记录，重试会产生重复。</p></li>
+        <li><span class="chip sev-high">高</span><p><b>密码存储不安全</b>无盐 SHA-256，在登录页 UI 代码里计算；哈希值还随用户模型在界面间传递。</p></li>
+        <li><span class="chip sev-high">高</span><p><b>同步会误删他人数据</b>删除一餐时按 30 分钟时间窗删除健康平台里的营养样本。</p></li>
+        <li><span class="chip sev-high">高</span><p><b>健康数据直发第三方模型</b>体重、饮食、训练记录直接从手机发给 Gemini，只有一个开关，没有说明会发送哪些数据。</p></li>
+        <li><span class="chip sev-high">高</span><p><b>体重两个来源</b>设置页改的是档案字段，首页改的是体重记录，两者可能不一致；体重历史里公斤和磅混在一起存。</p></li>
+        <li><span class="chip sev-mid">中</span><p><b>跨页面数据过期</b>各 Tab 一直持有启动时的用户对象，记了饮食、改了单位，其他页面要手动下拉才更新。</p></li>
+        <li><span class="chip sev-mid">中</span><p><b>巨型页面</b>进行中训练页 1874 行，混合计时器、HTTP、数据库、摄像头资格判断和界面；引导页和目标编辑页重复约 300 行。</p></li>
+        <li><span class="chip sev-mid">中</span><p><b>错误被吞掉</b>大量 <code>catch (_)</code> 后返回空值；用户看到的是空白卡片或异常原文。</p></li>
+        <li><span class="chip sev-mid">中</span><p><b>性能</b>同步 SQLite 跑在 UI 线程；饮食页每次刷新对 7 天逐日查询再逐条查食物（N+1）；首页每次改体重都重跑 8 个查询。</p></li>
+        <li><span class="chip sev-mid">中</span><p><b>无障碍</b>界面层没有任何语义标签，图表对读屏不可见，多处点击区域小于 44 pt。</p></li>
+        <li><span class="chip sev-mid">中</span><p><b>测试薄弱</b>只有 3 个测试文件；同步协调器、AI、饮食仓库、计数引擎都没有测试；<code>.gitignore</code> 还忽略了 <code>/test/</code> 目录。</p></li>
+      </ul>
+    </section>
+
+    <section id="rebuild">
+      <h2><span class="num">08</span>重建设计</h2>
+      <p class="note">第 08–10 节是按 Flutter 写的初版方案，已被 <a href="https://claude.ai/artifact/MZh6hoZ1qZW8wiN2hazE5X">Movement Tracker+ iOS 架构</a> 取代：平台改为纯原生 iOS，AI 教练改用 Meta Muse。</p>
+      <h3>原则</h3>
+      <ol class="plain">
+        <li>业务规则写成纯 Dart 并单测：目标规划、营养计算、训练会话状态机、动作计数引擎。</li>
+        <li>外部依赖全部放在接口后面：摄像头姿态、健康平台、食物库、AI、时钟、设置。测试用假实现。</li>
+        <li>数据单一来源、响应式：任何写入之后，所有页面自动更新。</li>
+        <li>迁移是一等公民：每个 schema 版本都有迁移测试，绝不清库。</li>
+        <li>客户端不放任何密钥。</li>
+        <li>从第一天起支持中英双语、深浅色和无障碍。</li>
+      </ol>
+
+      <div class="compare">
+        <div class="stack">
+          <h3>旧版结构</h3>
+          <div class="band"><small>页面</small>StatefulWidget，直接调用数据库、HTTP、单例</div>
+          <div class="arrow">↓</div>
+          <div class="band">服务单例：AI、食物搜索、健康协调器、设置</div>
+          <div class="arrow">↓</div>
+          <div class="band">DatabaseHelper 门面（约 80 个转发方法）→ 15 个仓库</div>
+          <div class="arrow">↓</div>
+          <div class="band warn">SQLite（UI 线程同步）· 外部 API（密钥随包）</div>
+        </div>
+        <div class="stack">
+          <h3>新结构</h3>
+          <div class="band"><small>界面层 · features/*</small>Today · Train · Track · Eat · Coach · Progress · Settings<br>Riverpod AsyncNotifier + go_router</div>
+          <div class="arrow">↓</div>
+          <div class="band core"><small>领域层 · 纯 Dart 包</small><code>domain</code>：实体、值对象、目标规划、会话状态机<br><code>motion_core</code>：姿态帧、滤波、动作规格、计数引擎</div>
+          <div class="arrow">↓</div>
+          <div class="band"><small>数据与集成层</small>drift（后台 isolate、迁移测试）· PoseSource · HealthGateway · FoodCatalog · CoachModel</div>
+          <div class="arrow">↓</div>
+          <div class="band"><small>外部</small>HealthKit / Health Connect · ML Kit · 自建代理 → USDA / Open Food Facts / LLM</div>
+        </div>
+      </div>
+
+      <h3>导航</h3>
+      <p>四个 Tab：<b>今日</b>、<b>训练</b>、<b>饮食</b>、<b>我</b>。教练做成全局入口（今日页按钮 + 各卡片上的"问教练"），不再单独占一个 Tab。"我"里包含档案、Progress（所有长期图表，一个范围选择器：7 天 / 8 周 / 6 个月）、目标和设置。开始训练后进入全屏专注流程，隐藏 Tab 栏，对应场景文档里"训练时导航简化"的要求。</p>
+
+      <h3>动作引擎（motion_core）</h3>
+      <ul class="pipeline" aria-label="新版处理流程">
+        <li>姿态帧（单调时间戳）</li>
+        <li>统一旋转与镜像</li>
+        <li>One-Euro 滤波</li>
+        <li>单一可见度门槛</li>
+        <li>锁定一侧（带滞后）</li>
+        <li>按规格取角度</li>
+        <li>基于时间的状态机</li>
+        <li>整个动作窗口评估规则</li>
+        <li>事件流</li>
+      </ul>
+      <ul class="plain">
+        <li><b>动作规格是数据：</b>视角、关节三元组、锁定角、深度目标（相对校准值）、最小幅度、停留时间、时长范围、起始姿势、规则列表（度量、比较、阈值、窗口、严重度、文案 key）。加新动作只改配置。</li>
+        <li><b>校准：</b>开始前站直或锁定 2 秒，记下用户自己的锁定角和肢段长度。</li>
+        <li><b>连续评分：</b>按深度、节奏、规则扣分算出每次分数，好/坏由分数派生。</li>
+        <li><b>可测试：</b>把真实训练的骨架序列录成 JSON 夹具，回放测试断言次数、被拒次数和问题。</li>
+        <li><b>摄像头适配器：</b>限制在约 15 fps，按"停流 → 等推理结束 → 关检测器 → 释放控制器"的顺序释放。</li>
+        <li><b>v1 动作：</b>建议深蹲 + 俯卧撑（都适合侧面拍摄、在家就能做），卧推放到后面。</li>
+      </ul>
+
+      <h3>训练会话状态机</h3>
+      <div class="states" aria-label="会话状态">
+        <span class="state">空闲</span><span class="to">→</span>
+        <span class="state loop">进行中：做组 ⇄ 休息</span><span class="to">→</span>
+        <span class="state">结束中</span><span class="to">→</span>
+        <span class="state">已完成</span>
+      </div>
+      <p>事件：加/删动作、加/改组、开始组、完成组（次数、来源）、摄像头结果（次数 + 每次记录）、跳过休息、结束（命名）、放弃。状态更新是领域层的纯函数，控制器在每个事件后写草稿，结束时一个事务落库。计时器由存下来的时间戳推算，App 重启也不会丢。</p>
+
+      <div class="cols2">
+        <div>
+          <h3>数据模型</h3>
+          <ul class="plain">
+            <li>单一本地档案：出生日期、身高、单位、活动水平。</li>
+            <li>目标：类型、每周速率、各项目标值、规划器版本，最多一个生效。</li>
+            <li>身体测量：体重（kg）和体脂（%），体重只在这里存。</li>
+            <li>训练：会话 → 动作条目 → 组 → 每次记录。动作目录用稳定 id 加别名。</li>
+            <li>饮食：食物（每 100 g 营养可为空，多种份量，自定义归属档案，FTS 索引）→ 饮食条目。合计实时查询，不存冗余列。</li>
+            <li>同步：发件箱、各数据类型的同步窗口、每次同步的运行记录。</li>
+            <li>教练：洞察（类型、周期、输入哈希、提示词版本、模型）、聊天会话与消息（带发送状态）。</li>
+            <li>主键用 UUIDv7；时间存 UTC + IANA 时区，<code>local_day</code> 写入时算好并建索引。</li>
+          </ul>
+        </div>
+        <div>
+          <h3>同步与教练</h3>
+          <ul class="plain">
+            <li>导入：每种数据回读"上次窗口末尾 − 72 小时"到现在，按外部 id 幂等写入。</li>
+            <li>导出：本地写入时在同一事务里写发件箱，后台按退避重试；修改会重新导出，删除按平台记录 id 删除。</li>
+            <li>触发：回到前台（最短间隔 15 分钟）、手动、本地写入后去抖。</li>
+            <li>教练代理只接收聚合数据（目标、今日/本周合计、趋势），返回经过校验的 JSON。</li>
+            <li>按类型、周期和输入哈希缓存；每种卡片每天有调用预算；不可用时有明确状态。</li>
+            <li>首次开启 AI 时显示同意页，写明哪些数据会离开手机。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="decisions">
+      <h2><span class="num">09</span>需要你决定</h2>
+      <p class="note">这张表已被 iOS 架构报告第 10 节取代。</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>决定</th><th>默认</th><th>备选</th><th>取舍</th></tr></thead>
+          <tbody>
+            <tr><td class="area">平台</td><td>Flutter（iOS + Android）</td><td>SwiftUI 原生（仅 iOS）</td><td>原生在姿态（Vision，含 3D 骨架）、HealthKit（锚点查询、后台推送）和端侧 AI 上都更强，代价是放弃 Android</td></tr>
+            <tr><td class="area">后端</td><td>只做轻量代理（如 Cloudflare Workers）</td><td>Supabase（账号 + 数据库 + 边缘函数）</td><td>代理只负责藏密钥和限流；Supabase 适合以后要多设备同步</td></tr>
+            <tr><td class="area">账号</td><td>单一本地档案，无密码</td><td>云账号（Apple / Google 登录）</td><td>本地档案最简单也最安全；云账号是多设备的前提</td></tr>
+            <tr><td class="area">AI 模型</td><td>模型无关的代理，默认 Claude（卡片用 Haiku 5.5，聊天用 Sonnet 5.5）</td><td>继续用 Gemini</td><td>放在代理后面以后随时可换，App 不用发版</td></tr>
+            <tr><td class="area">v1 摄像头动作</td><td>深蹲 + 俯卧撑</td><td>深蹲 + 卧推（旧版）</td><td>俯卧撑不需要器械，侧面拍摄更容易；卧推需要把手机架在凳边</td></tr>
+            <tr><td class="area">导航</td><td>4 Tab + 全局教练入口</td><td>旧版 5 Tab（聊天单独占一个）</td><td>取决于你预期 AI 聊天的使用频率</td></tr>
+            <tr><td class="area">最低年龄</td><td>16 岁</td><td>13（旧版）/ 18</td><td>未成年人的热量建议有健康和合规风险</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="roadmap">
+      <h2><span class="num">10</span>路线图</h2>
+      <p>每个里程碑结束时 CI 全绿，并且能跑出可用的构建。</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th class="num">#</th><th>范围</th><th>完成标准</th></tr></thead>
+          <tbody>
+            <tr><td class="num">M0</td><td>工作区、lint、CI、设计 token 与主题、l10n、路由骨架、drift 骨架 + 迁移测试框架、依赖注入</td><td>中英文、深浅色下启动到 4 个空 Tab；CI 通过</td></tr>
+            <tr><td class="num">M1</td><td>档案、引导、目标规划器、设置</td><td>规划器边界测试齐全；引导可中断恢复；所有地方都尊重单位设置</td></tr>
+            <tr><td class="num">M2</td><td>饮食：代理食物搜索、记录弹窗、日视图、历史、自定义食物</td><td>记录后所有 Tab 自动更新；离线可用最近食物</td></tr>
+            <tr><td class="num">M3</td><td>手动训练：动作目录、会话状态机、草稿、历史、模板</td><td>训练中杀掉 App 后能恢复；结束保存是单事务</td></tr>
+            <tr><td class="num">M4</td><td>摄像头计数：motion_core + 回放夹具、摄像头适配器、深蹲 + 俯卧撑、每次记录、总结页</td><td>回放测试通过；真机计数与人工计数一致</td></tr>
+            <tr><td class="num">M5</td><td>健康同步引擎 + 状态界面</td><td>重复同步幂等；不回写；发件箱可重试；真机确认体脂单位</td></tr>
+            <tr><td class="num">M6</td><td>教练：代理、卡片、聊天、同意页</td><td>安装包里没有任何密钥；预算生效；结构化输出正常渲染</td></tr>
+            <tr><td class="num">M7</td><td>Progress 图表、无障碍、性能、发布准备</td><td>点击区域 ≥ 44 pt；图表有语义描述；两种主题对比度达标</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <p>分析日期 2026-10-29。原项目只读分析，未修改任何文件，未读取 <code>.env</code>。</p>
+      <p>配套的实现简报：<code>Workout_movement_tracker+/docs/rebuild-brief.md</code>（已按 iOS 方案重写）</p>
+    </footer>
+  </main>
+</div>
