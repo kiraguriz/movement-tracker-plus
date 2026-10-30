@@ -47,6 +47,67 @@ enum AccessibilityID {
     static let weightEntry = "weightEntry.field"
     static let weightEntrySave = "weightEntry.save"
 
+    // Train
+    static let trainStart = "train.start"
+    static let trainAddExercise = "train.addExercise"
+    static let trainFinish = "train.finish"
+    static let trainDiscard = "train.discard"
+    static let trainDiscardConfirm = "train.discard.confirm"
+    static let exercisePicker = "exercise.picker"
+    static let exercisePickerClose = "exercise.picker.close"
+    static let manualSet = "manual.sheet"
+    static let manualReps = "manual.reps"
+    static let manualLoad = "manual.load"
+    static let manualSave = "manual.save"
+    static let manualCancel = "manual.cancel"
+
+    static func exerciseRow(_ id: ExerciseID) -> String { "exercise.row.\(id.rawValue)" }
+    static func exerciseCard(_ id: ExerciseID) -> String { "train.exercise.\(id.rawValue)" }
+    static func liveSetButton(_ id: ExerciseID) -> String { "train.live.\(id.rawValue)" }
+    static func addSetButton(_ id: ExerciseID) -> String { "train.addSet.\(id.rawValue)" }
+    static func setRow(_ id: ExerciseID, _ number: Int) -> String { "train.set.\(id.rawValue).\(number)" }
+
+    // Live set
+    static let liveSet = "live.screen"
+    static let liveRepCount = "live.repCount"
+    static let livePartials = "live.partials"
+    static let liveFraming = "live.framing"
+    static let liveCue = "live.cue"
+    static let liveIdle = "live.idle"
+    static let liveGauge = "live.gauge"
+    static let liveEnd = "live.end"
+    static let liveClose = "live.close"
+    static let liveSwitchCamera = "live.switchCamera"
+    static let liveHUD = "live.hud"
+    static let liveCameraDenied = "live.camera.denied"
+    static let liveCameraRestricted = "live.camera.restricted"
+    static let liveOpenSettings = "live.openSettings"
+    static let liveRecording = "live.recording"
+    static let liveNotice = "live.notice"
+
+    // Set review
+    static let setReview = "review.sheet"
+    static let reviewReps = "review.reps"
+    static let reviewPartials = "review.partials"
+    static let reviewScore = "review.score"
+    static let reviewVelocityLoss = "review.velocityLoss"
+    static let reviewMuse = "review.muse"
+    static let reviewHeadline = "review.headline"
+    static let reviewSaw = "review.saw"
+    static let reviewRetry = "review.retry"
+    static let reviewNextSet = "review.nextSet"
+    static let reviewFinish = "review.finish"
+    static let reviewClose = "review.close"
+
+    static func reviewRep(_ number: Int) -> String { "review.rep.\(number)" }
+
+    // Session summary
+    static let sessionSummary = "summary.sheet"
+    static let summarySave = "summary.save"
+    static let summaryClose = "summary.close"
+    static let summaryDebrief = "summary.debrief"
+    static let summaryReps = "summary.reps"
+
     // Eat
     static let dateStrip = "eat.dateStrip"
     static let eatCalendar = "eat.calendar"
