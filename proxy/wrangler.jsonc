@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "movement-tracker-proxy",
+  "main": "src/index.ts",
+  // Must not be newer than the workerd bundled with the pinned wrangler (workerd 1.20261012.1), or
+  // `wrangler dev` refuses to start. Raise it together with the wrangler pin.
+  "compatibility_date": "2026-10-12",
+
+  // One KV namespace holds install tokens, rate-limit counters and daily budgets.
+  // Create it once, then paste the printed id below:
+  //   npx wrangler kv namespace create PROXY_KV
+  // The placeholder id is enough for `npm run build` (dry run) and `wrangler dev` (local KV).
+  "kv_namespaces": [
+    {
+      "binding": "PROXY_KV",
+      "id": "REPLACE_WITH_KV_NAMESPACE_ID"
+    }
+  ],
+
+  // Secrets MODEL_API_KEY and USDA_API_KEY are never listed here. Set them with
+  // `npx wrangler secret put <NAME>` (deployed) or in proxy/.dev.vars (local, gitignored).
+  "vars": {
+    "KILL_SWITCH": "0",
+    "MUSE_BASE_URL": "https://api.meta.ai/v1"
+  }
+}
