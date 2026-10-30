@@ -9,8 +9,8 @@
     "topPrior": 165,
     "bottomPrior": 85,
     "minRom": 45,
-    "dwellMs": 100,
-    "minPeriodMs": 600,
+    "dwellMs": 70,
+    "minPeriodMs": 400,
     "maxPeriodMs": 12000,
     "idleSeconds": 20
   },

@@ -127,23 +127,37 @@ struct RepSegmenterTests {
         #expect(run.phases.first == .top, "armed with the first top")
     }
 
-    @Test("timing edges match the 10 % to 90 % part of a cosine-eased movement")
+    @Test("eccentric and concentric times are the movement's own durations, from leaving one plateau to reaching the next")
     func timing() throws {
         var seg = segmenter()
         var wave = Waveform(fps: 60, value: 1.0)
         wave.hold(1)
         wave.rep(bottom: 0.0, top: 1.0, ecc: 1.2, con: 1.0, pauseBottom: 0.3, pauseTop: 1)
         let rep = try #require(drive(&seg, wave).reps.first)
-        let scale = 1 - 2 * acos(0.8) / .pi // share of an eased move between its 10 % and 90 % levels
-        #expect(abs(rep.eccMs - 1200 * scale) < 80, "ecc \(rep.eccMs) expected \(1200 * scale)")
-        #expect(abs(rep.conMs - 1000 * scale) < 80, "con \(rep.conMs) expected \(1000 * scale)")
-        // Between the two edges the signal also sits inside the 10 % band on each side of the pause.
-        let tail = acos(0.8) / .pi
-        let expectedDuration = rep.eccMs + 300 + (1200 + 1000) * tail + rep.conMs
-        #expect(abs(rep.durationMs - expectedDuration) < 120, "duration \(rep.durationMs) expected \(expectedDuration)")
+        // The movement starts at 1.0 s, reaches the bottom at 2.2 s, leaves it at 2.5 s and is back at 3.5 s.
+        #expect(abs(rep.eccMs - 1200) < 100, "ecc \(rep.eccMs)")
+        #expect(abs(rep.conMs - 1000) < 100, "con \(rep.conMs)")
+        #expect(abs(rep.tStart - 1.0) < 0.1 && abs(rep.tBottom - 2.2) < 0.1, "start \(rep.tStart) bottom \(rep.tBottom)")
+        #expect(abs(rep.tLift - 2.5) < 0.1 && abs(rep.tEnd - 3.5) < 0.1, "lift \(rep.tLift) end \(rep.tEnd)")
+        #expect(abs(rep.durationMs - 2500) < 150, "duration \(rep.durationMs)")
         #expect(abs(rep.rom - 1.0) < 0.05 && abs(rep.bottomValue) < 0.05 && abs(rep.topValue - 1.0) < 0.05)
         // 80 % of the range over the 10 %-to-90 % rise time.
+        let scale = 1 - 2 * acos(0.8) / .pi
         #expect(abs(rep.conVelocity - 0.8 / (1.0 * scale)) < 0.15)
+    }
+
+    @Test("a descent of 0.8, 1.5 or 3 s measures within 15 %, and so does the rise",
+          arguments: [(0.8, 0.7), (1.5, 1.2), (3.0, 2.5)])
+    func knownDurations(ecc: Double, con: Double) throws {
+        for pauseBottom in [0.0, 0.5] {
+            var seg = segmenter()
+            var wave = Waveform(fps: 30, value: 1.0)
+            wave.hold(1)
+            wave.rep(bottom: 0.0, top: 1.0, ecc: ecc, con: con, pauseBottom: pauseBottom, pauseTop: 1)
+            let rep = try #require(drive(&seg, wave).reps.first)
+            #expect(abs(rep.eccMs - ecc * 1000) < 0.15 * ecc * 1000, "ecc \(rep.eccMs) for \(ecc) s")
+            #expect(abs(rep.conMs - con * 1000) < 0.15 * con * 1000, "con \(rep.conMs) for \(con) s")
+        }
     }
 
     @Test("a pause at the bottom lengthens the rep but not the eccentric or concentric times")
@@ -167,7 +181,7 @@ struct RepSegmenterTests {
         let run = drive(&seg, wave)
         #expect(run.reps.count == 5)
         let first = try #require(run.reps.first)
-        #expect(abs(first.eccMs - 1200 * (1 - 2 * acos(0.8) / .pi)) < 130)
+        #expect(abs(first.eccMs - 1200) < 180, "ecc \(first.eccMs) at \(fps) fps")
     }
 
     @Test("a dip shorter than the dwell time is ignored")
@@ -232,7 +246,7 @@ struct RepSegmenterTests {
         var seg = segmenter()
         var wave = Waveform(fps: 120, value: 1.0)
         wave.hold(1)
-        wave.rep(bottom: 0.0, top: 1.0, ecc: 0.2, con: 0.2, pauseBottom: 0.12, pauseTop: 1)
+        wave.rep(bottom: 0.0, top: 1.0, ecc: 0.15, con: 0.15, pauseBottom: 0.05, pauseTop: 1)
         let run = drive(&seg, wave)
         #expect(run.reps.isEmpty)
         #expect(run.rejected.contains(.tooFast))

@@ -74,9 +74,9 @@ public enum SegmenterEvent: Equatable, Sendable {
 /// Top and bottom start at the spec's priors, so rep 1 counts without any learning. Each counted rep
 /// then pulls both estimates toward what it actually did (EMA), which follows depth drift from fatigue.
 /// Reps that never reach the bottom threshold are partials. A completed rep is held back for
-/// `settleSeconds` after it stops rising so lockout can be measured, then reported with timing edges taken
-/// at 10 % and 90 % of the rep's own range between robust plateau levels, which makes the timing
-/// independent of calibration.
+/// `settleSeconds` after it stops rising so lockout can be measured, then reported with timing edges that
+/// are found from the rep's own trace (see `measure`): where the signal actually leaves one plateau and
+/// arrives at the next, independent of the calibration and of the 70 % / 30 % counting thresholds.
 public struct RepSegmenter: Sendable {
     private struct TracePoint: Sendable {
         var t: Double
@@ -352,12 +352,10 @@ public struct RepSegmenter: Sendable {
         while end > p.confirmIndex, trace[absolute: end].t > windowEnd { end -= 1 }
         guard let m = measure(p.context, confirmIndex: p.confirmIndex, end: end) else { return }
 
-        // The timing edges cover the middle part of the range, so the period limits scale with them.
-        let edgeScale = 1 - 2 * tuning.edgeFraction
         let duration = m.segment.durationMs
         if m.segment.rom < parameters.minRom {
             events.append(.partial(m.segment))
-        } else if duration < parameters.minPeriodMs * edgeScale {
+        } else if duration < parameters.minPeriodMs {
             events.append(.rejected(.tooFast))
         } else if duration > parameters.maxPeriodMs {
             events.append(.rejected(.tooSlow))
@@ -369,8 +367,8 @@ public struct RepSegmenter: Sendable {
 
     private mutating func finishPartial(endIndex: Int, into events: inout [SegmenterEvent]) {
         guard let m = measure(context, confirmIndex: nil, end: endIndex) else { return }
-        // A flick much shorter than a rep is noise or a bump, not an attempt.
-        if m.segment.durationMs < parameters.minPeriodMs * (1 - 2 * tuning.edgeFraction) / 2 {
+        // A flick shorter than the shortest rep is noise or a bump, not an attempt.
+        if m.segment.durationMs < parameters.minPeriodMs {
             events.append(.rejected(.tooFast))
         } else {
             events.append(.partial(m.segment))
@@ -404,11 +402,91 @@ public struct RepSegmenter: Sendable {
         return values[min(values.count - 1, max(0, Int((fraction * Double(values.count - 1)).rounded())))]
     }
 
+    private func lastIndex(from: Int, downTo bound: Int, where match: (Double) -> Bool) -> Int? {
+        var i = from
+        while i >= bound {
+            if match(trace[absolute: i].u) { return i }
+            i -= 1
+        }
+        return nil
+    }
+
+    private func firstIndex(from: Int, upTo bound: Int, where match: (Double) -> Bool) -> Int? {
+        var i = from
+        while i <= bound {
+            if match(trace[absolute: i].u) { return i }
+            i += 1
+        }
+        return nil
+    }
+
+    /// When a movement from `from` to `to` (in signal units) began and how long it took, from the trace
+    /// samples `first...last`.
+    ///
+    /// Every sample inside the band of the movement (`edgeFraction` to `1 - edgeFraction` of the way) is
+    /// turned into the phase `s` of a cosine-eased movement that would be at that height,
+    /// `s = acos(1 - 2x) / pi`, and a line `s = (t - t0) / T` is fitted through them. That reads the start
+    /// and stop of the movement off its steep middle, where the signal is far above the noise, instead
+    /// of timing the first and last few percent, where a smooth movement hardly moves and noise decides.
+    /// An eased movement is timed exactly, a jerk-limited one about 15 % short, a squat whose thigh
+    /// angle is eased (so the height is flat at the top) about 20 % short.
+    private func fitTransition(from: Double, to: Double, first: Int, last: Int) -> (start: Double, duration: Double)? {
+        let band = tuning.edgeFraction
+        guard last > first, band > 0, band < 0.5, abs(to - from) > 1e-9 else { return nil }
+        let span = to - from
+        var sumT = 0.0, sumS = 0.0, count = 0
+        var samples: [(t: Double, s: Double)] = []
+        samples.reserveCapacity(last - first + 1)
+        for i in first...last {
+            let point = trace[absolute: i]
+            let x = (point.u - from) / span
+            guard x >= band, x <= 1 - band else { continue }
+            let s = acos(1 - 2 * x) / .pi
+            samples.append((point.t, s))
+            sumT += point.t
+            sumS += s
+            count += 1
+        }
+        if count < 3 {
+            // Too few samples inside the band (a very fast movement at a low frame rate): use the two
+            // interpolated crossings of the band edges instead.
+            samples.removeAll()
+            for level in [band, 1 - band] {
+                var crossingTime: Double?
+                for i in first..<last {
+                    let a = trace[absolute: i], b = trace[absolute: i + 1]
+                    let xa = (a.u - from) / span, xb = (b.u - from) / span
+                    if xa < level, xb >= level {
+                        crossingTime = a.t + (level - xa) / (xb - xa) * (b.t - a.t)
+                        break
+                    }
+                }
+                guard let crossingTime else { return nil }
+                samples.append((crossingTime, acos(1 - 2 * level) / .pi))
+            }
+            sumT = samples.reduce(0) { $0 + $1.t }
+            sumS = samples.reduce(0) { $0 + $1.s }
+            count = samples.count
+        }
+        let meanT = sumT / Double(count), meanS = sumS / Double(count)
+        var covariance = 0.0, variance = 0.0
+        for sample in samples {
+            covariance += (sample.t - meanT) * (sample.s - meanS)
+            variance += (sample.t - meanT) * (sample.t - meanT)
+        }
+        guard variance > 1e-12, covariance > 1e-12 else { return nil }
+        let duration = variance / covariance
+        return (meanT - meanS * duration, duration)
+    }
+
     /// Measures a rep from the sample trace. Plateau levels are percentiles of the samples in each phase
     /// window (the bottom window is the time spent in the bottom phase; the top windows are before the
     /// descent and just after the rise), not the raw minimum and maximum: an extreme of a noisy plateau
-    /// sits two sigma off its typical level and would put the timing edges inside the noise. Edges are
-    /// `edgeFraction` of the range in from each plateau.
+    /// sits two sigma off its typical level and would put the timing edges inside the noise.
+    ///
+    /// The timing edges are where the signal actually leaves the top plateau, arrives at the bottom
+    /// plateau, leaves it and arrives back at the top (`fitTransition`), not where it crosses the 70 % and
+    /// 30 % counting thresholds. They are the eccentric and concentric times a lifter would quote.
     private func measure(_ ctx: Context, confirmIndex: Int?, end rawEnd: Int) -> Measurement? {
         let first = max(ctx.topWindowStart, trace.firstAbsolute)
         let end = min(rawEnd, trace.lastAbsolute)
@@ -441,11 +519,7 @@ public struct RepSegmenter: Sendable {
         let span0 = uHigh0 - uLow
         let span1 = uHigh1 - uLow
         guard span0 > 1e-9, span1 > 1e-9 else { return nil }
-        let e = tuning.edgeFraction
-        let start0 = uLow + (1 - e) * span0
-        let bottom0 = uLow + e * span0
-        let bottom1 = uLow + e * span1
-        let end1 = uLow + (1 - e) * span1
+        let band = tuning.edgeFraction
 
         func crossing(_ i: Int, _ j: Int, _ levelValue: Double) -> Double {
             let a = trace[absolute: i]
@@ -455,33 +529,58 @@ public struct RepSegmenter: Sendable {
             return a.t + fraction * (b.t - a.t)
         }
 
-        // Start of the descent: the last time at the top plateau before the bottom window.
-        var iStart = bottomStart
-        while iStart > first, trace[absolute: iStart].u < start0 { iStart -= 1 }
-        let tStart = iStart < bottomStart ? crossing(iStart, iStart + 1, start0) : trace[absolute: iStart].t
-        // Arrival on the bottom plateau.
-        var iBottom = min(iStart + 1, bottomEnd)
-        while iBottom < bottomEnd, trace[absolute: iBottom].u > bottom0 { iBottom += 1 }
-        let tBottom = iBottom > iStart ? max(tStart, crossing(iBottom - 1, iBottom, bottom0)) : tStart
-        // Departure from the bottom plateau: the last time at the bottom before the final rise.
-        var iLift = end
-        while iLift > iBottom, trace[absolute: iLift].u > bottom1 { iLift -= 1 }
-        let tLift = iLift < end ? max(tBottom, crossing(iLift, iLift + 1, bottom1)) : trace[absolute: end].t
-        // Arrival back on the top plateau.
-        var iEnd = iLift + 1
-        while iEnd <= end, trace[absolute: iEnd].u < end1 { iEnd += 1 }
-        let tEnd = iEnd <= end ? max(tLift, crossing(iEnd - 1, iEnd, end1)) : trace[absolute: end].t
+        // The descent: from the last sample before the bottom window that is still within the band of the
+        // top plateau, to the first sample that is within the band of the bottom plateau.
+        let descentBandTop = uHigh0 - band * span0
+        let descentBandBottom = uLow + band * span0
+        let iDescent = lastIndex(from: bottomStart, downTo: first) { $0 >= descentBandTop } ?? first
+        let iArrival = firstIndex(from: max(iDescent, first), upTo: bottomEnd) { $0 <= descentBandBottom } ?? bottomEnd
+        var tStart: Double
+        var tBottom: Double
+        if let fit = fitTransition(from: uHigh0, to: uLow, first: iDescent, last: max(iArrival, min(iDescent + 1, end))) {
+            tStart = fit.start
+            tBottom = fit.start + fit.duration
+        } else {
+            tStart = iDescent < bottomStart ? crossing(iDescent, iDescent + 1, descentBandTop) : trace[absolute: iDescent].t
+            tBottom = iArrival > iDescent ? crossing(iArrival - 1, iArrival, descentBandBottom) : trace[absolute: iArrival].t
+        }
+        tStart = max(trace[absolute: first].t, tStart)
+        tBottom = max(tStart, tBottom)
+
+        // The rise: from the last sample at the bottom plateau before the top was confirmed, to the first
+        // sample back at the top plateau. (Searching back from `end` could reach into the next descent.)
+        let riseBandBottom = uLow + band * span1
+        let riseBandTop = uLow + (1 - band) * span1
+        let riseSearchFrom = confirmIndex.map { min($0, end) } ?? end
+        let iLift = lastIndex(from: riseSearchFrom, downTo: min(iArrival, riseSearchFrom)) { $0 <= riseBandBottom } ?? min(iArrival, riseSearchFrom)
+        let iTop = firstIndex(from: iLift, upTo: end) { $0 >= riseBandTop } ?? end
+        var tLift: Double
+        var tEnd: Double
+        if let fit = fitTransition(from: uLow, to: uHigh1, first: iLift, last: max(iTop, min(iLift + 1, end))) {
+            tLift = fit.start
+            tEnd = fit.start + fit.duration
+        } else {
+            tLift = iLift < end ? crossing(iLift, iLift + 1, riseBandBottom) : trace[absolute: iLift].t
+            tEnd = iTop > iLift ? crossing(iTop - 1, iTop, riseBandTop) : trace[absolute: iTop].t
+        }
+        if tLift < tBottom {
+            // A reversal with no pause: the two fits overlap by noise, and meet in the middle.
+            let middle = max(tStart, (tBottom + tLift) / 2)
+            tBottom = middle
+            tLift = middle
+        }
+        tEnd = max(tLift, min(tEnd, trace[absolute: end].t))
 
         // Mean concentric velocity from the 10 %-to-90 % part of the rise: the steep part, where noise
         // moves the crossing times least.
         let velocityLow = uLow + 0.1 * span1
         let velocityHigh = uLow + 0.9 * span1
-        let riseFrom = max(iLift, iBottom)
-        var iV0 = riseFrom
+        let velocityFrom = max(iLift, iArrival)
+        var iV0 = velocityFrom
         while iV0 < end, trace[absolute: iV0].u < velocityLow { iV0 += 1 }
         var iV1 = iV0
         while iV1 < end, trace[absolute: iV1].u < velocityHigh { iV1 += 1 }
-        let tV0 = iV0 > riseFrom ? crossing(iV0 - 1, iV0, velocityLow) : trace[absolute: iV0].t
+        let tV0 = iV0 > velocityFrom ? crossing(iV0 - 1, iV0, velocityLow) : trace[absolute: iV0].t
         let tV1 = iV1 > iV0 ? crossing(iV1 - 1, iV1, velocityHigh) : trace[absolute: iV1].t
         let riseSeconds = max(tV1 - tV0, 1e-3)
 

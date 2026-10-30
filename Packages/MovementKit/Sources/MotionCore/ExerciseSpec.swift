@@ -211,7 +211,7 @@ public struct RepParameters: Equatable, Codable, Sendable {
 
     public init(
         polarity: Polarity, topPrior: Double, bottomPrior: Double, minRom: Double,
-        dwellMs: Double = 100, minPeriodMs: Double = 600, maxPeriodMs: Double = 12_000, idleSeconds: Double = 20
+        dwellMs: Double = 70, minPeriodMs: Double = 400, maxPeriodMs: Double = 12_000, idleSeconds: Double = 20
     ) {
         self.polarity = polarity
         self.topPrior = topPrior
@@ -233,8 +233,8 @@ public struct RepParameters: Equatable, Codable, Sendable {
         topPrior = try c.decode(Double.self, forKey: .topPrior)
         bottomPrior = try c.decode(Double.self, forKey: .bottomPrior)
         minRom = try c.decode(Double.self, forKey: .minRom)
-        dwellMs = try c.decodeIfPresent(Double.self, forKey: .dwellMs) ?? 100
-        minPeriodMs = try c.decodeIfPresent(Double.self, forKey: .minPeriodMs) ?? 600
+        dwellMs = try c.decodeIfPresent(Double.self, forKey: .dwellMs) ?? 70
+        minPeriodMs = try c.decodeIfPresent(Double.self, forKey: .minPeriodMs) ?? 400
         maxPeriodMs = try c.decodeIfPresent(Double.self, forKey: .maxPeriodMs) ?? 12_000
         idleSeconds = try c.decodeIfPresent(Double.self, forKey: .idleSeconds) ?? 20
     }

@@ -107,8 +107,10 @@ public struct MotionConfig: Equatable, Codable, Sendable {
         public var bottomEnter: Double = 0.30
         /// Above this the signal has left the bottom (starts the ascent).
         public var bottomLeave: Double = 0.40
-        /// Rep timing edges sit this fraction of the rep's own range in from each plateau.
-        public var edgeFraction: Double = 0.10
+        /// Rep timing is read off the part of each movement between this fraction and one minus it of
+        /// the rep's own range (see `RepSegmenter`): clear of the plateau noise, wide enough to carry
+        /// several samples of a brisk rep.
+        public var edgeFraction: Double = 0.15
         /// EMA weight of each counted rep when re-estimating top and bottom.
         public var calibrationAlpha: Double = 0.3
         /// A counted rep is held back until the signal has stopped reaching new highs for this long, so

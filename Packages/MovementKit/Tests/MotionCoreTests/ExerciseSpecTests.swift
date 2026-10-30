@@ -14,7 +14,7 @@ struct ExerciseSpecTests {
         #expect(spec.signal == .relativeHeight(of: .hip, to: .knee, scale: .thigh))
         #expect(spec.rep.polarity == .down)
         #expect(spec.rep.topPrior == 1.0 && spec.rep.bottomPrior == 0.05 && spec.rep.minRom == 0.45)
-        #expect(spec.rep.dwellMs == 100 && spec.rep.minPeriodMs == 600 && spec.rep.maxPeriodMs == 12_000)
+        #expect(spec.rep.dwellMs == 70 && spec.rep.minPeriodMs == 400 && spec.rep.maxPeriodMs == 12_000)
         #expect(spec.rep.idleSeconds == 20)
         #expect(spec.rules.map(\.id) == ["depth", "chest", "tempo"])
         #expect(spec.rules.first { $0.id == "depth" }?.severity == .major)
@@ -75,7 +75,7 @@ struct ExerciseSpecTests {
     func repDefaults() throws {
         let json = #"{"polarity":"down","topPrior":1,"bottomPrior":0,"minRom":0.5}"#
         let rep = try JSONDecoder().decode(RepParameters.self, from: Data(json.utf8))
-        #expect(rep.dwellMs == 100 && rep.minPeriodMs == 600 && rep.maxPeriodMs == 12_000 && rep.idleSeconds == 20)
+        #expect(rep.dwellMs == 70 && rep.minPeriodMs == 400 && rep.maxPeriodMs == 12_000 && rep.idleSeconds == 20)
     }
 
     // MARK: Decoding errors
@@ -187,7 +187,7 @@ struct ExerciseSpecTests {
             .contains("rep: polarity 'up' needs topPrior below bottomPrior"))
         #expect(try problems { $0.rep.minRom = 2 }.contains { $0.hasPrefix("rep: |topPrior − bottomPrior|") })
         #expect(try problems { $0.rep.dwellMs = 0 }.contains { $0.hasPrefix("rep.dwellMs") })
-        #expect(try problems { $0.rep.maxPeriodMs = 500 }.contains("rep.maxPeriodMs: must exceed minPeriodMs"))
+        #expect(try problems { $0.rep.maxPeriodMs = 300 }.contains("rep.maxPeriodMs: must exceed minPeriodMs"))
         #expect(try problems { $0.rep.idleSeconds = 1 }.contains { $0.hasPrefix("rep.idleSeconds") })
         #expect(try problems { $0.signal = .relativeHeight(of: .hip, to: .hip, scale: .thigh) }
             .contains("signal: relativeHeight 'of' and 'to' must differ"))

@@ -230,8 +230,10 @@ during framing; switch only after ≥ 1 s of clearly better confidence) → sign
 - Calibrate from the first full cycle: `top`, `bottom` estimates; thresholds at 70 % / 30 % of the range
   (relative to top); update both with EMA after each counted rep (handles fatigue and depth drift).
 - States `top → descending → bottom → ascending → top`. Transitions need the signal past the threshold for
-  ≥ `dwellMs` (default 80–120 ms) measured on frame timestamps, never frame counts.
-- Valid rep: ROM ≥ `minRom`; duration within `[minPeriodMs 600, maxPeriodMs 12 000]` (allows pauses).
+  ≥ `dwellMs` (default 70 ms) measured on frame timestamps, never frame counts.
+- Valid rep: ROM ≥ `minRom`; duration within `[minPeriodMs 400, maxPeriodMs 12 000]` (allows pauses).
+  Timing edges are where the signal leaves and reaches each plateau, read off the steep middle of each
+  movement, not the 70 % / 30 % counting thresholds.
   A dip that never reaches the bottom threshold → `partialRep` (shown, not counted).
 - Velocity: mean concentric velocity of the signal (units/s, scale-free). Set-level **velocity loss**
   `1 − v_rep / max(v_first two reps)` as a fatigue proxy (VBT literature; phrase as an estimate).
@@ -242,7 +244,7 @@ Bundled JSON per exercise, versioned, Codable, validated on load:
 ```json
 { "id": "squat.bodyweight", "version": 1, "view": "side",
   "signal": { "kind": "relativeHeight", "of": "hip", "to": "knee", "scale": "thigh" },
-  "rep": { "minRom": 0.45, "dwellMs": 100, "minPeriodMs": 600, "maxPeriodMs": 12000 },
+  "rep": { "minRom": 0.45, "dwellMs": 70, "minPeriodMs": 400, "maxPeriodMs": 12000 },
   "metrics": ["bottomValue", "eccMs", "conMs", "maxTorsoLeanDeg@descent", "conVelocity"],
   "rules": [
     { "id": "depth", "metric": "bottomValue", "op": "<=", "value": 0.10, "severity": "major", "cue": "cue.squat.deeper" },
