@@ -7,6 +7,8 @@ import Foundation
 ///   or with a profile plus weights, meals and a workout (`sample`).
 /// - `-MTStartTab today|train|eat|me`: the tab to show first.
 /// - `-MTFailDatabase`: behave as if the database could not be opened.
+/// - `-MTCoachURL <url>`: talk to the coach proxy at this address (for example `wrangler dev`) instead of
+///   `CoachEndpoint.deployed`.
 struct LaunchOptions: Equatable {
     enum Seed: String {
         case none, profile, sample
@@ -16,6 +18,7 @@ struct LaunchOptions: Equatable {
     var seed = Seed.none
     var startTab: String?
     var failDatabase = false
+    var coachURL: URL?
 
     init() {}
 
@@ -24,6 +27,7 @@ struct LaunchOptions: Equatable {
         failDatabase = arguments.contains("-MTFailDatabase")
         seed = Self.value(after: "-MTSeed", in: arguments).flatMap(Seed.init(rawValue:)) ?? .none
         startTab = Self.value(after: "-MTStartTab", in: arguments)
+        coachURL = Self.value(after: "-MTCoachURL", in: arguments).flatMap(URL.init(string:))
     }
 
     /// The options of this process.

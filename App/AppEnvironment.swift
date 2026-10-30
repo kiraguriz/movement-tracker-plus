@@ -1,3 +1,4 @@
+import CoachKit
 import Domain
 import Persistence
 import SwiftUI
@@ -18,6 +19,12 @@ struct AppEnvironment: Sendable {
     var now: @Sendable () -> Date
     var timeZone: @Sendable () -> TimeZone
     var launch: LaunchOptions
+    /// Muse through the proxy: set review, debrief, meal photo, food search, voice. Nil while the proxy's
+    /// address is unknown (`CoachEndpoint`). CoachKit does not check consent: callers read
+    /// `SettingKey.aiOptIn` before every Muse call (food search is USDA, not Muse).
+    var coach: CoachService?
+    /// Coach chat with on-device tools; nil when `coach` is.
+    var coachChat: ChatService?
 
     init(
         database: AppDatabase,
@@ -39,6 +46,16 @@ struct AppEnvironment: Sendable {
         self.now = now
         self.timeZone = timeZone
         self.launch = launch
+
+        if let url = CoachEndpoint.url(for: launch) {
+            let client = CoachClient(baseURL: url, tokenStore: KeychainTokenStore(service: CoachEndpoint.tokenService))
+            coach = CoachService(client: client, insights: database.coachInsights, ids: ids)
+            let toolbox = ChatToolbox(
+                workouts: database.workouts, nutrition: database.nutrition, body: database.bodyMeasurements,
+                profiles: database.profiles, timeZone: timeZone()
+            )
+            coachChat = ChatService(client: client, chats: database.chat, toolbox: toolbox, ids: ids)
+        }
     }
 
     /// The calendar day it is for the user right now.
