@@ -2,7 +2,7 @@
 
 What was built when, generated from `git log main` by `tools/build-log.sh`. Times are author times in Chicago time (CST/CDT); merge commits are left out.
 
-Source: `main` at `a5506c8`, 17 commits, 2026-10-29 to 2026-10-30.
+Source: `main` at `a3d7783`, 20 commits, 2026-10-29 to 2026-10-30.
 
 ## 2026-10-29 (Thu)
 
@@ -26,3 +26,6 @@ Source: `main` at `a5506c8`, 17 commits, 2026-10-29 to 2026-10-30.
 - 04:39 CDT `aa78552` Match offline cue sentences to the push-up spec
 - 04:45 CDT `a5506c8` Add coach chat, food search and meal photo
 - 05:11 CDT `7806a73` Harden onboarding, Today, Eat and Me
+- 06:55 CDT `65353a8` Add the README, accuracy report, device checklist and build log
+- 10:59 CDT `42cd84c` Harden Train drafts, profile saves, health exports and timing tests
+- 11:18 CDT `a3d7783` Send workouts, meals and weight to Apple Health

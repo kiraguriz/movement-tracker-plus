@@ -19,9 +19,8 @@ bodyweight squat and push-up, both filmed from the side.
    proposals you confirm.
 5. Log a meal from a photo. Muse names the foods and estimates grams, USDA supplies the nutrients, you edit
    and save.
-6. Today shows the day's nutrition, your latest workout and a weight trend. Apple Health is not connected in the
-   app yet: `HealthBridge` (workouts, meals, weight) is built and tested with fakes on macOS, but nothing in `App/`
-   calls it.
+6. Today shows the day's nutrition, your latest workout and a weight trend. With the Apple Health switch in Me on,
+   finished workouts, meals and weight are written to Health, and deleting them in the app removes them there.
 
 ## How it uses Muse
 
@@ -67,7 +66,7 @@ flowchart LR
     ev --> pc
   end
   ui --> mc & pc & ck & dom
-  env --> per & ck & dom
+  env --> per & ck & hb & dom
   ck -- "HTTPS, install token" --> w["Cloudflare Worker<br/>proxy/"]
   w -- "server-held keys" --> muse["Meta Model API (Muse)"]
   w --> usda["USDA FoodData Central"]
@@ -83,7 +82,8 @@ flowchart LR
   (`squat.bodyweight`, `pushup`).
 - The app target holds the screens and `AppEnvironment`, which builds every store from one database and passes
   them to the screens as protocols through a SwiftUI environment value. `Persistence` is imported there and
-  nowhere else in the app. `HealthBridge` is linked into the app target, but no file in `App/` imports it yet.
+  nowhere else in the app. `AppEnvironment` also wraps the workout, nutrition, body-measurement and profile stores
+  so that a successful save is queued for Apple Health (`App/Health/`); a failed Health write never fails a save.
 - `motion-eval` is the accuracy tool described below.
 
 ## Privacy

@@ -1,9 +1,7 @@
 # Device checklist
 
 Everything that needs your iPhone or a live Muse call, in the order to do it. Each step says what to do and
-what you should see. Tick a box only when you saw the expected result. Written against `main` at `a5506c8`.
-Apple Health is not connected in the app there, so section 6 and the HealthKit step in section 1 only apply once
-it is.
+what you should see. Tick a box only when you saw the expected result.
 
 Nothing here needs a key typed anywhere except at the `wrangler secret put` prompts in section 4.
 
@@ -13,9 +11,9 @@ Nothing here needs a key typed anywhere except at the `wrangler secret put` prom
   "Automatically manage signing" on and choose your Team. Expected: no red signing error.
   The bundle ID is `io.github.kiraguriz.MovementTracker`; if your team cannot register it, change it, and use the
   new one in the `devicectl` command in section 3.
-- [ ] HealthKit capability, only once the app calls `HealthBridge` (at `a5506c8` it has no HealthKit entitlement
-  or usage string). In the same pane, check that HealthKit is listed; if it is missing, press + Capability and add
-  it. With automatic signing Xcode enables it on the App ID. Expected: the build signs. In the developer portal
+- [ ] HealthKit capability. The project already carries the entitlement (`Config/MovementTracker.entitlements`). In
+  the same pane, check that HealthKit is listed. With automatic signing Xcode enables it on the App ID. Expected:
+  the build signs. In the developer portal
   (Certificates, Identifiers & Profiles, Identifiers) the App ID shows HealthKit enabled. A provisioning error
   naming the HealthKit entitlement means the App ID does not have it yet.
 - [ ] iPhone: Settings, Privacy & Security, Developer Mode on. Connect it, pick it as the run destination.
@@ -217,32 +215,30 @@ What Muse sees, and read the list.
 
 ## 6. Apple Health
 
-Applies only once the app calls `HealthBridge`; at `a5506c8` nothing does, so there is nothing to check yet. It also
-needs the HealthKit capability from section 1. The package writes these types:
-Workouts and Active Energy (an estimate from MET values, marked as one), Dietary Energy, Protein, Carbohydrates,
-Total Fat, and Weight. It reads the latest Weight and today's Steps. Every sample carries a sync identifier and
-version so a re-save replaces instead of duplicating.
+Needs the HealthKit capability from section 1. Health is off until you turn on the Apple Health switch in Me.
+Only what you save while it is on is sent; turning it on does not send older data. The app writes Workouts and
+Active Energy (an estimate from MET values, marked as one), Dietary Energy, Protein, Carbohydrates, Total Fat, and
+Weight. Every sample carries a sync identifier and version so a re-save replaces instead of duplicating.
 
-- [ ] Authorization. The first write opens the Health sheet. Expected: it lists the types above to write and
-  Weight and Steps to read. Allow all.
+- [ ] Authorization. In Me, turn on Apple Health. Expected: the Health sheet lists the types above to write, plus
+  Weight and Steps to read (the app does not use the reads yet). Allow all; the switch stays on. If you allow
+  only some types, nothing is written: note it as a finding.
+- [ ] Denied. On a second install or after resetting, deny the sheet. Expected: an alert, and the switch stays off.
 - [ ] Workout. Finish a workout of at least one set. In Health: Browse, Activity, Workouts. Expected: one
   Traditional Strength Training workout with the right start time and duration, source Movement Tracker+. Active Energy has
   one sample for it.
 - [ ] Meal. Save a meal of 200 g. In Health: Browse, Nutrition, Dietary Energy, Protein, Carbohydrates, Total
   Fat, Show All Data. Expected: one sample of each at the meal's time, matching the app's numbers.
 - [ ] Weight. Log a weight on Today. In Health: Browse, Body Measurements, Weight. Expected: one sample with that
-  value.
+  value. Then change the weight in Me, edit profile, and save. Expected: a second sample with the new value.
 - [ ] No duplicates after an edit. Edit that meal (change 200 g to 100 g) and save. Expected: Health still shows
-  one sample per nutrient for that meal, now with the new values. Edit the weight, if the app offers it:
-  expected the same.
+  one sample per nutrient for that meal, now with the new values.
 - [ ] Removal after a delete. Delete that meal in Eat. Expected: its Dietary Energy, Protein, Carbohydrate and Fat
   samples are gone from Health.
-- [ ] Read. Add a weight in the Health app. Expected: the app picks it up as the latest weight, and a weight this app
-  exported is not imported a second time. Skip if the app does not surface reads.
-- [ ] Denied access. Revoke write access in Settings, Health, Data Access & Devices, Movement Tracker+, then save a
-  meal. Expected: the app still saves it and does not crash. Re-enable access; expected: the meal reaches
-  Health on the next sync (the exporter keeps the entry queued; when the app next syncs depends on how Health is
-  wired in). Samples written before the revoke stay in Health until you delete them there.
+- [ ] Revoked access. Revoke all write access in Settings, Health, Data Access & Devices, Movement Tracker+, then
+  return to the app. Expected: the Apple Health switch in Me is off, and saving a meal still works. Samples
+  written before the revoke stay in Health until you delete them there.
+- [ ] Switch off. Turn the switch off in Me and save a meal. Expected: it does not appear in Health.
 
 ## 7. Demo dry run
 
@@ -260,7 +256,7 @@ Before the pass: volume up, Voice cues on in Me, Do Not Disturb on, battery abov
 | End set, set review | Numbers at once; Muse card streams in citing reps; velocity loss shown. | |
 | Coach chat | Tool chips ("Coach looked at ..."); a proposed plan you confirm. | |
 | Meal photo | Foods and grams, USDA match, editable sheet, saved. | |
-| Today and Health | Today shows the day's nutrition and the latest workout. With Health connected, Health shows the same workout and meal; skip that half otherwise. | |
+| Today and Health | Today shows the day's nutrition and the latest workout. With the Apple Health switch on, Health shows the same workout and meal. | |
 | Architecture and accuracy | The diagram and the table from the README, with the synthetic rows labelled generated motion. The real row is filled in only if real sets were imported (section 3). | |
 | Close | | |
 
