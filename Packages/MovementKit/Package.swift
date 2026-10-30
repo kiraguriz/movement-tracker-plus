@@ -29,7 +29,7 @@ let package = Package(
 
         .testTarget(name: "MotionCoreTests", dependencies: ["MotionCore"]),
         .testTarget(name: "DomainTests", dependencies: ["Domain"]),
-        .testTarget(name: "PoseCaptureTests", dependencies: ["PoseCapture"]),
+        .testTarget(name: "PoseCaptureTests", dependencies: ["PoseCapture", "MotionCore", "MotionEval"]),
         .testTarget(name: "PersistenceTests", dependencies: ["Persistence"]),
         .testTarget(name: "CoachKitTests", dependencies: ["CoachKit"]),
     ]
