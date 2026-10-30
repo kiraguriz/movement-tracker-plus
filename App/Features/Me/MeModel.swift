@@ -46,20 +46,29 @@ final class MeModel {
     // MARK: Changes
 
     func setVoiceCues(_ isOn: Bool) {
+        let previous = voiceCues
         voiceCues = isOn
-        Task { await store(SettingKey.voiceCues, isOn) }
+        Task {
+            if await !store(SettingKey.voiceCues, isOn) { voiceCues = previous }
+        }
     }
 
+    /// The coach switch is a consent: when the write fails the switch goes back to what is stored.
     func setCoachEnabled(_ isOn: Bool) {
+        let previous = coachEnabled
         coachEnabled = isOn
-        Task { await store(SettingKey.aiOptIn, isOn) }
+        Task {
+            if await !store(SettingKey.aiOptIn, isOn) { coachEnabled = previous }
+        }
     }
 
-    private func store(_ key: SettingKey<Bool>, _ value: Bool) async {
+    private func store(_ key: SettingKey<Bool>, _ value: Bool) async -> Bool {
         do {
             try await environment.settings.set(key, to: value)
+            return true
         } catch {
             errorMessage = error.localizedDescription
+            return false
         }
     }
 

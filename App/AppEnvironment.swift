@@ -67,8 +67,10 @@ struct AppEnvironment: Sendable {
 // MARK: - Factories
 
 extension AppEnvironment {
-    enum LaunchError: Error {
+    enum LaunchError: LocalizedError {
         case simulatedFailure
+
+        var errorDescription: String? { "The database could not be opened." }
     }
 
     /// Opens the app's database and builds the environment. The file lives in Application Support;

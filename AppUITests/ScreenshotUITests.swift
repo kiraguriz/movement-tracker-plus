@@ -6,6 +6,7 @@ import XCTest
 ///     TEST_RUNNER_PTE_SHOTS_DIR=/tmp/shots xcodebuild test -project MovementTracker.xcodeproj -scheme MovementTracker \
 ///         -destination '...' -only-testing:MovementTrackerUITests/ScreenshotUITests
 ///
+/// `PTE_TAG` (optional, for example `duo`) is prefixed to every file name so one directory can hold several devices.
 /// The light tests expect the simulator in light mode, the dark ones in dark mode
 /// (`xcrun simctl ui <udid> appearance dark`); a test fails when the appearance does not match.
 final class ScreenshotUITests: AppUITestCase {
@@ -22,6 +23,7 @@ final class ScreenshotUITests: AppUITestCase {
     private static let chinese = Labels(language: "zh-Hans", locale: "zh_CN", tag: "zh", metric: "公制", male: "男", maintain: "保持")
 
     private var directory: String = ""
+    private var tag: String = ""
 
     override func setUpWithError() throws {
         try super.setUpWithError()
@@ -29,6 +31,7 @@ final class ScreenshotUITests: AppUITestCase {
             throw XCTSkip("PTE_SHOTS_DIR is not set")
         }
         directory = path
+        tag = ProcessInfo.processInfo.environment["PTE_TAG"].map { $0.isEmpty ? "" : $0 + "-" } ?? ""
         try FileManager.default.createDirectory(atPath: path, withIntermediateDirectories: true)
     }
 
@@ -65,6 +68,52 @@ final class ScreenshotUITests: AppUITestCase {
             openTab(index, in: app)
             shoot("\(name)-landscape-light-\(labels.tag)")
         }
+    }
+
+    /// The coach consent and the privacy screen, the two places that say what leaves the phone.
+    @MainActor
+    func testConsentAndPrivacy() {
+        let app = launchApp(seed: .sample, startTab: "me")
+        let toggle = element(ID.coachToggle, in: app)
+        scrollClearOfBottomBars(toggle, in: app)
+        flip(toggle)
+        XCTAssertTrue(app.buttons["Turn On"].firstMatch.waitForExistence(timeout: 10))
+        shoot("coach-consent")
+        dismissDialog(in: app)
+        tap(ID.privacyLink, in: app)
+        XCTAssertTrue(element(ID.screenPrivacy, in: app).waitForExistence(timeout: 10))
+        shoot("privacy-top")
+        app.swipeUp()
+        shoot("privacy-bottom")
+    }
+
+    /// The screen shown when the database cannot be opened.
+    @MainActor
+    func testLaunchFailure() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-MTInMemoryDatabase", "-MTFailDatabase"]
+        app.launch()
+        XCTAssertTrue(element(ID.launchFailed, in: app).waitForExistence(timeout: 20))
+        shoot("launch-failed")
+    }
+
+    /// The main screens at the largest text size.
+    @MainActor
+    func testLargestText() {
+        let app = launchApp(
+            seed: .sample,
+            extraArguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        )
+        XCTAssertTrue(element(ID.screens[0], in: app).waitForExistence(timeout: 10))
+        shoot("today-xxxl")
+        openTab(2, in: app)
+        shoot("eat-xxxl")
+        tap(ID.eatAdd, in: app)
+        XCTAssertTrue(element(ID.mealEditor, in: app).waitForExistence(timeout: 10))
+        shoot("meal-editor-xxxl")
+        tap("meal.cancel", in: app)
+        openTab(3, in: app)
+        shoot("me-xxxl")
     }
 
     // MARK: Flows
@@ -119,6 +168,7 @@ final class ScreenshotUITests: AppUITestCase {
             shoot("profile-edit-\(suffix)")
             tap("profileEditor.cancel", in: app)
         }
+        scrollClearOfBottomBars(element(ID.privacyLink, in: app), in: app)
         tap(ID.privacyLink, in: app)
         XCTAssertTrue(element(ID.screenPrivacy, in: app).waitForExistence(timeout: 10))
         shoot("privacy-\(suffix)")
@@ -132,7 +182,7 @@ final class ScreenshotUITests: AppUITestCase {
             return
         }
         do {
-            try data.write(to: URL(fileURLWithPath: directory).appendingPathComponent("pte-\(name).png"))
+            try data.write(to: URL(fileURLWithPath: directory).appendingPathComponent("pte-\(tag)\(name).png"))
         } catch {
             XCTFail("could not write \(name): \(error)")
         }

@@ -19,7 +19,8 @@ enum NumberInput: Equatable {
             self = .invalid
             return
         }
-        self = .value(number)
+        // `+ 0` turns negative zero ("-0") into plain zero.
+        self = .value(number + 0)
     }
 
     var value: Double? {

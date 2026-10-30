@@ -113,31 +113,71 @@ extension View {
 
 /// A label with a numeric text field and an optional unit. The text is parsed by the owner with `NumberInput`.
 struct NumberField: View {
-    let title: LocalizedStringKey
+    let title: LocalizedStringResource
     @Binding var text: String
     var unit: String?
     var allowsDecimals = true
     var isInvalid = false
     var identifier: String?
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
-        HStack(spacing: 8) {
-            Text(title)
-            TextField(title, text: $text, prompt: Text(verbatim: "–"))
-                .multilineTextAlignment(.trailing)
-                .keyboardType(allowsDecimals ? .decimalPad : .numberPad)
-                .accessibilityIdentifier(identifier ?? "")
-            if isInvalid {
-                Image(systemName: "exclamationmark.circle.fill")
-                    .foregroundStyle(.red)
-                    .accessibilityLabel("Invalid value")
-            }
-            if let unit {
-                Text(unit)
-                    .foregroundStyle(.secondary)
-                    .fixedSize()
+        // At accessibility text sizes the name goes above the field instead of breaking inside a word.
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 4) {
+                    name
+                    HStack(spacing: 8) {
+                        field
+                        trailing
+                    }
+                }
+            } else {
+                HStack(spacing: 8) {
+                    name.layoutPriority(1)
+                    field
+                    trailing
+                }
             }
         }
         .frame(minHeight: 44)
+    }
+
+    /// The field carries the name and the unit for VoiceOver, so the visible words are not read twice.
+    private var name: some View {
+        Text(title)
+            .accessibilityHidden(true)
+    }
+
+    private var field: some View {
+        TextField(text: $text, prompt: Text(verbatim: "–")) {
+            Text(title)
+        }
+        .multilineTextAlignment(.trailing)
+        .keyboardType(allowsDecimals ? .decimalPad : .numberPad)
+        .accessibilityLabel(Text(verbatim: spokenName))
+        .accessibilityIdentifier(identifier ?? "")
+    }
+
+    @ViewBuilder
+    private var trailing: some View {
+        if isInvalid {
+            Image(systemName: "exclamationmark.circle.fill")
+                .foregroundStyle(.red)
+                .accessibilityLabel("Invalid value")
+        }
+        if let unit {
+            Text(unit)
+                .foregroundStyle(.secondary)
+                .fixedSize()
+                .accessibilityHidden(true)
+        }
+    }
+
+    private var spokenName: String {
+        let name = String(localized: title)
+        guard let unit else { return name }
+        return name + " " + unit
     }
 }

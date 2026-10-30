@@ -16,6 +16,7 @@ final class EatModel {
     var errorMessage: String?
 
     private let environment: AppEnvironment
+    @ObservationIgnored private var watchedDay: LocalDay?
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -35,6 +36,9 @@ final class EatModel {
 
     var isToday: Bool { selectedDay == today }
 
+    /// The days whose entries the strip marks. It changes when the strip widens or the day rolls over.
+    var stripRange: ClosedRange<LocalDay> { stripStart...today }
+
     /// Opens a day anywhere in the past, widening the strip when it lies before it.
     func select(_ day: LocalDay) {
         let clamped = min(day, today)
@@ -52,8 +56,12 @@ final class EatModel {
 
     /// Follows the selected day's meals and totals until the surrounding task is cancelled. Restart it when the day changes.
     func watch(day: LocalDay) async {
-        meals = .loading
-        total = .loading
+        // Coming back to the tab restarts the observation for the same day: keep what is shown until fresh values arrive.
+        if watchedDay != day {
+            meals = .loading
+            total = .loading
+            watchedDay = day
+        }
         async let mealUpdates: Void = watchMeals(day)
         async let totalUpdates: Void = watchTotal(day)
         _ = await (mealUpdates, totalUpdates)
@@ -87,12 +95,8 @@ final class EatModel {
         try await environment.nutrition.log([meal], foods: [])
     }
 
-    func delete(_ meal: MealEntry) async {
-        do {
-            try await environment.nutrition.deleteMeal(id: meal.id)
-        } catch {
-            errorMessage = error.localizedDescription
-        }
+    func delete(_ meal: MealEntry) async throws {
+        try await environment.nutrition.deleteMeal(id: meal.id)
     }
 
     func suggestedSlot() -> MealSlot {

@@ -56,23 +56,49 @@ final class MealDraft {
 
     var trimmedName: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
 
-    var inputs: [NumberInput] {
-        [gramsText, kcalText, proteinText, carbsText, fatText].map { NumberInput($0) }
+    /// The numeric fields, each with the largest value it accepts. Bigger numbers are typing mistakes.
+    enum Field: CaseIterable {
+        case grams, kcal, protein, carbs, fat
+
+        var limit: Double {
+            switch self {
+            case .grams: 5_000
+            case .kcal: 10_000
+            case .protein, .carbs, .fat: 1_000
+            }
+        }
+    }
+
+    func text(_ field: Field) -> String {
+        switch field {
+        case .grams: gramsText
+        case .kcal: kcalText
+        case .protein: proteinText
+        case .carbs: carbsText
+        case .fat: fatText
+        }
+    }
+
+    /// The parsed value of a field; a number beyond the field's limit reads as invalid.
+    func input(_ field: Field) -> NumberInput {
+        let input = NumberInput(text(field))
+        if let value = input.value, value > field.limit { return .invalid }
+        return input
     }
 
     var isValid: Bool {
-        !trimmedName.isEmpty && !inputs.contains { $0.isInvalid }
+        !trimmedName.isEmpty && !Field.allCases.contains { input($0).isInvalid }
     }
 
     /// The entry this form describes, or nil while it is not valid.
     func makeEntry(day: LocalDay, environment: AppEnvironment) -> MealEntry? {
         guard isValid else { return nil }
-        let grams = NumberInput(gramsText).value ?? 0
+        let grams = input(.grams).value ?? 0
         let nutrients = Nutrients(
-            energy: NumberInput(kcalText).value.map { Energy(kilocalories: $0) },
-            protein: NumberInput(proteinText).value.map { Mass(grams: $0) },
-            carbohydrate: NumberInput(carbsText).value.map { Mass(grams: $0) },
-            fat: NumberInput(fatText).value.map { Mass(grams: $0) }
+            energy: input(.kcal).value.map { Energy(kilocalories: $0) },
+            protein: input(.protein).value.map { Mass(grams: $0) },
+            carbohydrate: input(.carbs).value.map { Mass(grams: $0) },
+            fat: input(.fat).value.map { Mass(grams: $0) }
         )
         if var meal = original {
             meal.label = trimmedName

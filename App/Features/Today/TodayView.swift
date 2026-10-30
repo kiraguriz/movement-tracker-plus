@@ -38,14 +38,15 @@ struct TodayView: View {
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Today")
-        .navigationSubtitle(Text(Date.now, format: .dateTime.weekday(.wide).month(.wide).day()))
+        .navigationSubtitle(Text(model.dayDate, format: .dateTime.weekday(.wide).month(.wide).day()))
         .task(id: model.day) { await model.run() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { model.refreshDay() }
         }
+        .onDayChange { model.refreshDay() }
         .sheet(isPresented: $isLoggingWeight) {
             WeightEntrySheet(units: session.units, initial: model.weights.value?.last?.weight) { weight in
-                await model.logWeight(weight)
+                try await model.logWeight(weight)
             }
         }
         .errorAlert($model.errorMessage)

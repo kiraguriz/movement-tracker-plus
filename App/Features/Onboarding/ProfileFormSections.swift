@@ -40,6 +40,16 @@ extension GoalKind {
     }
 }
 
+extension ActivityLevel {
+    var title: LocalizedStringResource {
+        switch self {
+        case .beginner: "Beginner"
+        case .intermediate: "Intermediate"
+        case .advanced: "Advanced"
+        }
+    }
+}
+
 extension UnitSystem {
     var title: LocalizedStringResource {
         switch self {
@@ -59,7 +69,7 @@ struct AboutYouSections: View {
     var body: some View {
         if showsUnits {
             Section {
-                Picker("Units", selection: $draft.unitSystem) {
+                Picker("Units", selection: Binding(get: { draft.unitSystem }, set: { draft.select(units: $0) })) {
                     ForEach(UnitSystem.allCases, id: \.self) { system in
                         Text(system.title).tag(system)
                     }
@@ -175,6 +185,13 @@ struct GoalSections: View {
             }
             .frame(minHeight: 44)
             .accessibilityIdentifier(AccessibilityID.workoutsPerWeek)
+            Picker("Training level", selection: $draft.activityLevel) {
+                ForEach(ActivityLevel.allCases, id: \.self) { level in
+                    Text(level.title).tag(level)
+                }
+            }
+            .frame(minHeight: 44)
+            .accessibilityIdentifier(AccessibilityID.trainingLevel)
         }
         Section {
             Picker("Goal", selection: Binding(get: { draft.goalKind }, set: { draft.select(goal: $0) })) {

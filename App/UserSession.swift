@@ -7,6 +7,8 @@ final class UserSession {
     private(set) var profile: Profile?
     private(set) var goal: Goal?
     private(set) var hasLoadedProfile = false
+    /// The first read of the profile failed, so the app cannot tell onboarding from the tabs.
+    private(set) var hasFailedToLoad = false
     var failure: String?
 
     private let environment: AppEnvironment
@@ -20,6 +22,7 @@ final class UserSession {
 
     /// Follows the profile and the active goal until the surrounding task is cancelled.
     func run() async {
+        hasFailedToLoad = false
         async let profileUpdates: Void = watchProfile()
         async let goalUpdates: Void = watchGoal()
         _ = await (profileUpdates, goalUpdates)
@@ -27,7 +30,10 @@ final class UserSession {
 
     private func watchProfile() async {
         await environment.profiles.observeProfile().forEachValue(
-            onFailure: { failure = $0.localizedDescription },
+            onFailure: {
+                failure = $0.localizedDescription
+                if !hasLoadedProfile { hasFailedToLoad = true }
+            },
             { value in
                 profile = value
                 hasLoadedProfile = true
@@ -47,6 +53,7 @@ final class UserSession {
 struct AppGate: View {
     let environment: AppEnvironment
     @State private var session: UserSession
+    @State private var attempt = 0
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -56,7 +63,17 @@ struct AppGate: View {
     var body: some View {
         Group {
             if !session.hasLoadedProfile {
-                Color(.systemBackground)
+                if session.hasFailedToLoad {
+                    ContentUnavailableView {
+                        Label("Can't open your data", systemImage: "externaldrive.badge.exclamationmark")
+                    } actions: {
+                        Button("Try Again") { attempt += 1 }
+                            .buttonStyle(.borderedProminent)
+                            .accessibilityIdentifier(AccessibilityID.launchRetry)
+                    }
+                } else {
+                    Color(.systemBackground)
+                }
             } else if session.profile == nil {
                 OnboardingView(environment: environment)
                     .transition(.opacity)
@@ -69,6 +86,6 @@ struct AppGate: View {
         .environment(\.appEnvironment, environment)
         .environment(session)
         .errorAlert($session.failure)
-        .task { await session.run() }
+        .task(id: attempt) { await session.run() }
     }
 }

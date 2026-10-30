@@ -46,10 +46,11 @@ struct EatView: View {
                 }
             }
             .task(id: model.selectedDay) { await model.watch(day: model.selectedDay) }
-            .task(id: model.stripStart) { await model.watchLoggedDays(from: model.stripStart, through: model.today) }
+            .task(id: model.stripRange) { await model.watchLoggedDays(from: model.stripRange.lowerBound, through: model.stripRange.upperBound) }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { model.refreshToday() }
             }
+            .onDayChange { model.refreshToday() }
             .sheet(item: $addRoute) { route in
                 EatAddDestination(route: route, context: addContext) { addRoute = nil }
             }
@@ -58,7 +59,7 @@ struct EatView: View {
                     draft: MealDraft(editing: meal),
                     day: meal.localDay,
                     environment: environment,
-                    onDelete: { await model.delete(meal) },
+                    onDelete: { try await model.delete(meal) },
                     onSave: { try await model.save($0) }
                 )
             }
@@ -162,7 +163,9 @@ struct EatView: View {
                                 .accessibilityIdentifier(AccessibilityID.mealRow(meal.label))
                                 .swipeActions(edge: .trailing) {
                                     Button(role: .destructive) {
-                                        Task { await model.delete(meal) }
+                                        Task {
+                                            do { try await model.delete(meal) } catch { model.errorMessage = error.localizedDescription }
+                                        }
                                     } label: {
                                         Label("Delete", systemImage: "trash")
                                     }
@@ -240,6 +243,22 @@ private struct MealRow: View {
                 .monospacedDigit()
         }
         .frame(minHeight: 44)
+        // The macro numbers are told apart by color on screen; VoiceOver gets them by name.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(meal.label))
+        .accessibilityValue(Text(spokenSummary))
+    }
+
+    private var spokenSummary: String {
+        var parts: [String] = []
+        if meal.grams.grams > 0 { parts.append(UnitFormatter.grams(meal.grams.grams)) }
+        if let energy = meal.nutrients.energy { parts.append(UnitFormatter.energy(energy.kilocalories)) }
+        for macro in Macro.allCases {
+            if let grams = macro.grams(in: meal.nutrients) {
+                parts.append(String(localized: macro.title) + " " + UnitFormatter.grams(grams))
+            }
+        }
+        return parts.formatted(.list(type: .and, width: .narrow))
     }
 }
 

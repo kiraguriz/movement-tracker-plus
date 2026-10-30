@@ -105,6 +105,86 @@ final class ProfileFlowUITests: AppUITestCase {
         attachScreenshot("privacy")
     }
 
+    /// Going back to change the units must convert what was typed: 80 kg is 176.4 lb, not "80 lb".
+    @MainActor
+    func testChangingUnitsConvertsTheBodyValues() {
+        let app = launchApp(seed: .none)
+        completeAbout(in: app, birthYear: Self.currentYear - 30, sex: "Male")
+        XCTAssertTrue(app.navigationBars["Body"].waitForExistence(timeout: 10))
+        enter("180", into: app.textFields[ID.height])
+        enter("80", into: app.textFields[ID.weight])
+
+        app.navigationBars.buttons["About you"].tap()
+        XCTAssertTrue(app.segmentedControls[ID.unitsPicker].waitForExistence(timeout: 10))
+        app.segmentedControls[ID.unitsPicker].buttons["Imperial"].tap()
+        tapContinue(in: app)
+
+        XCTAssertTrue(app.navigationBars["Body"].waitForExistence(timeout: 10))
+        XCTAssertEqual(text(of: app.textFields[ID.weight]), "176.4", "80 kg in pounds")
+        XCTAssertEqual(text(of: app.textFields[ID.height]), "5", "180 cm is 5 ft 11 in")
+        XCTAssertEqual(text(of: app.textFields[ID.heightInches]), "11")
+        XCTAssertTrue(app.buttons[ID.onboardingNext].isEnabled, "the converted values are valid")
+    }
+
+    /// The training level is asked for, saved with the profile and shown again when editing.
+    @MainActor
+    func testTrainingLevelIsEditableAndSaved() {
+        let app = launchApp(seed: .profile, startTab: "me")
+        tap(ID.editProfile, in: app)
+        XCTAssertTrue(element(ID.profileEditor, in: app).waitForExistence(timeout: 10))
+        let level = element(ID.trainingLevel, in: app)
+        XCTAssertTrue(level.waitForExistence(timeout: 10), "no training level picker")
+        XCTAssertEqual(level.label, "Training level, Intermediate", "the seeded level")
+
+        choose("Advanced", fromPicker: ID.trainingLevel, in: app)
+        tap(ID.profileSave, in: app)
+        XCTAssertTrue(element(ID.profileEditor, in: app).waitForNonExistence(timeout: 10), "editor did not close")
+
+        tap(ID.editProfile, in: app)
+        XCTAssertTrue(element(ID.profileEditor, in: app).waitForExistence(timeout: 10))
+        XCTAssertEqual(element(ID.trainingLevel, in: app).label, "Training level, Advanced", "the level was not saved")
+    }
+
+    /// Turning the coach on sends data to Muse, so it asks first; turning it off does not.
+    @MainActor
+    func testCoachSwitchAsksBeforeSendingData() {
+        let app = launchApp(seed: .profile, startTab: "me")
+        let toggle = element(ID.coachToggle, in: app)
+        scrollClearOfBottomBars(toggle, in: app)
+        XCTAssertEqual(toggle.value as? String, "0", "the coach starts off")
+
+        flip(toggle)
+        let turnOn = app.buttons["Turn On"].firstMatch // the popover lists the button twice
+        XCTAssertTrue(turnOn.waitForExistence(timeout: 10), "no confirmation before turning the coach on")
+        dismissDialog(in: app)
+        XCTAssertTrue(turnOn.waitForNonExistence(timeout: 10))
+        XCTAssertEqual(toggle.value as? String, "0", "cancelling must leave the coach off")
+
+        flip(toggle)
+        XCTAssertTrue(turnOn.waitForExistence(timeout: 10))
+        turnOn.tap()
+        XCTAssertTrue(waitUntil { toggle.value as? String == "1" }, "the coach did not turn on")
+
+        flip(toggle)
+        XCTAssertTrue(waitUntil { toggle.value as? String == "0" }, "the coach did not turn off")
+        XCTAssertFalse(app.buttons["Turn On"].exists, "turning the coach off must not ask")
+    }
+
+    /// What leaves the phone: the lists name who receives it, the data kinds, and what never leaves.
+    @MainActor
+    func testPrivacyScreenStatesWhatLeavesThePhone() {
+        let app = launchApp(seed: .profile, startTab: "me")
+        tap(ID.privacyLink, in: app)
+        XCTAssertTrue(element(ID.screenPrivacy, in: app).waitForExistence(timeout: 10))
+        for expected in ["Sent to Muse", "Your messages", "Workouts", "Meals", "Body and goal", "Skeleton drawings", "Meal photos",
+                         "Never leaves your phone", "Your name", "Camera video"] {
+            let match = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", expected)).firstMatch
+            XCTAssertTrue(match.waitForExistence(timeout: 5), "the privacy screen does not say '\(expected)'")
+        }
+        let consent = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "Muse is Meta's AI model")).firstMatch
+        XCTAssertTrue(consent.waitForExistence(timeout: 5), "the privacy screen does not say who receives the data")
+    }
+
     @MainActor
     func testDatabaseFailureOffersRetry() {
         let app = XCUIApplication()

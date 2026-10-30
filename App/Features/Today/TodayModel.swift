@@ -20,6 +20,9 @@ final class TodayModel {
         day = environment.today
     }
 
+    /// A date inside `day`, for formatting its name.
+    var dayDate: Date { day.date(in: environment.timeZone()) }
+
     /// Moves to the new day after midnight or a time-zone change; the views restart their observations.
     func refreshDay() {
         let today = environment.today
@@ -57,17 +60,12 @@ final class TodayModel {
         )
     }
 
-    func logWeight(_ weight: Mass) async -> Bool {
+    /// Saves a weight taken now. The sheet that asks for it shows the error, so it is not swallowed here.
+    func logWeight(_ weight: Mass) async throws {
         let measurement = BodyMeasurement(
             id: environment.newID(), kind: .weight, value: weight.kilograms,
             measuredAt: environment.now(), timeZone: environment.timeZone(), source: .app
         )
-        do {
-            try await environment.bodyMeasurements.save(measurement)
-            return true
-        } catch {
-            errorMessage = error.localizedDescription
-            return false
-        }
+        try await environment.bodyMeasurements.save(measurement)
     }
 }

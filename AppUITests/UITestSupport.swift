@@ -20,6 +20,8 @@ class AppUITestCase: XCTestCase {
         static let height = "profile.height"
         static let weight = "profile.weight"
         static let workoutsPerWeek = "profile.workouts"
+        static let trainingLevel = "profile.level"
+        static let heightInches = "profile.heightInches"
         static let goalPicker = "profile.goal"
         static let planKcal = "plan.kcal"
 
@@ -45,6 +47,7 @@ class AppUITestCase: XCTestCase {
         static let meKcal = "me.kcal"
         static let unitsSetting = "me.units"
         static let privacyLink = "me.privacy"
+        static let coachToggle = "me.coach"
         static let screenPrivacy = "screen.privacy"
         static let profileEditor = "profileEditor"
         static let profileSave = "profileEditor.save"
@@ -99,11 +102,28 @@ class AppUITestCase: XCTestCase {
 
     // MARK: Lookups
 
-    /// Tab bar items are found by position: identifiers set on `Tab` don't reliably reach the tab bar button.
+    /// Tab bar items are found by position: identifiers set on `Tab` don't reliably reach the tab bar button. On the
+    /// iPhone Duo the tabs form a side rail whose buttons are not children of the tab bar: they are the toolbar
+    /// buttons at the bottom of the bar's frame, found by where they sit and then by their label, because the
+    /// toolbar's other buttons change with the selected tab.
     @MainActor
     func tabButton(_ index: Int, in app: XCUIApplication) -> XCUIElement {
-        let tab = app.tabBars.firstMatch.buttons.element(boundBy: index)
-        XCTAssertTrue(tab.waitForExistence(timeout: 10), "tab \(ID.tabs[index]) not found")
+        let bar = app.tabBars.firstMatch
+        XCTAssertTrue(bar.waitForExistence(timeout: 10), "no tab bar")
+        var tab = bar.buttons.element(boundBy: index)
+        if !tab.waitForExistence(timeout: 2) {
+            let toolbar = app.toolbars.firstMatch.buttons
+            let barFrame = bar.frame
+            let rail = (0..<toolbar.count).map { toolbar.element(boundBy: $0) }
+                .filter { barFrame.contains(CGPoint(x: $0.frame.midX, y: $0.frame.midY)) }
+                .sorted { $0.frame.minY < $1.frame.minY }
+                .suffix(ID.tabs.count)
+            if index < rail.count {
+                let label = rail[rail.startIndex + index].label
+                tab = app.toolbars.buttons.matching(NSPredicate(format: "label == %@", label)).firstMatch
+            }
+        }
+        XCTAssertTrue(tab.exists, "tab \(ID.tabs[index]) not found")
         return tab
     }
 
@@ -131,14 +151,24 @@ class AppUITestCase: XCTestCase {
         XCTAssertTrue(element(ID.screens[index], in: app).waitForExistence(timeout: 10), ID.screens[index])
     }
 
-    /// Replaces the text of a field.
+    /// Replaces the text of a field. It waits for the field to own the keyboard before typing, and taps again when
+    /// the first tap did not take (the keyboard animates in, and on a busy machine the tap can be dropped).
     @MainActor
     func enter(_ text: String, into field: XCUIElement) {
         XCTAssertTrue(field.waitForExistence(timeout: 10), "field \(field) not found")
-        // Fields are right-aligned: tap their right edge so the cursor lands after the existing text.
-        field.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap()
+        for _ in 0..<3 where !hasKeyboardFocus(field) {
+            // Fields are right-aligned: tap their right edge so the cursor lands after the existing text.
+            field.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap()
+            _ = waitUntil(timeout: 4) { self.hasKeyboardFocus(field) }
+        }
+        XCTAssertTrue(hasKeyboardFocus(field), "field \(field) did not get keyboard focus")
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
         field.typeText(text)
+    }
+
+    @MainActor
+    private func hasKeyboardFocus(_ element: XCUIElement) -> Bool {
+        (element.value(forKey: "hasKeyboardFocus") as? Bool) ?? false
     }
 
     @MainActor
@@ -154,6 +184,51 @@ class AppUITestCase: XCTestCase {
         let target = element(id, in: app)
         XCTAssertTrue(target.waitForExistence(timeout: 10), "\(id) not found")
         return (target.value as? String) ?? ""
+    }
+
+    /// The text a text field currently shows.
+    @MainActor
+    func text(of field: XCUIElement) -> String {
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "field \(field) not found")
+        return (field.value as? String) ?? ""
+    }
+
+    /// Scrolls until the element exists (lists build their rows lazily) and is clear of the tab bar and the coach
+    /// button above it, which cover the bottom of a list.
+    @MainActor
+    func scrollClearOfBottomBars(_ element: XCUIElement, in app: XCUIApplication) {
+        for _ in 0..<4 where !element.exists {
+            app.swipeUp()
+            _ = element.waitForExistence(timeout: 2)
+        }
+        XCTAssertTrue(element.exists, "\(element) not found")
+        let coach = app.buttons[ID.askCoach]
+        let limit = coach.exists ? coach.frame.minY : app.windows.firstMatch.frame.height * 0.84
+        for _ in 0..<4 where element.frame.maxY > limit {
+            app.swipeUp()
+            _ = waitUntil(timeout: 3) { element.frame.maxY <= limit }
+        }
+        XCTAssertLessThanOrEqual(element.frame.maxY, limit, "\(element) is still under the bottom bars")
+    }
+
+    /// Flips a switch by tapping the switch itself: the row's centre is only its label.
+    @MainActor
+    func flip(_ toggle: XCUIElement) {
+        toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+    }
+
+    /// Dismisses a confirmation dialog without choosing. On iPhone it is a popover with no Cancel button: a tap
+    /// outside it cancels, and on a sheet the Cancel button does.
+    @MainActor
+    func dismissDialog(in app: XCUIApplication) {
+        let cancel = app.buttons["Cancel"]
+        if cancel.exists {
+            cancel.tap()
+        } else {
+            let outside = app.otherElements["PopoverDismissRegion"]
+            XCTAssertTrue(outside.waitForExistence(timeout: 10), "the dialog cannot be dismissed")
+            outside.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap()
+        }
     }
 
     /// Picks an option of a menu-style picker.

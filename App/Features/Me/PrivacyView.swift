@@ -1,17 +1,25 @@
 import SwiftUI
 
-/// Exactly what may leave the phone when the coach is on, and what never does.
+/// Exactly what leaves the phone when the coach is on, and what never does.
+/// Keep it in step with what CoachKit sends: the chat tools, the insight inputs and the meal photo.
 struct PrivacyView: View {
     var body: some View {
         List {
-            Section("May leave your phone") {
-                row("Workout and nutrition numbers", detail: "Reps, depth, tempo, fatigue, daily totals, weight trend", systemImage: "chart.xyaxis.line")
+            Section {
+                row("Your messages", detail: "What you type in the coach chat", systemImage: "bubble.left")
+                row("Workouts", detail: "Exercises, sets, reps, load, depth, tempo, fatigue, form scores", systemImage: "figure.strengthtraining.traditional")
+                row("Meals", detail: "Food names, calories, protein, carbs, fat", systemImage: "fork.knife")
+                row("Body and goal", detail: "Weight and body fat history, calorie targets, age, height, training level", systemImage: "scalemass")
                 row("Skeleton drawings", detail: "Stick figures of your best and worst reps", systemImage: "figure.stand")
                 row("Meal photos", detail: "Only when you log a meal with a photo", systemImage: "camera")
+            } header: {
+                Text("Sent to Muse")
+            } footer: {
+                Text("Muse is Meta's AI model. Requests go through this app's server. With Coach off, none of this is sent.")
             }
             Section("Never leaves your phone") {
                 row("Your name", systemImage: "person.crop.circle")
-                row("Video", systemImage: "video")
+                row("Camera video", systemImage: "video")
             }
         }
         .navigationTitle("What Muse sees")
@@ -32,6 +40,7 @@ struct PrivacyView: View {
         } icon: {
             Image(systemName: systemImage)
         }
+        .accessibilityElement(children: .combine)
         .frame(minHeight: 44)
     }
 }

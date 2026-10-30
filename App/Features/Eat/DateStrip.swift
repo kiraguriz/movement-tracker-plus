@@ -25,6 +25,8 @@ struct DateStrip: View {
                 withAnimation(.smooth) { proxy.scrollTo(selection, anchor: .center) }
             }
         }
+        // A navigation control, like the tab bar: it stops growing before the numbers outgrow their chips.
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .accessibilityIdentifier(AccessibilityID.dateStrip)
     }
 
@@ -56,6 +58,7 @@ struct DateStrip: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Text(date, format: .dateTime.weekday(.wide).month(.wide).day()))
+        .accessibilityValue(loggedDays.contains(day) ? Text("Meals logged") : Text(verbatim: ""))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier(AccessibilityID.day(day))
     }

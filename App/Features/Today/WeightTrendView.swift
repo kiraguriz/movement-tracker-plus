@@ -48,14 +48,21 @@ struct WeightTrendView: View {
                 .font(.title.bold())
                 .monospacedDigit()
                 .accessibilityIdentifier(AccessibilityID.latestWeight)
-            if let first = measurements.first, first.id != latest.id {
-                let change = Mass(kilograms: latest.value - first.value)
-                Text(verbatim: (change.kilograms >= 0 ? "+" : "−") + units.bodyMass(Mass(kilograms: abs(change.kilograms))))
+            if let first = measurements.first, first.id != latest.id, let change = changeText(from: first, to: latest) {
+                Text(verbatim: change)
                     .font(.subheadline)
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    /// The signed change between two entries, or nil when it rounds to nothing (so there is no "−0 kg").
+    private func changeText(from first: BodyMeasurement, to latest: BodyMeasurement) -> String? {
+        let difference = Mass(kilograms: latest.value - first.value)
+        let shown = (units.massValue(difference) * 10).rounded() / 10
+        guard shown != 0 else { return nil }
+        return (shown > 0 ? "+" : "−") + units.bodyMass(Mass(kilograms: abs(difference.kilograms)))
     }
 
     private var chart: some View {
@@ -90,13 +97,14 @@ struct WeightTrendView: View {
 struct WeightEntrySheet: View {
     let units: UnitFormatter
     let initial: Mass?
-    let onSave: (Mass) async -> Bool
+    let onSave: (Mass) async throws -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var text: String
     @State private var isSaving = false
+    @State private var errorMessage: String?
 
-    init(units: UnitFormatter, initial: Mass?, onSave: @escaping (Mass) async -> Bool) {
+    init(units: UnitFormatter, initial: Mass?, onSave: @escaping (Mass) async throws -> Void) {
         self.units = units
         self.initial = initial
         self.onSave = onSave
@@ -131,7 +139,12 @@ struct WeightEntrySheet: View {
                         guard let weight else { return }
                         isSaving = true
                         Task {
-                            if await onSave(weight) { dismiss() }
+                            do {
+                                try await onSave(weight)
+                                dismiss()
+                            } catch {
+                                errorMessage = error.localizedDescription
+                            }
                             isSaving = false
                         }
                     }
@@ -139,6 +152,7 @@ struct WeightEntrySheet: View {
                     .accessibilityIdentifier(AccessibilityID.weightEntrySave)
                 }
             }
+            .errorAlert($errorMessage)
         }
         .presentationDetents([.medium])
     }

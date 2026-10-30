@@ -63,6 +63,8 @@ struct NutritionSummaryView: View {
                 }
             }
             .padding(.horizontal, 12)
+            // The ring grows with the text size, but its own numbers stop before they reach the stroke.
+            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         }
         .frame(width: ringSize, height: ringSize)
         .accessibilityElement(children: .ignore)
@@ -89,20 +91,38 @@ struct NutritionSummaryView: View {
         let marker = (total.map { macro.entriesMissing(in: $0) } ?? 0) > 0 && eaten != nil
         let eatenText = (hasEntries && eaten == nil) ? "–" : UnitFormatter.number(amount)
         return VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(macro.title)
-                    .font(.subheadline.weight(.medium))
-                Spacer(minLength: 8)
-                Text(verbatim: (marker ? "≥ " : "") + eatenText + (target.map { " / " + UnitFormatter.grams($0) } ?? ""))
-                    .font(.subheadline)
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
+            let amountText = (marker ? "≥ " : "") + eatenText + (target.map { " / " + UnitFormatter.grams($0) } ?? "")
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .firstTextBaseline) {
+                    macroTitle(macro)
+                    Spacer(minLength: 8)
+                    macroAmount(amountText)
+                }
+                // At large text sizes the amount moves under the name instead of wrapping in the middle.
+                VStack(alignment: .leading, spacing: 2) {
+                    macroTitle(macro)
+                    macroAmount(amountText)
+                }
             }
             ProgressView(value: target.map { min(amount, $0) } ?? 0, total: max(target ?? 1, 1))
                 .tint(macro.color)
         }
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("\(idPrefix).macro.\(macro.idString)")
+    }
+}
+
+private extension NutritionSummaryView {
+    func macroTitle(_ macro: Macro) -> some View {
+        Text(macro.title)
+            .font(.subheadline.weight(.medium))
+    }
+
+    func macroAmount(_ text: String) -> some View {
+        Text(verbatim: text)
+            .font(.subheadline)
+            .monospacedDigit()
+            .foregroundStyle(.secondary)
     }
 }
 

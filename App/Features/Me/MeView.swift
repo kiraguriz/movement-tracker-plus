@@ -5,6 +5,7 @@ struct MeView: View {
     @Environment(UserSession.self) private var session
     @State private var model: MeModel
     @State private var isEditing = false
+    @State private var isConfirmingCoach = false
 
     private let environment: AppEnvironment
 
@@ -35,7 +36,13 @@ struct MeView: View {
                 Toggle("Voice cues", isOn: Binding(get: { model.voiceCues }, set: model.setVoiceCues))
                     .frame(minHeight: 44)
                     .accessibilityIdentifier(AccessibilityID.voiceCuesToggle)
-                Toggle("Coach", isOn: Binding(get: { model.coachEnabled }, set: model.setCoachEnabled))
+                Toggle("Coach", isOn: Binding(
+                    get: { model.coachEnabled },
+                    set: { isOn in
+                        // Turning the coach on is the consent to send data to Muse: it asks first.
+                        if isOn { isConfirmingCoach = true } else { model.setCoachEnabled(false) }
+                    }
+                ))
                     .frame(minHeight: 44)
                     .accessibilityIdentifier(AccessibilityID.coachToggle)
                 NavigationLink {
@@ -66,6 +73,13 @@ struct MeView: View {
                     latestWeight: model.latestWeight.flatMap(\.weight)
                 )
             }
+        }
+        .confirmationDialog("Turn on Coach?", isPresented: $isConfirmingCoach, titleVisibility: .visible) {
+            Button("Turn On") { model.setCoachEnabled(true) }
+                .accessibilityIdentifier(AccessibilityID.coachConfirm)
+            Button(role: .cancel) {}
+        } message: {
+            Text("Coach sends your messages, workouts, meals and body data to Meta's Muse model. See What Muse sees for the full list.")
         }
         .errorAlert($model.errorMessage)
         .testIdentifier(AccessibilityID.screenMe)

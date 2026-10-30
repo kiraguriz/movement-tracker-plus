@@ -11,13 +11,13 @@ struct MealEditorSheet: View {
     private let day: LocalDay
     private let environment: AppEnvironment
     private let onSave: (MealEntry) async throws -> Void
-    private let onDelete: (() async -> Void)?
+    private let onDelete: (() async throws -> Void)?
 
     init(
         draft: MealDraft,
         day: LocalDay,
         environment: AppEnvironment,
-        onDelete: (() async -> Void)? = nil,
+        onDelete: (() async throws -> Void)? = nil,
         onSave: @escaping (MealEntry) async throws -> Void
     ) {
         _draft = State(initialValue: draft)
@@ -45,7 +45,7 @@ struct MealEditorSheet: View {
                         title: "Amount",
                         text: $draft.gramsText,
                         unit: UnitFormatter.symbol(UnitMass.grams),
-                        isInvalid: NumberInput(draft.gramsText).isInvalid,
+                        isInvalid: draft.input(.grams).isInvalid,
                         identifier: AccessibilityID.mealGrams
                     )
                 }
@@ -54,19 +54,23 @@ struct MealEditorSheet: View {
                         title: "Calories",
                         text: $draft.kcalText,
                         unit: UnitFormatter.symbol(UnitEnergy.kilocalories),
-                        isInvalid: NumberInput(draft.kcalText).isInvalid,
+                        isInvalid: draft.input(.kcal).isInvalid,
                         identifier: AccessibilityID.mealKcal
                     )
-                    macroField(.protein, text: $draft.proteinText, identifier: AccessibilityID.mealProtein)
-                    macroField(.carbs, text: $draft.carbsText, identifier: AccessibilityID.mealCarbs)
-                    macroField(.fat, text: $draft.fatText, identifier: AccessibilityID.mealFat)
+                    macroField(.protein, field: .protein, text: $draft.proteinText, identifier: AccessibilityID.mealProtein)
+                    macroField(.carbs, field: .carbs, text: $draft.carbsText, identifier: AccessibilityID.mealCarbs)
+                    macroField(.fat, field: .fat, text: $draft.fatText, identifier: AccessibilityID.mealFat)
                 }
                 if let onDelete {
                     Section {
                         Button("Delete", role: .destructive) {
                             Task {
-                                await onDelete()
-                                dismiss()
+                                do {
+                                    try await onDelete()
+                                    dismiss()
+                                } catch {
+                                    errorMessage = error.localizedDescription
+                                }
                             }
                         }
                         .frame(maxWidth: .infinity, minHeight: 44)
@@ -94,12 +98,12 @@ struct MealEditorSheet: View {
         .testIdentifier(AccessibilityID.mealEditor)
     }
 
-    private func macroField(_ macro: Macro, text: Binding<String>, identifier: String) -> some View {
+    private func macroField(_ macro: Macro, field: MealDraft.Field, text: Binding<String>, identifier: String) -> some View {
         NumberField(
-            title: LocalizedStringKey(macro.titleKey),
+            title: macro.title,
             text: text,
             unit: UnitFormatter.symbol(UnitMass.grams),
-            isInvalid: NumberInput(text.wrappedValue).isInvalid,
+            isInvalid: draft.input(field).isInvalid,
             identifier: identifier
         )
     }
@@ -113,17 +117,6 @@ struct MealEditorSheet: View {
             dismiss()
         } catch {
             errorMessage = error.localizedDescription
-        }
-    }
-}
-
-private extension Macro {
-    /// The localization key of `title`, for views that take a `LocalizedStringKey`.
-    var titleKey: String {
-        switch self {
-        case .protein: "Protein"
-        case .carbs: "Carbs"
-        case .fat: "Fat"
         }
     }
 }

@@ -9,7 +9,7 @@ final class LocalizationUITests: AppUITestCase {
         XCTAssertTrue(app.segmentedControls[ID.unitsPicker].buttons["公制"].exists)
         XCTAssertTrue(app.segmentedControls[ID.unitsPicker].buttons["英制"].exists)
         XCTAssertEqual(app.buttons[ID.onboardingNext].label, "继续")
-        XCTAssertTrue(app.staticTexts["出生年份"].exists)
+        XCTAssertEqual(app.textFields[ID.birthYear].label, "出生年份")
         attachScreenshot("zh-onboarding")
     }
 
@@ -27,8 +27,9 @@ final class LocalizationUITests: AppUITestCase {
         XCTAssertTrue(app.staticTexts["早餐"].waitForExistence(timeout: 10), "meal slot")
         XCTAssertTrue(element(ID.mealRow("燕麦粥配浆果"), in: app).exists, "sample meal name")
         tap(ID.eatAdd, in: app)
-        XCTAssertTrue(app.staticTexts["热量"].waitForExistence(timeout: 10), "calories field")
-        XCTAssertTrue(app.staticTexts["蛋白质"].exists)
+        XCTAssertTrue(app.textFields[ID.mealKcal].waitForExistence(timeout: 10), "calories field")
+        XCTAssertTrue(app.textFields[ID.mealKcal].label.hasPrefix("热量"), "calories field label: \(app.textFields[ID.mealKcal].label)")
+        XCTAssertTrue(app.textFields[ID.mealProtein].label.hasPrefix("蛋白质"))
         attachScreenshot("zh-meal-editor")
         tap("meal.cancel", in: app)
 

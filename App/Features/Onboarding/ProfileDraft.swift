@@ -8,7 +8,7 @@ final class ProfileDraft {
     static let rateSteps = [0.25, 0.5, 0.75, 1.0]
     static let workoutRange = 0...7
 
-    var unitSystem: UnitSystem
+    private(set) var unitSystem: UnitSystem
     var birthYearText = ""
     var sex: Sex?
     /// Only asked when `sex` is `.preferNotToSay`.
@@ -20,6 +20,7 @@ final class ProfileDraft {
     /// Kilograms or pounds, as `unitSystem` says.
     var weightText = ""
     var workoutsPerWeek = 3
+    var activityLevel = ActivityLevel.beginner
     private(set) var goalKind = GoalKind.maintain
     var ratePercent = ProfileDraft.defaultRate(for: .lose)
 
@@ -38,6 +39,7 @@ final class ProfileDraft {
         birthYearText = profile.birthYear.map(String.init) ?? ""
         sex = profile.sex
         equation = profile.bmrEquation
+        activityLevel = profile.activityLevel
         if let height = profile.height {
             switch profile.unitSystem {
             case .metric:
@@ -75,6 +77,33 @@ final class ProfileDraft {
     func select(goal kind: GoalKind) {
         goalKind = kind
         if kind != .maintain { ratePercent = Self.defaultRate(for: kind) }
+    }
+
+    /// Switches the unit system and converts what is already typed, so 80 kg does not turn into 80 lb.
+    /// A field that holds something unreadable is cleared.
+    func select(units system: UnitSystem) {
+        guard system != unitSystem else { return }
+        let height = self.height
+        let weight = self.weight
+        let hadHeight = !heightText.isEmpty || !heightInchesText.isEmpty
+        let hadWeight = !weightText.isEmpty
+        unitSystem = system
+        heightText = ""
+        heightInchesText = ""
+        weightText = ""
+        if hadHeight, let height {
+            switch system {
+            case .metric:
+                heightText = NumberInput.text(height.centimeters)
+            case .imperial:
+                let parts = height.feetAndInches
+                heightText = String(parts.feet)
+                heightInchesText = String(parts.inches)
+            }
+        }
+        if hadWeight, let weight {
+            weightText = NumberInput.text(weight.value(in: system))
+        }
     }
 
     // MARK: About you
@@ -215,7 +244,7 @@ final class ProfileDraft {
             bmrEquation: sex == .preferNotToSay ? equation : nil,
             height: height,
             unitSystem: unitSystem,
-            activityLevel: existing?.activityLevel ?? .beginner,
+            activityLevel: activityLevel,
             createdAt: existing?.createdAt ?? now,
             updatedAt: now
         )

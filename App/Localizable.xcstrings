@@ -177,6 +177,22 @@
         }
       }
     },
+    "Advanced" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Advanced"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "高级"
+          }
+        }
+      }
+    },
     "Age" : {
       "localizations" : {
         "en" : {
@@ -241,6 +257,22 @@
         }
       }
     },
+    "Beginner" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beginner"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "初级"
+          }
+        }
+      }
+    },
     "Birth year" : {
       "localizations" : {
         "en" : {
@@ -269,6 +301,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "身体"
+          }
+        }
+      }
+    },
+    "Body and goal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Body and goal"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "身体与目标"
           }
         }
       }
@@ -365,6 +413,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "摄像头计数"
+          }
+        }
+      }
+    },
+    "Camera video" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera video"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "相机视频"
           }
         }
       }
@@ -477,6 +541,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "教练"
+          }
+        }
+      }
+    },
+    "Coach sends your messages, workouts, meals and body data to Meta's Muse model. See What Muse sees for the full list." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach sends your messages, workouts, meals and body data to Meta's Muse model. See What Muse sees for the full list."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "教练会把你的消息、训练、餐食和身体数据发送给 Meta 的 Muse 模型。完整清单见“Muse 能看到什么”。"
           }
         }
       }
@@ -992,6 +1072,22 @@
         }
       }
     },
+    "Exercises, sets, reps, load, depth, tempo, fatigue, form scores" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercises, sets, reps, load, depth, tempo, fatigue, form scores"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "动作、组数、次数、重量、深度、节奏、疲劳度、动作评分"
+          }
+        }
+      }
+    },
     "Fat" : {
       "localizations" : {
         "en" : {
@@ -1052,6 +1148,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "完成"
+          }
+        }
+      }
+    },
+    "Food names, calories, protein, carbs, fat" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Food names, calories, protein, carbs, fat"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "食物名称、热量、蛋白质、碳水、脂肪"
           }
         }
       }
@@ -1320,6 +1432,22 @@
         }
       }
     },
+    "Intermediate" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intermediate"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中级"
+          }
+        }
+      }
+    },
     "Invalid value" : {
       "localizations" : {
         "en" : {
@@ -1560,22 +1688,6 @@
         }
       }
     },
-    "May leave your phone" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "May leave your phone"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "可能离开你的手机"
-          }
-        }
-      }
-    },
     "Me" : {
       "localizations" : {
         "en" : {
@@ -1636,6 +1748,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "餐食照片"
+          }
+        }
+      }
+    },
+    "Meals" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meals"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "餐食"
+          }
+        }
+      }
+    },
+    "Meals logged" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meals logged"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已记录餐食"
           }
         }
       }
@@ -1716,6 +1860,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法连接 Muse，以下内容由这部 iPhone 生成。"
+          }
+        }
+      }
+    },
+    "Muse is Meta's AI model. Requests go through this app's server. With Coach off, none of this is sent." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse is Meta's AI model. Requests go through this app's server. With Coach off, none of this is sent."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse 是 Meta 的 AI 模型。请求会经由本应用的服务器转发。关闭教练后，以上内容都不会发送。"
           }
         }
       }
@@ -2381,22 +2541,6 @@
         }
       }
     },
-    "Reps, depth, tempo, fatigue, daily totals, weight trend" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reps, depth, tempo, fatigue, daily totals, weight trend"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "次数、深度、节奏、疲劳度、每日总量、体重趋势"
-          }
-        }
-      }
-    },
     "rest %lld s" : {
       "localizations" : {
         "en" : {
@@ -2537,6 +2681,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请选择"
+          }
+        }
+      }
+    },
+    "Sent to Muse" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sent to Muse"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发送给 Muse"
           }
         }
       }
@@ -2861,6 +3021,22 @@
         }
       }
     },
+    "Training level" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Training level"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练水平"
+          }
+        }
+      }
+    },
     "Try Again" : {
       "localizations" : {
         "en" : {
@@ -2909,6 +3085,38 @@
         }
       }
     },
+    "Turn On" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn On"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开启"
+          }
+        }
+      }
+    },
+    "Turn on Coach?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn on Coach?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开启教练？"
+          }
+        }
+      }
+    },
     "Units" : {
       "localizations" : {
         "en" : {
@@ -2937,22 +3145,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "速度下降"
-          }
-        }
-      }
-    },
-    "Video" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Video"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "视频"
           }
         }
       }
@@ -2989,6 +3181,22 @@
         }
       }
     },
+    "Weight and body fat history, calorie targets, age, height, training level" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weight and body fat history, calorie targets, age, height, training level"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "体重和体脂历史、热量目标、年龄、身高、训练水平"
+          }
+        }
+      }
+    },
     "What Muse saw" : {
       "localizations" : {
         "en" : {
@@ -3017,6 +3225,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Muse 能看到什么"
+          }
+        }
+      }
+    },
+    "What you type in the coach chat" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What you type in the coach chat"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你在教练聊天中输入的内容"
           }
         }
       }
@@ -3053,18 +3277,18 @@
         }
       }
     },
-    "Workout and nutrition numbers" : {
+    "Workouts" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Workout and nutrition numbers"
+            "value" : "Workouts"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "训练和营养数据"
+            "value" : "训练"
           }
         }
       }
@@ -3097,6 +3321,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你必须年满 16 岁"
+          }
+        }
+      }
+    },
+    "Your messages" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your messages"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的消息"
           }
         }
       }

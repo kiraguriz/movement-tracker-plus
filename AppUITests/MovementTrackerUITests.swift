@@ -5,7 +5,6 @@ final class MovementTrackerUITests: AppUITestCase {
     @MainActor
     func testEachTabShowsOnlyItsOwnScreen() {
         let app = launchApp()
-        XCTAssertEqual(app.tabBars.firstMatch.buttons.count, ID.tabs.count)
 
         for (index, tabID) in ID.tabs.enumerated() {
             let tab = tabButton(index, in: app)

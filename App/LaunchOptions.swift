@@ -44,7 +44,7 @@ struct LaunchOptions: Equatable {
         failDatabase = arguments.contains("-MTFailDatabase")
         seed = Self.value(after: "-MTSeed", in: arguments).flatMap(Seed.init(rawValue:)) ?? .none
         startTab = Self.value(after: "-MTStartTab", in: arguments)
-        coachURL = Self.value(after: "-MTCoachURL", in: arguments).flatMap(URL.init(string:))
+        coachURL = Self.value(after: "-MTCoachURL", in: arguments).flatMap(Self.proxyURL)
         replayPoses = Self.value(after: "-MTReplayPoses", in: arguments)
         replaySpeed = Self.value(after: "-MTReplaySpeed", in: arguments).flatMap(Double.init).flatMap { $0 > 0 ? $0 : nil } ?? 1
         replayHoldReps = Self.value(after: "-MTReplayHoldReps", in: arguments).flatMap(Int.init).flatMap { $0 > 0 ? $0 : nil }
@@ -60,6 +60,13 @@ struct LaunchOptions: Equatable {
         #else
         LaunchOptions()
         #endif
+    }
+
+    /// An http(s) address with a host; anything else would only fail later, inside a request.
+    private static func proxyURL(_ text: String) -> URL? {
+        guard let url = URL(string: text), url.host() != nil, let scheme = url.scheme?.lowercased(),
+              scheme == "http" || scheme == "https" else { return nil }
+        return url
     }
 
     private static func value(after flag: String, in arguments: [String]) -> String? {
