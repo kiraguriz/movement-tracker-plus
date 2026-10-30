@@ -25,6 +25,8 @@ struct AppEnvironment: Sendable {
     var coach: CoachService?
     /// Coach chat with on-device tools; nil when `coach` is.
     var coachChat: ChatService?
+    /// True when `coach` runs over the canned Debug transport (`-MTCoachStub`). Always false in Release.
+    var coachIsStub = false
 
     init(
         database: AppDatabase,
@@ -47,8 +49,8 @@ struct AppEnvironment: Sendable {
         self.timeZone = timeZone
         self.launch = launch
 
-        if let url = CoachEndpoint.url(for: launch) {
-            let client = CoachClient(baseURL: url, tokenStore: KeychainTokenStore(service: CoachEndpoint.tokenService))
+        if let (client, isStub) = Self.makeCoachClient(launch: launch) {
+            coachIsStub = isStub
             coach = CoachService(client: client, insights: database.coachInsights, ids: ids)
             let toolbox = ChatToolbox(
                 workouts: database.workouts, nutrition: database.nutrition, body: database.bodyMeasurements,
@@ -56,6 +58,18 @@ struct AppEnvironment: Sendable {
             )
             coachChat = ChatService(client: client, chats: database.chat, toolbox: toolbox, ids: ids)
         }
+    }
+
+    /// The proxy client, or nil while the proxy's address is unknown. In Debug builds `-MTCoachStub` swaps in the
+    /// canned transport; the stub code is not compiled into Release.
+    private static func makeCoachClient(launch: LaunchOptions) -> (CoachClient, isStub: Bool)? {
+        #if DEBUG
+        if launch.coachStub {
+            return (CoachStub.makeClient(failure: launch.coachStubFailure), true)
+        }
+        #endif
+        guard let url = CoachEndpoint.url(for: launch) else { return nil }
+        return (CoachClient(baseURL: url, tokenStore: KeychainTokenStore(service: CoachEndpoint.tokenService)), false)
     }
 
     /// The calendar day it is for the user right now.
@@ -88,6 +102,7 @@ extension AppEnvironment {
         #if DEBUG
         if launch.inMemoryDatabase {
             try await SampleData.seed(into: environment, level: launch.seed)
+            if launch.aiOptIn { try await environment.settings.set(SettingKey.aiOptIn, to: true) }
         }
         #endif
         return environment

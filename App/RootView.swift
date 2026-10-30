@@ -53,7 +53,7 @@ struct RootView: View {
             .accessibilityIdentifier(AccessibilityID.askCoach)
         }
         .sheet(isPresented: $isCoachPresented) {
-            CoachSheet()
+            CoachSheet(environment: environment, openTrain: { selection = .train })
         }
     }
 }

@@ -17,6 +17,74 @@
         }
       }
     },
+    "%lld meals" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld meal"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld meals"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 餐"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld measurements" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld measurement"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld measurements"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 条测量"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld partial" : {
       "localizations" : {
         "en" : {
@@ -79,6 +147,40 @@
         }
       }
     },
+    "%lld sessions" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld session"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sessions"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 次训练"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld workouts per week" : {
       "localizations" : {
         "en" : {
@@ -109,6 +211,22 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld × %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld × %lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld × %lld"
           }
         }
       }
@@ -177,6 +295,56 @@
         }
       }
     },
+    "Add your weight before changing your goal." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add your weight before changing your goal."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改目标前请先记录体重。"
+          }
+        }
+      }
+    },
+    "Added %lld exercises. Not in your list: %@" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Added %lld exercise. Not in your list: %@"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Added %lld exercises. Not in your list: %@"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "已添加 %lld 个动作。不在你的列表中：%@"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Advanced" : {
       "localizations" : {
         "en" : {
@@ -209,6 +377,22 @@
         }
       }
     },
+    "Am I eating enough protein?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Am I eating enough protein?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我的蛋白质吃够了吗？"
+          }
+        }
+      }
+    },
     "Amount" : {
       "localizations" : {
         "en" : {
@@ -225,6 +409,54 @@
         }
       }
     },
+    "Applied" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Applied"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已应用"
+          }
+        }
+      }
+    },
+    "Apply" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apply"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "应用"
+          }
+        }
+      }
+    },
+    "Ask about your training and food" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask about your training and food"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "问问你的训练和饮食"
+          }
+        }
+      }
+    },
     "Ask Coach" : {
       "localizations" : {
         "en" : {
@@ -237,6 +469,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "问教练"
+          }
+        }
+      }
+    },
+    "At least %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At least %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "至少 %@"
           }
         }
       }
@@ -481,6 +729,38 @@
         }
       }
     },
+    "Chats" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chats"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "对话"
+          }
+        }
+      }
+    },
+    "Checking your data" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checking your data"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在查看你的数据"
+          }
+        }
+      }
+    },
     "Chicken rice bowl" : {
       "localizations" : {
         "en" : {
@@ -497,6 +777,22 @@
         }
       }
     },
+    "Choose Another Photo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose Another Photo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "换一张照片"
+          }
+        }
+      }
+    },
     "Choose date" : {
       "localizations" : {
         "en" : {
@@ -509,6 +805,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择日期"
+          }
+        }
+      }
+    },
+    "Choose Photo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose Photo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择照片"
           }
         }
       }
@@ -545,6 +857,38 @@
         }
       }
     },
+    "Coach is unavailable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach is unavailable"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "教练暂时无法使用"
+          }
+        }
+      }
+    },
+    "Coach looked at %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach looked at %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "教练查看了：%@"
+          }
+        }
+      }
+    },
     "Coach sends your messages, workouts, meals and body data to Meta's Muse model. See What Muse sees for the full list." : {
       "localizations" : {
         "en" : {
@@ -557,6 +901,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "教练会把你的消息、训练、餐食和身体数据发送给 Meta 的 Muse 模型。完整清单见“Muse 能看到什么”。"
+          }
+        }
+      }
+    },
+    "Coach uses Muse" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach uses Muse"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "教练使用 Muse"
           }
         }
       }
@@ -577,6 +937,22 @@
         }
       }
     },
+    "Complete your profile before changing your goal." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complete your profile before changing your goal."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改目标前请先完善资料。"
+          }
+        }
+      }
+    },
     "Continue" : {
       "localizations" : {
         "en" : {
@@ -589,6 +965,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "继续"
+          }
+        }
+      }
+    },
+    "Couldn't look this up" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't look this up"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查询失败"
           }
         }
       }
@@ -807,6 +1199,38 @@
         }
       }
     },
+    "Dismiss" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dismiss"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "忽略"
+          }
+        }
+      }
+    },
+    "Dismissed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dismissed"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已忽略"
+          }
+        }
+      }
+    },
     "Done? Tap End set." : {
       "localizations" : {
         "en" : {
@@ -899,6 +1323,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "结束这一组"
+          }
+        }
+      }
+    },
+    "Estimating your meal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estimating your meal"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在估算你的餐食"
           }
         }
       }
@@ -1152,6 +1592,22 @@
         }
       }
     },
+    "Finish or discard your current workout first." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finish or discard your current workout first."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先完成或放弃当前训练。"
+          }
+        }
+      }
+    },
     "Food names, calories, protein, carbs, fat" : {
       "localizations" : {
         "en" : {
@@ -1164,6 +1620,70 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "食物名称、热量、蛋白质、碳水、脂肪"
+          }
+        }
+      }
+    },
+    "Food search is busy. Try again in a moment." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Food search is busy. Try again in a moment."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "食物搜索正忙，请稍后再试。"
+          }
+        }
+      }
+    },
+    "Food search is paused right now. Try again later." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Food search is paused right now. Try again later."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "食物搜索暂时停用，请稍后再试。"
+          }
+        }
+      }
+    },
+    "Food search is unavailable right now. Try again later." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Food search is unavailable right now. Try again later."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "食物搜索暂时无法使用，请稍后再试。"
+          }
+        }
+      }
+    },
+    "Food searches" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Food searches"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "食物搜索"
           }
         }
       }
@@ -1400,6 +1920,22 @@
         }
       }
     },
+    "How did my last workout go?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How did my last workout go?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我上次训练怎么样？"
+          }
+        }
+      }
+    },
     "Imperial" : {
       "localizations" : {
         "en" : {
@@ -1496,6 +2032,22 @@
         }
       }
     },
+    "Language" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Language"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "语言"
+          }
+        }
+      }
+    },
     "Live set" : {
       "localizations" : {
         "en" : {
@@ -1556,6 +2108,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "记录体重"
+          }
+        }
+      }
+    },
+    "Logged" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logged"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已记录"
+          }
+        }
+      }
+    },
+    "Looking up nutrition" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looking up nutrition"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在查询营养成分"
           }
         }
       }
@@ -1784,6 +2368,22 @@
         }
       }
     },
+    "Message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Message"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "消息"
+          }
+        }
+      }
+    },
     "Metric" : {
       "localizations" : {
         "en" : {
@@ -1796,6 +2396,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "公制"
+          }
+        }
+      }
+    },
+    "Model" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Model"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型"
           }
         }
       }
@@ -1880,6 +2496,22 @@
         }
       }
     },
+    "Muse isn't sure about this one" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse isn't sure about this one"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse 对这一项不太确定"
+          }
+        }
+      }
+    },
     "Name" : {
       "localizations" : {
         "en" : {
@@ -1912,6 +2544,22 @@
         }
       }
     },
+    "New chat" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New chat"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新对话"
+          }
+        }
+      }
+    },
     "Next set" : {
       "localizations" : {
         "en" : {
@@ -1928,6 +2576,70 @@
         }
       }
     },
+    "No chats" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No chats"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有对话"
+          }
+        }
+      }
+    },
+    "No food found" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No food found"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有找到食物"
+          }
+        }
+      }
+    },
+    "No goal set" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No goal set"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未设置目标"
+          }
+        }
+      }
+    },
+    "No match found. Enter the numbers yourself." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No match found. Enter the numbers yourself."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有找到匹配项，请自己填写数值。"
+          }
+        }
+      }
+    },
     "No meals" : {
       "localizations" : {
         "en" : {
@@ -1940,6 +2652,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "暂无餐食"
+          }
+        }
+      }
+    },
+    "No meals logged" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No meals logged"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有餐食记录"
+          }
+        }
+      }
+    },
+    "No measurements" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No measurements"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有测量记录"
+          }
+        }
+      }
+    },
+    "No sessions" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No sessions"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有训练记录"
           }
         }
       }
@@ -1976,6 +2736,38 @@
         }
       }
     },
+    "None of these exercises are in your list: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "None of these exercises are in your list: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这些动作都不在你的列表中：%@"
+          }
+        }
+      }
+    },
+    "Not sent" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not sent"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未发送"
+          }
+        }
+      }
+    },
     "Oatmeal with berries" : {
       "localizations" : {
         "en" : {
@@ -2004,6 +2796,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "好"
+          }
+        }
+      }
+    },
+    "One set" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One set"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 组"
           }
         }
       }
@@ -2040,6 +2848,22 @@
         }
       }
     },
+    "Open Train" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Train"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前往训练"
+          }
+        }
+      }
+    },
     "Pace" : {
       "localizations" : {
         "en" : {
@@ -2068,6 +2892,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不完整"
+          }
+        }
+      }
+    },
+    "Per 100 ml. Saved as 1 g per ml." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Per 100 ml. Saved as 1 g per ml."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每 100 毫升。按 1 毫升 = 1 克保存。"
+          }
+        }
+      }
+    },
+    "Photo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "照片"
+          }
+        }
+      }
+    },
+    "Plan my training week" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plan my training week"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "给我安排一周训练计划"
           }
         }
       }
@@ -2461,6 +3333,22 @@
         }
       }
     },
+    "Recent" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近"
+          }
+        }
+      }
+    },
     "Recording poses" : {
       "localizations" : {
         "en" : {
@@ -2473,6 +3361,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在记录姿态"
+          }
+        }
+      }
+    },
+    "Remove" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除"
           }
         }
       }
@@ -2541,6 +3445,22 @@
         }
       }
     },
+    "Request" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Request"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请求"
+          }
+        }
+      }
+    },
     "rest %lld s" : {
       "localizations" : {
         "en" : {
@@ -2553,6 +3473,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "休息 %lld 秒"
+          }
+        }
+      }
+    },
+    "Review" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看"
+          }
+        }
+      }
+    },
+    "Review meal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review meal"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确认餐食"
           }
         }
       }
@@ -2669,6 +3621,22 @@
         }
       }
     },
+    "Search foods" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search foods"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索食物"
+          }
+        }
+      }
+    },
     "Select" : {
       "localizations" : {
         "en" : {
@@ -2681,6 +3649,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请选择"
+          }
+        }
+      }
+    },
+    "Send" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发送"
           }
         }
       }
@@ -2701,6 +3685,22 @@
         }
       }
     },
+    "Sent to USDA" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sent to USDA"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发送给 USDA"
+          }
+        }
+      }
+    },
     "Set %lld" : {
       "localizations" : {
         "en" : {
@@ -2713,6 +3713,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "第 %lld 组"
+          }
+        }
+      }
+    },
+    "Set not found" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set not found"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到该组"
           }
         }
       }
@@ -2745,6 +3761,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "性别"
+          }
+        }
+      }
+    },
+    "Share with Muse" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share with Muse"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与 Muse 共享"
+          }
+        }
+      }
+    },
+    "Should I change my goal?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Should I change my goal?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我的目标需要调整吗？"
           }
         }
       }
@@ -2829,6 +3877,22 @@
         }
       }
     },
+    "Started" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Started"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已开始"
+          }
+        }
+      }
+    },
     "Stick figures of your best and worst reps" : {
       "localizations" : {
         "en" : {
@@ -2841,6 +3905,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你最好和最差几次动作的火柴人图"
+          }
+        }
+      }
+    },
+    "Stop" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止"
+          }
+        }
+      }
+    },
+    "Stub data, not Muse" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stub data, not Muse"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "演示数据，非 Muse"
           }
         }
       }
@@ -2877,6 +3973,54 @@
         }
       }
     },
+    "Take Photo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take Photo"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拍照"
+          }
+        }
+      }
+    },
+    "That didn't work." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That didn't work."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有成功。"
+          }
+        }
+      }
+    },
+    "That didn't work. Try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That didn't work. Try again."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有成功，请重试。"
+          }
+        }
+      }
+    },
     "The camera is restricted on this device" : {
       "localizations" : {
         "en" : {
@@ -2889,6 +4033,86 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此设备已限制使用相机"
+          }
+        }
+      }
+    },
+    "The coach can't help with that." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The coach can't help with that."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "教练无法回答这个问题。"
+          }
+        }
+      }
+    },
+    "The coach is busy. Try again in a moment." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The coach is busy. Try again in a moment."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "教练正忙，请稍后再试。"
+          }
+        }
+      }
+    },
+    "The coach is paused right now. Try again later." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The coach is paused right now. Try again later."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "教练暂时停用，请稍后再试。"
+          }
+        }
+      }
+    },
+    "The coach is unavailable right now. Try again later." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The coach is unavailable right now. Try again later."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "教练暂时无法使用，请稍后再试。"
+          }
+        }
+      }
+    },
+    "The planner can't make a plan from these numbers." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The planner can't make a plan from these numbers."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法根据这些数值制定计划。"
           }
         }
       }
@@ -2941,6 +4165,22 @@
         }
       }
     },
+    "The target weight doesn't fit this goal." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The target weight doesn't fit this goal."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目标体重与这个目标不符。"
+          }
+        }
+      }
+    },
     "The workout could not be changed." : {
       "localizations" : {
         "en" : {
@@ -2953,6 +4193,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法修改这次训练。"
+          }
+        }
+      }
+    },
+    "Thinking" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thinking"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "思考中"
           }
         }
       }
@@ -3001,6 +4257,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "今天"
+          }
+        }
+      }
+    },
+    "Total" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "合计"
           }
         }
       }
@@ -3229,6 +4501,22 @@
         }
       }
     },
+    "What you type in food search, also with Coach off" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What you type in food search, also with Coach off"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你在食物搜索中输入的内容，教练关闭时也会发送"
+          }
+        }
+      }
+    },
     "What you type in the coach chat" : {
       "localizations" : {
         "en" : {
@@ -3257,6 +4545,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "数字从何而来"
+          }
+        }
+      }
+    },
+    "Words sent" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Words sent"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发送的文字"
           }
         }
       }
@@ -3325,6 +4629,86 @@
         }
       }
     },
+    "You're offline. Check your connection and try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You're offline. Check your connection and try again."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前没有网络。请检查连接后重试。"
+          }
+        }
+      }
+    },
+    "You've reached today's coach limit. Try again tomorrow." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You've reached today's coach limit. Try again tomorrow."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天的教练次数已用完，明天再试。"
+          }
+        }
+      }
+    },
+    "You've reached today's photo limit. You can still add meals by hand." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You've reached today's photo limit. You can still add meals by hand."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天的拍照识别次数已用完，你仍可以手动添加餐食。"
+          }
+        }
+      }
+    },
+    "You've reached today's search limit. You can still add meals by hand." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You've reached today's search limit. You can still add meals by hand."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天的搜索次数已用完，你仍可以手动添加餐食。"
+          }
+        }
+      }
+    },
+    "Your goal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your goal"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的目标"
+          }
+        }
+      }
+    },
     "Your messages" : {
       "localizations" : {
         "en" : {
@@ -3353,6 +4737,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的姓名"
+          }
+        }
+      }
+    },
+    "Your name and video never leave your phone." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your name and video never leave your phone."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的姓名和视频不会离开手机。"
           }
         }
       }

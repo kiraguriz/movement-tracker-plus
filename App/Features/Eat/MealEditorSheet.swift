@@ -44,10 +44,17 @@ struct MealEditorSheet: View {
                     NumberField(
                         title: "Amount",
                         text: $draft.gramsText,
-                        unit: UnitFormatter.symbol(UnitMass.grams),
+                        unit: draft.amountSymbol,
                         isInvalid: draft.input(.grams).isInvalid,
                         identifier: AccessibilityID.mealGrams
                     )
+                    if !draft.servings.isEmpty {
+                        servingChoices
+                    }
+                } footer: {
+                    if draft.amountUnit == .milliliters {
+                        Text("Per 100 ml. Saved as 1 g per ml.")
+                    }
                 }
                 Section {
                     NumberField(
@@ -79,6 +86,7 @@ struct MealEditorSheet: View {
                 }
             }
             .scrollDismissesKeyboard(.interactively)
+            .onChange(of: draft.gramsText) { draft.amountChanged() }
             .navigationTitle(draft.original == nil ? "Add meal" : "Edit meal")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -96,6 +104,21 @@ struct MealEditorSheet: View {
         }
         .interactiveDismissDisabled(isSaving)
         .testIdentifier(AccessibilityID.mealEditor)
+    }
+
+    /// The food's own portions (a slice, a cup): one tap sets the amount.
+    private var servingChoices: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(draft.servings, id: \.self) { serving in
+                    Button(serving.label) { draft.useServing(serving) }
+                        .buttonStyle(.bordered)
+                        .frame(minHeight: 44)
+                        .accessibilityIdentifier(AccessibilityID.mealServing(serving.label))
+                }
+            }
+        }
+        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
     }
 
     private func macroField(_ macro: Macro, field: MealDraft.Field, text: Binding<String>, identifier: String) -> some View {

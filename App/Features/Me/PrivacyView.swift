@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Exactly what leaves the phone when the coach is on, and what never does.
-/// Keep it in step with what CoachKit sends: the chat tools, the insight inputs and the meal photo.
+/// Keep it in step with what CoachKit sends: the chat tools, the insight inputs, the meal photo and food search.
 struct PrivacyView: View {
     var body: some View {
         List {
@@ -16,6 +16,9 @@ struct PrivacyView: View {
                 Text("Sent to Muse")
             } footer: {
                 Text("Muse is Meta's AI model. Requests go through this app's server. With Coach off, none of this is sent.")
+            }
+            Section("Sent to USDA") {
+                row("Food searches", detail: "What you type in food search, also with Coach off", systemImage: "magnifyingglass")
             }
             Section("Never leaves your phone") {
                 row("Your name", systemImage: "person.crop.circle")

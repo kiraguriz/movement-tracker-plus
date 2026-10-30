@@ -20,6 +20,10 @@ import Foundation
 /// - `-MTDebugHUD`: shows the camera and engine numbers in a live set from the start (a long press on the rep
 ///   counter toggles them).
 /// - `-MTRecordPoses`: records every live set's poses as if the setting were on.
+/// - `-MTCoachStub`: build the coach over a canned, in-process transport (no network, not Muse). Wins over
+///   `-MTCoachURL`. `-MTCoachStubFail offline|budget|paused` makes every call fail that way.
+/// - `-MTAIOptIn`: with the in-memory database, start with the coach consent already given.
+/// - `-MTMealPhotoSample`: the meal photo sheet offers a generated sample photo (the Simulator has no camera).
 struct LaunchOptions: Equatable {
     enum Seed: String {
         case none, profile, sample
@@ -36,6 +40,10 @@ struct LaunchOptions: Equatable {
     var cameraState: String?
     var debugHUD = false
     var recordPoses = false
+    var coachStub = false
+    var coachStubFailure: String?
+    var aiOptIn = false
+    var mealPhotoSample = false
 
     init() {}
 
@@ -51,6 +59,10 @@ struct LaunchOptions: Equatable {
         cameraState = Self.value(after: "-MTCameraState", in: arguments)
         debugHUD = arguments.contains("-MTDebugHUD")
         recordPoses = arguments.contains("-MTRecordPoses")
+        coachStub = arguments.contains("-MTCoachStub")
+        coachStubFailure = Self.value(after: "-MTCoachStubFail", in: arguments)
+        aiOptIn = arguments.contains("-MTAIOptIn")
+        mealPhotoSample = arguments.contains("-MTMealPhotoSample")
     }
 
     /// The options of this process.

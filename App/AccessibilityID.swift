@@ -16,6 +16,33 @@ enum AccessibilityID {
     static let askCoach = "coach.ask"
     static let coachSheet = "coach.sheet"
     static let coachClose = "coach.close"
+    static let coachHistory = "coach.history"
+    static let coachNewChat = "coach.new"
+    static let coachThreads = "coach.threads"
+    static let coachConsent = "coach.consent"
+    static let coachConsentToggle = "coach.consent.toggle"
+    static let coachUnavailable = "coach.unavailable"
+    static let coachMessages = "coach.messages"
+    static let coachComposer = "coach.composer"
+    static let coachSend = "coach.send"
+    static let coachStop = "coach.stop"
+    static let coachUserMessage = "coach.message.user"
+    static let coachAssistantMessage = "coach.message.assistant"
+    static let coachStreaming = "coach.message.streaming"
+    static let coachToolChip = "coach.toolChip"
+    static let coachFailed = "coach.failed"
+    static let coachRetry = "coach.retry"
+    static let coachProposalConfirm = "coach.proposal.confirm"
+    static let coachProposalDismiss = "coach.proposal.dismiss"
+    static let coachProposalResolved = "coach.proposal.resolved"
+    static let coachProposalBlocked = "coach.proposal.blocked"
+    static let coachProposalKcal = "coach.proposal.kcal"
+    static let coachProposalNote = "coach.proposal.note"
+    static let coachOpenTrain = "coach.openTrain"
+    static let stubBadge = "stub.badge"
+    static func coachProposal(_ kind: String) -> String { "coach.proposal.\(kind)" }
+    static func coachSuggestion(_ index: Int) -> String { "coach.suggestion.\(index)" }
+    static func coachThread(_ title: String) -> String { "coach.thread.\(title)" }
 
     // Launch
     static let launchFailed = "launch.failed"
@@ -128,6 +155,42 @@ enum AccessibilityID {
 
     static func day(_ day: LocalDay) -> String { "eat.day.\(day.string)" }
     static func mealRow(_ label: String) -> String { "meal.row.\(label)" }
+    static func mealServing(_ label: String) -> String { "meal.serving.\(label)" }
+
+    // Eat: reviewing a meal of several items (meal photo, coach proposal)
+    static let mealItems = "mealItems"
+    static let mealItemsSave = "mealItems.save"
+    static let mealItemsCancel = "mealItems.cancel"
+    static let mealItemsTotal = "mealItems.total"
+    static func mealItemName(_ index: Int) -> String { "mealItem.\(index).name" }
+    static func mealItemGrams(_ index: Int) -> String { "mealItem.\(index).grams" }
+    static func mealItemKcal(_ index: Int) -> String { "mealItem.\(index).kcal" }
+    static func mealItemRemove(_ index: Int) -> String { "mealItem.\(index).remove" }
+    static func mealItemLookup(_ index: Int) -> String { "mealItem.\(index).lookup" }
+
+    // Eat: food search
+    static let foodSearch = "foodSearch"
+    static let foodSearchClose = "foodSearch.close"
+    static let foodSearchResults = "foodSearch.results"
+    static let foodSearchEmpty = "foodSearch.empty"
+    static let foodSearchError = "foodSearch.error"
+    static let foodSearchRetry = "foodSearch.retry"
+    static func foodResult(_ id: Int) -> String { "foodSearch.result.\(id)" }
+    static func foodRecent(_ label: String) -> String { "foodSearch.recent.\(label)" }
+
+    // Eat: meal photo
+    static let mealPhoto = "mealPhoto"
+    static let photoClose = "mealPhoto.close"
+    static let photoChoose = "mealPhoto.choose"
+    static let photoCamera = "mealPhoto.camera"
+    static let photoSample = "mealPhoto.sample"
+    static let photoEstimating = "mealPhoto.estimating"
+    static let photoNoFood = "mealPhoto.noFood"
+    static let photoError = "mealPhoto.error"
+    static let photoRetry = "mealPhoto.retry"
+    static let photoSaw = "mealPhoto.saw"
+    static let photoThumbnail = "mealPhoto.thumbnail"
+    static let photoSave = "mealPhoto.save"
 
     // Me
     static let editProfile = "me.edit"

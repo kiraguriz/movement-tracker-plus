@@ -3,15 +3,10 @@ import SwiftUI
 
 // MARK: - Extension points for the Eat tab
 //
-// The Eat tab opens one sheet per way of adding a meal. Today only the manual form exists. Two more are reserved:
-//
-//   1. FOOD SEARCH  (USDA FoodData Central through the proxy, `GET /v1/food/search`)
-//   2. MEAL PHOTO   (Muse estimate, then a USDA lookup, then an editable confirm sheet)
-//
-// To add one: implement its sheet below, add its case to `EatAddRoute.available`, and nothing else in
-// `EatView` changes. A sheet gets an `EatAddContext` and finishes by calling `context.log(...)`, which writes the
-// meals and the foods they use in one transaction and updates every screen through the observation streams.
-// Do not add networking to this file's callers; the search and photo clients belong to the coach/food client.
+// The Eat tab opens one sheet per way of adding a meal: the manual form, food search (`FoodSearchSheet`, USDA
+// through the proxy) and the meal photo (`MealPhotoSheet`, a Muse estimate then a USDA lookup). A sheet gets an
+// `EatAddContext` and finishes by calling `context.log(...)`, which writes the meals and the foods they use in one
+// transaction and updates every screen through the observation streams.
 
 /// The ways to add a meal.
 enum EatAddRoute: String, CaseIterable, Identifiable {
@@ -21,8 +16,14 @@ enum EatAddRoute: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    /// The routes the add menu offers. EXTENSION POINT: append `.search` and `.photo` when their sheets are built.
-    static let available: [EatAddRoute] = [.manual]
+    /// The routes the add menu can offer.
+    static let available: [EatAddRoute] = [.manual, .search, .photo]
+
+    /// The routes to offer in this app. Search and photo go through the coach's proxy, so without one the menu
+    /// offers manual entry only.
+    static func offered(in environment: AppEnvironment) -> [EatAddRoute] {
+        environment.coach == nil ? [.manual] : available
+    }
 
     var title: LocalizedStringResource {
         switch self {
@@ -50,24 +51,6 @@ struct EatAddContext {
     var log: ([MealEntry], [Food]) async throws -> Void
 }
 
-/// EXTENSION POINT 1: food search. Presented for `EatAddRoute.search`.
-struct FoodSearchSheet: View {
-    let context: EatAddContext
-
-    var body: some View {
-        EmptyView()
-    }
-}
-
-/// EXTENSION POINT 2: meal photo. Presented for `EatAddRoute.photo`.
-struct MealPhotoSheet: View {
-    let context: EatAddContext
-
-    var body: some View {
-        EmptyView()
-    }
-}
-
 /// The sheet for an add route.
 struct EatAddDestination: View {
     let route: EatAddRoute
@@ -82,9 +65,9 @@ struct EatAddDestination: View {
                 onSaved()
             }
         case .search:
-            FoodSearchSheet(context: context)
+            FoodSearchSheet(context: context, onSaved: onSaved)
         case .photo:
-            MealPhotoSheet(context: context)
+            MealPhotoSheet(context: context, onSaved: onSaved)
         }
     }
 }

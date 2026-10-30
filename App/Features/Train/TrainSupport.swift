@@ -8,15 +8,7 @@ import MotionCore
 enum TrainCoachAccess {
     static func coach(in environment: AppEnvironment) async -> CoachService? {
         guard let coach = environment.coach else { return nil }
-        let optedIn = (try? await environment.settings.get(SettingKey.aiOptIn)) ?? false
-        return optedIn ? coach : nil
-    }
-}
-
-extension CoachLocale {
-    /// The language the app is showing, which is the language of spoken cues and of Muse's answers.
-    static var app: CoachLocale {
-        CoachLocale(identifier: Bundle.main.preferredLocalizations.first ?? "en")
+        return await environment.isAIOptedIn() ? coach : nil
     }
 }
 

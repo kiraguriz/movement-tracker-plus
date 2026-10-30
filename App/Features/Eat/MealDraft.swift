@@ -38,9 +38,60 @@ final class MealDraft {
     /// The entry being edited; its identity, time and source are kept when saving.
     let original: MealEntry?
 
+    // MARK: Logged from a food
+
+    enum AmountUnit {
+        case grams, milliliters
+    }
+
+    /// Where an item's nutrition came from, for items that are looked up (meal photo, coach proposals).
+    enum Lookup {
+        case none, pending, matched, notFound, failed
+    }
+
+    /// Nutrients in 100 g (or 100 ml) of the food this entry is logged from. While it is set, changing the amount
+    /// recomputes the nutrient fields from it; a nutrient the source did not report stays empty, never zero.
+    var basis: Nutrients?
+    var amountUnit = AmountUnit.grams
+    /// The food the entry is logged from; it is saved with the entry. Nil for typed-in entries.
+    var food: Food?
+    var source = MealSource.manual
+    var servings: [FoodServing] = []
+    var lookup = Lookup.none
+    /// The English USDA phrase a photo or coach item is looked up with.
+    var query: String?
+    /// 0 to 1, the model's own confidence in a photo item.
+    var confidence: Double?
+    var showsNutrients = false
+
     init(slot: MealSlot) {
         self.slot = slot
         original = nil
+    }
+
+    /// A new entry from a food: the amount is `amount`, or the food's first serving, or 100.
+    convenience init(food: Food, unit: AmountUnit = .grams, amount: Double? = nil, slot: MealSlot, source: MealSource = .search) {
+        self.init(slot: slot)
+        name = food.name
+        self.food = food
+        self.source = source
+        servings = food.servings
+        amountUnit = unit
+        basis = food.per100g
+        gramsText = NumberInput.text(amount ?? food.servings.first?.grams ?? 100)
+        amountChanged()
+    }
+
+    /// A new entry with the numbers of an earlier one; the earlier entry is not changed.
+    convenience init(reusing meal: MealEntry, slot: MealSlot) {
+        self.init(slot: slot)
+        name = meal.label
+        source = meal.source
+        gramsText = meal.grams.grams > 0 ? NumberInput.text(meal.grams.grams) : ""
+        kcalText = NumberInput.text(meal.nutrients.energy?.kilocalories, maxFractionDigits: 0)
+        proteinText = NumberInput.text(meal.nutrients.protein?.grams)
+        carbsText = NumberInput.text(meal.nutrients.carbohydrate?.grams)
+        fatText = NumberInput.text(meal.nutrients.fat?.grams)
     }
 
     init(editing meal: MealEntry) {
@@ -55,6 +106,46 @@ final class MealDraft {
     }
 
     var trimmedName: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+    /// The unit next to the amount field.
+    var amountSymbol: String {
+        switch amountUnit {
+        case .grams: UnitFormatter.symbol(UnitMass.grams)
+        case .milliliters: UnitFormatter.symbol(UnitVolume.milliliters)
+        }
+    }
+
+    /// Recomputes the nutrient fields from `basis` for the amount typed so far.
+    func amountChanged() {
+        guard let basis else { return }
+        switch NumberInput(gramsText) {
+        case .value(let amount): setNutrients(basis.scaled(by: amount / 100))
+        case .empty: setNutrients(.unknown)
+        case .invalid: break
+        }
+    }
+
+    func useServing(_ serving: FoodServing) {
+        gramsText = NumberInput.text(serving.grams)
+        amountChanged()
+    }
+
+    /// Logs the item from a looked-up food, keeping the amount already typed.
+    func applyMatch(_ matched: Food, unit: AmountUnit) {
+        food = matched
+        basis = matched.per100g
+        amountUnit = unit
+        servings = matched.servings
+        lookup = .matched
+        amountChanged()
+    }
+
+    private func setNutrients(_ nutrients: Nutrients) {
+        kcalText = NumberInput.text(nutrients.energy?.kilocalories, maxFractionDigits: 0)
+        proteinText = NumberInput.text(nutrients.protein?.grams)
+        carbsText = NumberInput.text(nutrients.carbohydrate?.grams)
+        fatText = NumberInput.text(nutrients.fat?.grams)
+    }
 
     /// The numeric fields, each with the largest value it accepts. Bigger numbers are typing mistakes.
     enum Field: CaseIterable {
@@ -112,10 +203,11 @@ final class MealDraft {
             id: environment.newID(),
             localDay: day,
             slot: slot,
+            foodID: food?.id,
             label: trimmedName,
             grams: Mass(grams: grams),
             nutrients: nutrients,
-            source: .manual,
+            source: source,
             loggedAt: environment.now(),
             timeZoneID: timeZone.identifier
         )

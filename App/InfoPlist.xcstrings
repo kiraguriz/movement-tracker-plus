@@ -24,13 +24,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Counts your reps and checks your form during a set. Video stays on this iPhone."
+            "value" : "Counts your reps and checks your form during a set, and takes meal photos when you choose to. Video stays on this iPhone."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "训练时用来计数和检查动作，视频只在这部 iPhone 上处理。"
+            "value" : "训练时用来计数和检查动作，也用于你选择拍摄的餐食照片。视频只在这部 iPhone 上处理。"
           }
         }
       }

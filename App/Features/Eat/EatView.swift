@@ -81,9 +81,10 @@ struct EatView: View {
 
     @ViewBuilder
     private var addControl: some View {
-        if EatAddRoute.available.count > 1 {
+        let routes = EatAddRoute.offered(in: environment)
+        if routes.count > 1 {
             Menu {
-                ForEach(EatAddRoute.available) { route in
+                ForEach(routes) { route in
                     Button { addRoute = route } label: { Label(route.title, systemImage: route.systemImage) }
                 }
             } label: {
@@ -93,7 +94,7 @@ struct EatView: View {
             .accessibilityIdentifier(AccessibilityID.eatAdd)
         } else {
             Button {
-                addRoute = EatAddRoute.available.first
+                addRoute = routes.first
             } label: {
                 Image(systemName: "plus")
             }
