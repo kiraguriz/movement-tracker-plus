@@ -200,6 +200,7 @@ enum AccessibilityID {
     static let unitsSetting = "me.units"
     static let voiceCuesToggle = "me.voiceCues"
     static let coachToggle = "me.coach"
+    static let healthToggle = "me.health"
     static let coachConfirm = "me.coach.confirm"
     static let privacyLink = "me.privacy"
     static let profileEditor = "profileEditor"

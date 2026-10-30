@@ -377,6 +377,22 @@
         }
       }
     },
+    "Allow Movement Tracker+ to share data in the Health app." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow Movement Tracker+ to share data in the Health app."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在“健康”App 中允许 Movement Tracker+ 共享数据。"
+          }
+        }
+      }
+    },
     "Am I eating enough protein?" : {
       "localizations" : {
         "en" : {
@@ -405,6 +421,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "份量"
+          }
+        }
+      }
+    },
+    "Apple Health" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple 健康"
           }
         }
       }
@@ -1916,6 +1948,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "希腊酸奶"
+          }
+        }
+      }
+    },
+    "Health access is off" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health access is off"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未允许访问健康"
           }
         }
       }

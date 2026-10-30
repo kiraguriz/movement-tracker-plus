@@ -1,12 +1,17 @@
 import Domain
 import SwiftUI
 
-/// The Me tab's own state: the latest weight and the two settings. Profile and goal come from `UserSession`.
+/// The Me tab's own state: the latest weight and the settings. Profile and goal come from `UserSession`.
 @Observable
 final class MeModel {
     private(set) var latestWeight: BodyMeasurement?
     private(set) var voiceCues = SettingKey.voiceCues.defaultValue
     private(set) var coachEnabled = SettingKey.aiOptIn.defaultValue
+    private(set) var healthEnabled = SettingKey.appleHealth.defaultValue
+    /// False on a device without Health data, which hides the row. Every iPhone has it, so the row starts shown.
+    private(set) var isHealthAvailable = true
+    /// Health refused access when the switch asked for it: the alert says where to allow it.
+    var isHealthDenied = false
     var errorMessage: String?
 
     private let environment: AppEnvironment
@@ -19,7 +24,9 @@ final class MeModel {
         async let weightUpdates: Void = watchWeight()
         async let voiceUpdates: Void = watchVoiceCues()
         async let coachUpdates: Void = watchCoach()
-        _ = await (weightUpdates, voiceUpdates, coachUpdates)
+        async let healthUpdates: Void = watchHealth()
+        async let healthAvailability: Void = checkHealthAvailability()
+        _ = await (weightUpdates, voiceUpdates, coachUpdates, healthUpdates, healthAvailability)
     }
 
     private func watchWeight() async {
@@ -43,6 +50,17 @@ final class MeModel {
         )
     }
 
+    private func watchHealth() async {
+        await environment.settings.observe(SettingKey.appleHealth).forEachValue(
+            onFailure: { errorMessage = $0.localizedDescription },
+            { healthEnabled = $0 }
+        )
+    }
+
+    private func checkHealthAvailability() async {
+        isHealthAvailable = await environment.health.isAvailable()
+    }
+
     // MARK: Changes
 
     func setVoiceCues(_ isOn: Bool) {
@@ -59,6 +77,28 @@ final class MeModel {
         coachEnabled = isOn
         Task {
             if await !store(SettingKey.aiOptIn, isOn) { coachEnabled = previous }
+        }
+    }
+
+    /// Turning Health on asks for access first, and the switch moves only once exports can be written; the settings
+    /// stream then turns it on. Turning it off stops exports and leaves what is already in Health alone.
+    func setHealthEnabled(_ isOn: Bool) {
+        if isOn {
+            Task { await connectHealth() }
+        } else {
+            let previous = healthEnabled
+            healthEnabled = false
+            Task {
+                if await !store(SettingKey.appleHealth, false) { healthEnabled = previous }
+            }
+        }
+    }
+
+    private func connectHealth() async {
+        do {
+            if try await !environment.health.enable() { isHealthDenied = true }
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 

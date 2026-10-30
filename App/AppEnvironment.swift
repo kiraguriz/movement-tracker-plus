@@ -1,10 +1,13 @@
 import CoachKit
 import Domain
+import HealthBridge
 import Persistence
 import SwiftUI
 
 /// Port-typed dependencies, built at the composition root and injected through the SwiftUI environment.
-/// Every store comes from one `AppDatabase`; features see protocols, never the database.
+/// Every store comes from one `AppDatabase`; features see protocols, never the database. The workout, nutrition and
+/// body-measurement stores, and the profile store's weight, are wrapped so that what they save reaches Apple Health
+/// (`HealthSync`).
 struct AppEnvironment: Sendable {
     var workouts: any WorkoutStore
     var exercises: any ExerciseCatalogStore
@@ -27,6 +30,12 @@ struct AppEnvironment: Sendable {
     var coachChat: ChatService?
     /// True when `coach` runs over the canned Debug transport (`-MTCoachStub`). Always false in Release.
     var coachIsStub = false
+    /// Sends finished workouts, meals and weights to Apple Health while the user has it turned on.
+    var health: HealthSync
+    #if DEBUG
+    /// What the fake Health bridge recorded; nil unless the app runs with `-MTHealthStub`. Not compiled into Release.
+    var healthStub: HealthStubLog?
+    #endif
 
     init(
         database: AppDatabase,
@@ -35,11 +44,29 @@ struct AppEnvironment: Sendable {
         timeZone: @escaping @Sendable () -> TimeZone = { .autoupdatingCurrent },
         launch: LaunchOptions = LaunchOptions()
     ) {
-        workouts = database.workouts
+        let healthBridge: any HealthSync.Bridge
+        #if DEBUG
+        if launch.healthStub {
+            let log = HealthStubLog()
+            healthStub = log
+            healthBridge = HealthStubBridge(log: log, grantsAccess: !launch.healthStubDenies)
+        } else {
+            healthBridge = HealthKitBridge()
+        }
+        #else
+        healthBridge = HealthKitBridge()
+        #endif
+        // The exporter reads and updates through the plain stores; only the app's own writes go through the wrappers.
+        let health = HealthSync(
+            exports: database.healthExports, workouts: database.workouts, nutrition: database.nutrition,
+            bodyMeasurements: database.bodyMeasurements, settings: database.settings, bridge: healthBridge, now: now
+        )
+        self.health = health
+        workouts = HealthSyncingWorkoutStore(base: database.workouts, health: health)
         exercises = database.exercises
-        nutrition = database.nutrition
-        bodyMeasurements = database.bodyMeasurements
-        profiles = database.profiles
+        nutrition = HealthSyncingNutritionStore(base: database.nutrition, health: health)
+        bodyMeasurements = HealthSyncingBodyMeasurementStore(base: database.bodyMeasurements, health: health)
+        profiles = HealthSyncingProfileStore(base: database.profiles, health: health)
         coachInsights = database.coachInsights
         chat = database.chat
         settings = database.settings
@@ -51,12 +78,13 @@ struct AppEnvironment: Sendable {
 
         if let (client, isStub) = Self.makeCoachClient(launch: launch) {
             coachIsStub = isStub
-            coach = CoachService(client: client, insights: database.coachInsights, ids: ids)
+            let clock = EnvironmentCoachClock(currentDate: now)
+            coach = CoachService(client: client, insights: database.coachInsights, ids: ids, clock: clock)
             let toolbox = ChatToolbox(
                 workouts: database.workouts, nutrition: database.nutrition, body: database.bodyMeasurements,
-                profiles: database.profiles, timeZone: timeZone()
+                profiles: database.profiles, clock: clock, timeZone: timeZone()
             )
-            coachChat = ChatService(client: client, chats: database.chat, toolbox: toolbox, ids: ids)
+            coachChat = ChatService(client: client, chats: database.chat, toolbox: toolbox, ids: ids, clock: clock)
         }
     }
 
@@ -76,6 +104,17 @@ struct AppEnvironment: Sendable {
     var today: LocalDay { LocalDay(now(), in: timeZone()) }
 
     func newID() -> EntityID { ids.makeID() }
+}
+
+/// The coach's clock, following the environment's `now` so that "today" means the same thing in the coach as on screen.
+nonisolated struct EnvironmentCoachClock: CoachClock {
+    let currentDate: @Sendable () -> Date
+
+    func now() -> Date { currentDate() }
+
+    func sleep(for duration: Duration) async throws {
+        try await Task.sleep(for: duration)
+    }
 }
 
 // MARK: - Factories

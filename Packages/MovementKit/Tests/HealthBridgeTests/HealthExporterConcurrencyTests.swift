@@ -34,6 +34,30 @@ struct ExporterConcurrencyTests {
         #expect(await h.exporter.queuedCallers == 0)
     }
 
+    @Test func aDrainStopsWhereTheSwitchIsTurnedOffAndLeavesTheRestPending() async throws {
+        let h = Harness()
+        try await queueMeals(4, in: h)
+        await h.writer.holdWrites()
+        let isOn = Flag(true)
+
+        let drain = Task { try await h.exporter.drain(whileEnabled: { isOn.value }) }
+        try #require(await eventually { await h.writer.startedWrites == 1 })
+        isOn.value = false
+        await h.writer.releaseWrites()
+        let report = try await drain.value
+
+        #expect(report.synced == 1)
+        #expect(await h.writer.plans.map(\.entityID) == ["m0"], "nothing was written after the switch went off")
+        for index in 1..<4 {
+            let row = try #require(await h.exports.row(.meal, EntityID("m\(index)")))
+            #expect(row.status == .pending && row.attempts == 0 && row.lastError == nil, "m\(index) is untouched")
+        }
+
+        isOn.value = true
+        let next = try await h.exporter.drain(whileEnabled: { isOn.value })
+        #expect(next.synced == 3, "the rest goes out once the switch is on again")
+    }
+
     @Test func manyConcurrentDrainsAreStillOneWritePerRow() async throws {
         let h = Harness()
         try await queueMeals(8, in: h)
@@ -200,5 +224,18 @@ struct ExporterCancellationTests {
         await h.writer.releaseWrites()
         _ = try await running.value
         #expect(await h.writer.removalCalls.isEmpty)
+    }
+}
+
+/// A switch the test turns on and off while a drain runs.
+private final class Flag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var stored: Bool
+
+    init(_ value: Bool) { stored = value }
+
+    var value: Bool {
+        get { lock.withLock { stored } }
+        set { lock.withLock { stored = newValue } }
     }
 }

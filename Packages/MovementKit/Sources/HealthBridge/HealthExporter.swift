@@ -227,12 +227,16 @@ public actor HealthExporter {
 
     /// Writes every outstanding export that is due and records the result. Throws `CancellationError` when the
     /// calling task is cancelled; rows not reached stay as they were, and a cancelled write is not counted as a failure.
-    public func drain() async throws -> HealthDrainReport {
+    ///
+    /// `isEnabled` is asked before each row. Once it answers false the drain stops and leaves the rows it did not reach
+    /// as they were, so a switch that is turned off while a long drain runs stops the rest of it.
+    public func drain(whileEnabled isEnabled: @Sendable () async -> Bool = { true }) async throws -> HealthDrainReport {
         try await exclusively {
             var report = HealthDrainReport()
             let due = try await dueExports(into: &report)
             for row in due {
                 try Task.checkCancellation()
+                guard await isEnabled() else { break }
                 switch try await process(row) {
                 case .synced: report.synced += 1
                 case .failed: report.failed += 1

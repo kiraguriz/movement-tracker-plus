@@ -24,6 +24,9 @@ import Foundation
 ///   `-MTCoachURL`. `-MTCoachStubFail offline|budget|paused` makes every call fail that way.
 /// - `-MTAIOptIn`: with the in-memory database, start with the coach consent already given.
 /// - `-MTMealPhotoSample`: the meal photo sheet offers a generated sample photo (the Simulator has no camera).
+/// - `-MTHealthStub`: Apple Health runs over an in-process fake that records what would be written or removed and
+///   answers the access request without the system sheet; Me shows its counters. `-MTHealthStub denied` makes the
+///   access request come back denied. The stub is not compiled into Release, and neither is this flag.
 struct LaunchOptions: Equatable {
     enum Seed: String {
         case none, profile, sample
@@ -44,6 +47,10 @@ struct LaunchOptions: Equatable {
     var coachStubFailure: String?
     var aiOptIn = false
     var mealPhotoSample = false
+    #if DEBUG
+    var healthStub = false
+    var healthStubDenies = false
+    #endif
 
     init() {}
 
@@ -63,6 +70,10 @@ struct LaunchOptions: Equatable {
         coachStubFailure = Self.value(after: "-MTCoachStubFail", in: arguments)
         aiOptIn = arguments.contains("-MTAIOptIn")
         mealPhotoSample = arguments.contains("-MTMealPhotoSample")
+        #if DEBUG
+        healthStub = arguments.contains("-MTHealthStub")
+        healthStubDenies = healthStub && Self.value(after: "-MTHealthStub", in: arguments) == "denied"
+        #endif
     }
 
     /// The options of this process.

@@ -52,6 +52,7 @@ final class UserSession {
 /// Chooses between the first-run flow and the tabs, and puts the environment and session in the SwiftUI environment.
 struct AppGate: View {
     let environment: AppEnvironment
+    @Environment(\.scenePhase) private var scenePhase
     @State private var session: UserSession
     @State private var attempt = 0
 
@@ -87,5 +88,9 @@ struct AppGate: View {
         .environment(session)
         .errorAlert($session.failure)
         .task(id: attempt) { await session.run() }
+        // Writes whatever Health could not take earlier: at launch and every time the app comes back.
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            if phase == .active { environment.health.drain() }
+        }
     }
 }

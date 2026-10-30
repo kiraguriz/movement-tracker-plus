@@ -53,6 +53,20 @@ struct MeView: View {
                 }
                 .accessibilityIdentifier(AccessibilityID.privacyLink)
             }
+            if model.isHealthAvailable {
+                Section {
+                    Toggle(isOn: Binding(get: { model.healthEnabled }, set: model.setHealthEnabled)) {
+                        Label("Apple Health", systemImage: "heart")
+                    }
+                    .frame(minHeight: 44)
+                    .accessibilityIdentifier(AccessibilityID.healthToggle)
+                    .alert("Health access is off", isPresented: $model.isHealthDenied) {
+                        Button("OK", role: .cancel) {}
+                    } message: {
+                        Text("Allow Movement Tracker+ to share data in the Health app.")
+                    }
+                }
+            }
         }
         .navigationTitle("Me")
         .toolbar {
@@ -82,6 +96,9 @@ struct MeView: View {
             Text("Coach sends your messages, workouts, meals and body data to Meta's Muse model. See What Muse sees for the full list.")
         }
         .errorAlert($model.errorMessage)
+        #if DEBUG
+        .safeAreaInset(edge: .bottom) { HealthStubReadout() }
+        #endif
         .testIdentifier(AccessibilityID.screenMe)
     }
 
