@@ -1,0 +1,5 @@
+# Real pose recordings (.jsonl, skeleton coordinates only) are committed.
+# Videos show a face and are large: keep them out of git.
+*.mov
+*.mp4
+*.m4v
