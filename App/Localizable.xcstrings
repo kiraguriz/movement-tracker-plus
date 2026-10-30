@@ -1119,6 +1119,38 @@
         }
       }
     },
+    "Delete Meal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Meal"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除餐食"
+          }
+        }
+      }
+    },
+    "Delete this meal?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this meal?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除这条餐食？"
+          }
+        }
+      }
+    },
     "Dinner" : {
       "localizations" : {
         "en" : {

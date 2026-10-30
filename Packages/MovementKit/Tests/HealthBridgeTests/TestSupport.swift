@@ -254,6 +254,8 @@ actor FakeHealthExportStore: HealthExportStore {
     // Like GRDB's async access, a call made from a cancelled task throws before it touches the database.
     func upsert(_ export: HealthExport) async throws {
         try Task.checkCancellation()
+        // Like the real store, a row never moves to an older version.
+        if let stored = row(export.entity, export.entityID), stored.syncVersion > export.syncVersion { return }
         seed(export)
     }
 

@@ -17,11 +17,7 @@ public struct ProfileRepository: ProfileStore {
 
     public func save(_ profile: Profile) async throws {
         let record = ProfileRecord(profile)
-        try await database.writer.write { db in
-            // One profile: a new id replaces the old row.
-            try ProfileRecord.filter(Column("id") != record.id).deleteAll(db)
-            try record.save(db)
-        }
+        try await database.writer.write { db in try Self.store(record, in: db) }
     }
 
     public func observeProfile() -> ValueStream<Profile?> {
@@ -36,10 +32,7 @@ public struct ProfileRepository: ProfileStore {
 
     public func setActiveGoal(_ goal: Goal) async throws {
         let record = GoalRecord(goal, isActive: true)
-        try await database.writer.write { db in
-            try db.execute(sql: "UPDATE goal SET is_active = 0 WHERE is_active = 1 AND id <> ?", arguments: [record.id])
-            try record.save(db)
-        }
+        try await database.writer.write { db in try Self.storeActive(record, in: db) }
     }
 
     public func clearActiveGoal() async throws {
@@ -60,6 +53,29 @@ public struct ProfileRepository: ProfileStore {
                 .fetchAll(db)
                 .map { try $0.domain() }
         }
+    }
+
+    @discardableResult
+    public func saveProfile(_ profile: Profile, activeGoal goal: Goal, weight: BodyMeasurement?) async throws -> BodyMeasurement? {
+        let profileRecord = ProfileRecord(profile)
+        let goalRecord = GoalRecord(goal, isActive: true)
+        let weightRecord = weight.map { BodyMeasurementRecord($0) }
+        return try await database.writer.write { db in
+            try Self.store(profileRecord, in: db)
+            try Self.storeActive(goalRecord, in: db)
+            return try weightRecord.map { try BodyMeasurementRepository.store($0, in: db).domain() }
+        }
+    }
+
+    static func store(_ record: ProfileRecord, in db: Database) throws {
+        // One profile: a new id replaces the old row.
+        try ProfileRecord.filter(Column("id") != record.id).deleteAll(db)
+        try record.save(db)
+    }
+
+    static func storeActive(_ record: GoalRecord, in db: Database) throws {
+        try db.execute(sql: "UPDATE goal SET is_active = 0 WHERE is_active = 1 AND id <> ?", arguments: [record.id])
+        try record.save(db)
     }
 
     static func fetchProfile(_ db: Database) throws -> Profile? {

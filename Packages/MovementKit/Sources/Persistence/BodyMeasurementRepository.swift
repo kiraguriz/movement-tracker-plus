@@ -17,15 +17,7 @@ public struct BodyMeasurementRepository: BodyMeasurementStore {
         guard !measurements.isEmpty else { return }
         let records = measurements.map { BodyMeasurementRecord($0) }
         try await database.writer.write { db in
-            for var record in records {
-                // A Health sample that is already stored updates its row instead of adding a second one.
-                if let uuid = record.hkUUID,
-                   let existingID = try String.fetchOne(db, sql: "SELECT id FROM body_measurement WHERE hk_uuid = ?", arguments: [uuid])
-                {
-                    record.id = existingID
-                }
-                try record.save(db)
-            }
+            for record in records { try Self.store(record, in: db) }
         }
     }
 
@@ -49,6 +41,20 @@ public struct BodyMeasurementRepository: BodyMeasurementStore {
 
     public func observeMeasurements(kind: BodyMeasurementKind, from: LocalDay?, through: LocalDay?) -> ValueStream<[BodyMeasurement]> {
         database.observe { db in try Self.fetch(db, kind: kind, from: from, through: through) }
+    }
+
+    /// Returns the record as stored: a Health sample that was already there keeps its row's id.
+    @discardableResult
+    static func store(_ record: BodyMeasurementRecord, in db: Database) throws -> BodyMeasurementRecord {
+        var record = record
+        // A Health sample that is already stored updates its row instead of adding a second one.
+        if let uuid = record.hkUUID,
+           let existingID = try String.fetchOne(db, sql: "SELECT id FROM body_measurement WHERE hk_uuid = ?", arguments: [uuid])
+        {
+            record.id = existingID
+        }
+        try record.save(db)
+        return record
     }
 
     static func fetch(_ db: Database, kind: BodyMeasurementKind, from: LocalDay?, through: LocalDay?) throws -> [BodyMeasurement] {

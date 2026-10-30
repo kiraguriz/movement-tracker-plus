@@ -10,7 +10,22 @@ public struct HealthExportRepository: HealthExportStore {
     }
 
     public func upsert(_ export: HealthExport) async throws {
-        try await database.writer.write { db in try HealthExportRecord(export).save(db) }
+        let record = HealthExportRecord(export)
+        try await database.writer.write { db in
+            // A row never moves to an older sync version: a writer holding a stale copy changes nothing.
+            try db.execute(sql: """
+                INSERT INTO health_export (entity, entity_id, sync_identifier, sync_version, hk_uuid, status, attempts, last_error, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (entity, entity_id) DO UPDATE SET
+                    sync_identifier = excluded.sync_identifier, sync_version = excluded.sync_version, hk_uuid = excluded.hk_uuid,
+                    status = excluded.status, attempts = excluded.attempts, last_error = excluded.last_error,
+                    updated_at = excluded.updated_at
+                WHERE health_export.sync_version <= excluded.sync_version
+                """, arguments: [
+                    record.entity.rawValue, record.entityID, record.syncIdentifier, record.syncVersion, record.hkUUID,
+                    record.status.rawValue, record.attempts, record.lastError, record.updatedAt,
+                ])
+        }
     }
 
     public func export(entity: HealthEntityKind, entityID: EntityID) async throws -> HealthExport? {

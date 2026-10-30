@@ -200,6 +200,10 @@ actor FakeProfileStore: ProfileStore {
     func clearActiveGoal() async throws { writes += 1 }
     nonisolated func observeActiveGoal() -> ValueStream<Goal?> { emptyStream(nil) }
     func goalHistory(limit: Int) async throws -> [Goal] { goal.map { [$0] } ?? [] }
+    func saveProfile(_ profile: Profile, activeGoal goal: Goal, weight: BodyMeasurement?) async throws -> BodyMeasurement? {
+        writes += 1
+        return weight
+    }
 }
 
 /// The four data stores a toolbox reads, with their write counters.

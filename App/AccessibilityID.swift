@@ -152,6 +152,7 @@ enum AccessibilityID {
     static let mealSave = "meal.save"
     static let mealCancel = "meal.cancel"
     static let mealDelete = "meal.delete"
+    static let mealDeleteConfirm = "meal.delete.confirm"
 
     static func day(_ day: LocalDay) -> String { "eat.day.\(day.string)" }
     static func mealRow(_ label: String) -> String { "meal.row.\(label)" }

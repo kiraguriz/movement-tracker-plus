@@ -48,6 +48,43 @@ final class MealFlowUITests: AppUITestCase {
         XCTAssertTrue(waitUntil { self.value(of: ID.todayKcal, in: app).hasPrefix("0") }, "Today: \(value(of: ID.todayKcal, in: app))")
     }
 
+    /// The editor's Delete asks first: cancelling keeps the meal, confirming removes it.
+    @MainActor
+    func testDeletingFromTheEditorAsksForConfirmation() {
+        let app = launchApp(seed: .profile, startTab: "eat")
+        tap(ID.eatAdd, in: app)
+        enter("Oats", into: app.textFields[ID.mealName])
+        enter("300", into: app.textFields[ID.mealKcal])
+        tap(ID.mealSave, in: app)
+        XCTAssertTrue(element(ID.mealRow("Oats"), in: app).waitForExistence(timeout: 10), "the meal is not listed")
+        XCTAssertTrue(waitUntil { self.value(of: ID.eatKcal, in: app).hasPrefix("300") })
+
+        element(ID.mealRow("Oats"), in: app).tap()
+        XCTAssertTrue(element(ID.mealEditor, in: app).waitForExistence(timeout: 10))
+        tap(ID.mealDelete, in: app)
+        let confirm = app.buttons.matching(identifier: ID.mealDeleteConfirm).firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 10), "Delete did not ask first")
+        XCTAssertTrue(element(ID.mealEditor, in: app).exists, "the editor closed before the answer")
+        attachScreenshot("meal-delete-confirmation")
+
+        dismissDialog(in: app)
+        XCTAssertTrue(confirm.waitForNonExistence(timeout: 10), "the dialog stayed")
+        XCTAssertTrue(element(ID.mealEditor, in: app).exists, "cancelling closed the editor")
+        tap(ID.mealCancel, in: app)
+        XCTAssertTrue(element(ID.mealEditor, in: app).waitForNonExistence(timeout: 10))
+        XCTAssertTrue(element(ID.mealRow("Oats"), in: app).exists, "cancelling deleted the meal")
+        XCTAssertTrue(value(of: ID.eatKcal, in: app).hasPrefix("300"), "Eat: \(value(of: ID.eatKcal, in: app))")
+
+        element(ID.mealRow("Oats"), in: app).tap()
+        XCTAssertTrue(element(ID.mealEditor, in: app).waitForExistence(timeout: 10))
+        tap(ID.mealDelete, in: app)
+        XCTAssertTrue(confirm.waitForExistence(timeout: 10), "Delete did not ask the second time")
+        confirm.tap()
+        XCTAssertTrue(element(ID.mealEditor, in: app).waitForNonExistence(timeout: 10), "the editor stayed open")
+        XCTAssertTrue(element(ID.mealRow("Oats"), in: app).waitForNonExistence(timeout: 10), "the meal is still listed")
+        XCTAssertTrue(waitUntil { self.value(of: ID.eatKcal, in: app).hasPrefix("0") }, "Eat: \(value(of: ID.eatKcal, in: app))")
+    }
+
     @MainActor
     func testAMealWithMissingValuesIsAllowed() {
         let app = launchApp(seed: .profile, startTab: "eat")

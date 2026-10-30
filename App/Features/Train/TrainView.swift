@@ -4,9 +4,11 @@ import SwiftUI
 /// The Train tab: start a workout, add exercises, log sets by camera or by hand, then finish.
 struct TrainView: View {
     @Environment(\.appEnvironment) private var environment
+    /// Changes whenever Train may have been left behind by a workout started elsewhere.
+    let refresh: Int
 
     var body: some View {
-        TrainScreen(environment: environment)
+        TrainScreen(environment: environment, refresh: refresh)
     }
 }
 
@@ -16,9 +18,11 @@ private struct TrainScreen: View {
     @State private var isConfirmingDiscard = false
 
     private let environment: AppEnvironment
+    private let refresh: Int
 
-    init(environment: AppEnvironment) {
+    init(environment: AppEnvironment, refresh: Int) {
         self.environment = environment
+        self.refresh = refresh
         _model = State(initialValue: TrainModel(environment: environment))
     }
 
@@ -36,6 +40,7 @@ private struct TrainScreen: View {
         .navigationTitle("Train")
         .toolbar { toolbar }
         .task { await model.run() }
+        .onChange(of: refresh) { model.refreshDraft() }
         .sheet(isPresented: $model.isPickingExercise) {
             ExercisePickerSheet(model: model)
         }
@@ -221,6 +226,6 @@ struct SetRow: View {
 
 #Preview {
     SeededPreview { _ in
-        NavigationStack { TrainView() }
+        NavigationStack { TrainView(refresh: 0) }
     }
 }

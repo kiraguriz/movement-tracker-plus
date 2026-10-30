@@ -294,6 +294,48 @@ struct SettingsAndHealthRepositoryTests {
         #expect(try await store.outstanding(limit: 10).count == 1)
     }
 
+    @Test func aHealthExportNeverMovesToAnOlderVersion() async throws {
+        let store = try makeDatabase().healthExports
+        func row(_ version: Int, _ status: HealthExportStatus, uuid: String? = nil, at seconds: TimeInterval) -> HealthExport {
+            HealthExport(entity: .meal, entityID: "m1", syncIdentifier: "m1", syncVersion: version, healthUUID: uuid, status: status, updatedAt: Fixture.at(seconds))
+        }
+        let newest = row(3, .pending, uuid: "HK-1", at: 30)
+        try await store.upsert(row(1, .pending, at: 10))
+        try await store.upsert(newest)
+
+        // A writer that still holds version 2 as synced must not turn the pending version 3 into a synced one.
+        try await store.upsert(row(2, .synced, uuid: "HK-0", at: 40))
+        #expect(try await store.export(entity: .meal, entityID: "m1") == newest)
+        try await store.upsert(row(1, .failed, at: 50))
+        #expect(try await store.export(entity: .meal, entityID: "m1") == newest)
+        #expect(try await store.outstanding(limit: 10).map(\.syncVersion) == [3])
+
+        // The same version is allowed (a removal puts its own row back to pending), and a newer one wins.
+        let again = row(3, .failed, uuid: "HK-1", at: 60)
+        try await store.upsert(again)
+        #expect(try await store.export(entity: .meal, entityID: "m1") == again)
+        let next = row(4, .pending, uuid: "HK-1", at: 70)
+        try await store.upsert(next)
+        #expect(try await store.export(entity: .meal, entityID: "m1") == next)
+
+        // Recording a result never changes the version.
+        try await store.markFailed(entity: .meal, entityID: "m1", error: "x", at: Fixture.at(80))
+        try await store.markSynced(entity: .meal, entityID: "m1", healthUUID: "HK-2", at: Fixture.at(90))
+        #expect(try await store.export(entity: .meal, entityID: "m1")?.syncVersion == 4)
+    }
+
+    @Test func staleUpsertsDoNotTouchOtherRowsOrCreateDuplicates() async throws {
+        let database = try makeDatabase()
+        let store = database.healthExports
+        try await store.upsert(HealthExport(entity: .meal, entityID: "m1", syncIdentifier: "m1", syncVersion: 2, updatedAt: Fixture.at(0)))
+        try await store.upsert(HealthExport(entity: .workout, entityID: "m1", syncIdentifier: "w", syncVersion: 1, updatedAt: Fixture.at(0)))
+        // Version 1 of the meal is older than the stored version 2 of the meal; the workout with the same id is a different row.
+        try await store.upsert(HealthExport(entity: .meal, entityID: "m1", syncIdentifier: "m1", syncVersion: 1, updatedAt: Fixture.at(5)))
+        #expect(try database.count("health_export") == 2)
+        #expect(try await store.export(entity: .meal, entityID: "m1")?.syncVersion == 2)
+        #expect(try await store.export(entity: .workout, entityID: "m1")?.syncVersion == 1)
+    }
+
     @Test func outstandingExportsAreOldestFirstAndLimited() async throws {
         let database = try makeDatabase()
         let store = database.healthExports

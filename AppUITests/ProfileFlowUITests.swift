@@ -100,6 +100,7 @@ final class ProfileFlowUITests: AppUITestCase {
         )
 
         openTab(3, in: app)
+        scrollClearOfBottomBars(element(ID.privacyLink, in: app), in: app)
         tap(ID.privacyLink, in: app)
         XCTAssertTrue(element(ID.screenPrivacy, in: app).waitForExistence(timeout: 10))
         attachScreenshot("privacy")
@@ -174,15 +175,20 @@ final class ProfileFlowUITests: AppUITestCase {
     @MainActor
     func testPrivacyScreenStatesWhatLeavesThePhone() {
         let app = launchApp(seed: .profile, startTab: "me")
+        scrollClearOfBottomBars(element(ID.privacyLink, in: app), in: app)
         tap(ID.privacyLink, in: app)
         XCTAssertTrue(element(ID.screenPrivacy, in: app).waitForExistence(timeout: 10))
-        for expected in ["Sent to Muse", "Your messages", "Workouts", "Meals", "Body and goal", "Skeleton drawings", "Meal photos",
-                         "Never leaves your phone", "Your name", "Camera video"] {
-            let match = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", expected)).firstMatch
-            XCTAssertTrue(match.waitForExistence(timeout: 5), "the privacy screen does not say '\(expected)'")
+        // The list builds its lower rows only when they are scrolled to, so the checks follow the screen from top to bottom.
+        let lines = [
+            ("BEGINSWITH", "Sent to Muse"), ("BEGINSWITH", "Your messages"), ("BEGINSWITH", "Workouts"), ("BEGINSWITH", "Meals"),
+            ("BEGINSWITH", "Body and goal"), ("BEGINSWITH", "Skeleton drawings"), ("BEGINSWITH", "Meal photos"),
+            ("CONTAINS", "Muse is Meta's AI model"),
+            ("BEGINSWITH", "Never leaves your phone"), ("BEGINSWITH", "Your name"), ("BEGINSWITH", "Camera video"),
+        ]
+        for (comparison, text) in lines {
+            let match = app.descendants(matching: .any).matching(NSPredicate(format: "label \(comparison) %@", text)).firstMatch
+            scrollClearOfBottomBars(match, in: app)
         }
-        let consent = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "Muse is Meta's AI model")).firstMatch
-        XCTAssertTrue(consent.waitForExistence(timeout: 5), "the privacy screen does not say who receives the data")
     }
 
     @MainActor

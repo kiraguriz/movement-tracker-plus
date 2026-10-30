@@ -21,14 +21,12 @@ struct PerformanceTests {
         for frame in frames.prefix(300) { _ = pipeline.process(frame) }
         var timed = try MotionPipeline(spec: spec)
         var sink = 0
-        let clock = ContinuousClock()
-        let elapsed = clock.measure {
-            for frame in frames { sink &+= timed.process(frame).count }
-        }
+        // CPU time of this thread, not wall time: a busy machine that delays the thread is not engine cost.
+        let began = clock_gettime_nsec_np(CLOCK_THREAD_CPUTIME_ID)
+        for frame in frames { sink &+= timed.process(frame).count }
+        let nanoseconds = clock_gettime_nsec_np(CLOCK_THREAD_CPUTIME_ID) - began
         #expect(sink > 0)
-        let parts = elapsed.components
-        let seconds = Double(parts.seconds) + Double(parts.attoseconds) / 1e18
-        return seconds * 1000 / Double(frames.count)
+        return Double(nanoseconds) / 1e6 / Double(frames.count)
     }
 
     @Test("a squat frame costs well under the per-frame budget")

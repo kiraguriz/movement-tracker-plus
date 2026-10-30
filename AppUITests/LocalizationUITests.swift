@@ -35,6 +35,7 @@ final class LocalizationUITests: AppUITestCase {
 
         openTab(3, in: app)
         XCTAssertTrue(app.staticTexts["减重"].waitForExistence(timeout: 10) || app.staticTexts["减重"].exists)
+        scrollClearOfBottomBars(element(ID.privacyLink, in: app), in: app)
         XCTAssertTrue(app.staticTexts["Muse 能看到什么"].exists || app.buttons["Muse 能看到什么"].exists, "privacy row")
     }
 }

@@ -229,6 +229,85 @@ struct BodyProfileGoalRepositoryTests {
         #expect(try await store.activeGoal()?.id == "g1", "the deactivation was rolled back with the failed insert")
     }
 
+    // MARK: Profile, goal and weight together
+
+    static func onboardingWeight(_ id: String = "w-new", _ kg: Double = 82) -> BodyMeasurement {
+        BodyMeasurement(id: EntityID(id), kind: .weight, value: kg, measuredAt: Fixture.at(100), timeZone: Fixture.chicago, source: .app)
+    }
+
+    @Test func profileGoalAndWeightAreStoredTogether() async throws {
+        let database = try makeDatabase()
+        let store = database.profiles
+        try await store.setActiveGoal(Self.goal("g-old", kcal: 2300, createdAt: 0))
+
+        let saved = try await store.saveProfile(Self.profile("p1"), activeGoal: Self.goal("g-new", kcal: 2100, createdAt: 100), weight: Self.onboardingWeight())
+        #expect(saved == Self.onboardingWeight())
+        #expect(try await store.profile() == Self.profile("p1"))
+        #expect(try await store.activeGoal()?.id == "g-new")
+        #expect(try await store.goalHistory(limit: 10).map(\.isActive) == [true, false], "the old goal is deactivated")
+        #expect(try await database.bodyMeasurements.latest(kind: .weight) == Self.onboardingWeight())
+    }
+
+    @Test func withoutAWeightOnlyTheProfileAndTheGoalAreStored() async throws {
+        let database = try makeDatabase()
+        let store = database.profiles
+        let saved = try await store.saveProfile(Self.profile(), activeGoal: Self.goal("g1"), weight: nil)
+        #expect(saved == nil)
+        #expect(try await store.profile() == Self.profile())
+        #expect(try await store.activeGoal()?.id == "g1")
+        #expect(try database.count("body_measurement") == 0)
+    }
+
+    @Test func theReturnedMeasurementIsTheStoredOne() async throws {
+        let database = try makeDatabase()
+        let store = database.profiles
+        try await database.bodyMeasurements.save(Self.weight("b1", 80, at: 0, source: .health, hk: "HK-1"))
+        // A Health sample that is already stored keeps its row's id, and the caller gets that row back.
+        let saved = try await store.saveProfile(Self.profile(), activeGoal: Self.goal("g1"), weight: Self.weight("b2", 79.5, at: 0, source: .health, hk: "HK-1"))
+        #expect(saved?.id == "b1" && saved?.value == 79.5)
+        #expect(try database.count("body_measurement") == 1)
+    }
+
+    @Test("a failure while writing any part rolls back all of it", arguments: ["goal", "weight"])
+    func aFailureRollsBackEverything(failing part: String) async throws {
+        let database = try makeDatabase()
+        let store = database.profiles
+        let oldWeight = Self.onboardingWeight("w-old", 80)
+        try await store.saveProfile(Self.profile("p-old"), activeGoal: Self.goal("g-old", kcal: 2300), weight: oldWeight)
+
+        var newGoal = Self.goal("g-new", kcal: 2100, createdAt: 100)
+        var newWeight = Self.onboardingWeight("w-new", 82)
+        if part == "goal" { newGoal.kcal = 0 } else { newWeight.value = 0 }
+        await #expect(throws: DatabaseError.self) {
+            try await store.saveProfile(Self.profile("p-new"), activeGoal: newGoal, weight: newWeight)
+        }
+
+        #expect(try await store.profile()?.id == "p-old", "the profile written before the failure was rolled back")
+        #expect(try await store.activeGoal()?.id == "g-old", "the old goal is still the active one")
+        #expect(try database.count("goal") == 1)
+        #expect(try await database.bodyMeasurements.measurements(kind: .weight, from: nil, through: nil) == [oldWeight])
+    }
+
+    @Test func retryingAfterAFailureAndRepeatingASuccessLeaveOneOfEach() async throws {
+        let database = try makeDatabase()
+        let store = database.profiles
+        var broken = Self.onboardingWeight("w1", 82)
+        broken.value = 0
+        await #expect(throws: DatabaseError.self) {
+            try await store.saveProfile(Self.profile("p1"), activeGoal: Self.goal("g1"), weight: broken)
+        }
+        #expect(try database.count("profile") == 0 && database.count("goal") == 0 && database.count("body_measurement") == 0)
+
+        // The retry reuses the ids of the first attempt and can carry corrected values.
+        try await store.saveProfile(Self.profile("p1"), activeGoal: Self.goal("g1", kcal: 2200), weight: Self.onboardingWeight("w1", 82))
+        try await store.saveProfile(Self.profile("p1"), activeGoal: Self.goal("g1", kcal: 2150), weight: Self.onboardingWeight("w1", 81.5))
+        #expect(try database.count("profile") == 1)
+        #expect(try database.count("goal") == 1)
+        #expect(try database.count("body_measurement") == 1)
+        #expect(try await store.activeGoal()?.kcal == 2150)
+        #expect(try await database.bodyMeasurements.latest(kind: .weight)?.value == 81.5)
+    }
+
     @Test func clearingTheActiveGoalKeepsItInHistory() async throws {
         let store = try makeDatabase().profiles
         try await store.setActiveGoal(Self.goal("g1"))

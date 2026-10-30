@@ -6,6 +6,7 @@ struct MealEditorSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var draft: MealDraft
     @State private var isSaving = false
+    @State private var isConfirmingDelete = false
     @State private var errorMessage: String?
 
     private let day: LocalDay
@@ -68,18 +69,9 @@ struct MealEditorSheet: View {
                     macroField(.carbs, field: .carbs, text: $draft.carbsText, identifier: AccessibilityID.mealCarbs)
                     macroField(.fat, field: .fat, text: $draft.fatText, identifier: AccessibilityID.mealFat)
                 }
-                if let onDelete {
+                if onDelete != nil {
                     Section {
-                        Button("Delete", role: .destructive) {
-                            Task {
-                                do {
-                                    try await onDelete()
-                                    dismiss()
-                                } catch {
-                                    errorMessage = error.localizedDescription
-                                }
-                            }
-                        }
+                        Button("Delete", role: .destructive) { isConfirmingDelete = true }
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .accessibilityIdentifier(AccessibilityID.mealDelete)
                     }
@@ -99,6 +91,10 @@ struct MealEditorSheet: View {
                         .disabled(!draft.isValid || isSaving)
                         .accessibilityIdentifier(AccessibilityID.mealSave)
                 }
+            }
+            .confirmationDialog("Delete this meal?", isPresented: $isConfirmingDelete, titleVisibility: .visible) {
+                Button("Delete Meal", role: .destructive) { Task { await delete() } }
+                    .accessibilityIdentifier(AccessibilityID.mealDeleteConfirm)
             }
             .errorAlert($errorMessage)
         }
@@ -129,6 +125,16 @@ struct MealEditorSheet: View {
             isInvalid: draft.input(field).isInvalid,
             identifier: identifier
         )
+    }
+
+    private func delete() async {
+        guard let onDelete else { return }
+        do {
+            try await onDelete()
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     private func save() async {

@@ -115,6 +115,12 @@ public protocol ProfileStore: Sendable {
     func observeActiveGoal() -> ValueStream<Goal?>
     /// Newest first, including inactive goals.
     func goalHistory(limit: Int) async throws -> [Goal]
+    /// Stores `profile` (as `save(_:)` does), makes `goal` the active goal (as `setActiveGoal(_:)` does) and, if given,
+    /// stores the weight measurement, all in one transaction: all of them or none. Calling it again with the same
+    /// ids updates the same rows, so a retry leaves one profile, one active goal and one measurement. Returns the
+    /// stored measurement, for a caller that exports it to Health.
+    @discardableResult
+    func saveProfile(_ profile: Profile, activeGoal goal: Goal, weight: BodyMeasurement?) async throws -> BodyMeasurement?
 }
 
 // MARK: - Coach insights
@@ -189,6 +195,7 @@ extension SettingsStore {
 // MARK: - Health export
 
 public protocol HealthExportStore: Sendable {
+    /// Inserts the row or replaces the stored one, unless the stored one has a newer `syncVersion`: then nothing changes.
     func upsert(_ export: HealthExport) async throws
     func export(entity: HealthEntityKind, entityID: EntityID) async throws -> HealthExport?
     /// Exports still `pending` or `failed`, oldest first.

@@ -385,18 +385,24 @@ struct ReplayPoseSourceTests {
         #expect(clock.sleeping == 0)
     }
 
-    @Test func stoppingEarlyCancelsTheReplay() async {
-        let clock = ContinuousClock()
-        let source = ReplayPoseSource(fixture: fixture(frames: sampleFrames(count: 600)), pacing: .realTime(), clock: clock)
-        var count = 0
-        let start = clock.now
-        for await _ in source.frames() {
-            count += 1
-            if count == 3 { break }
+    @Test func stoppingEarlyCancelsTheReplay() async throws {
+        // On this clock a frame that is due now arrives at once and any later one waits until it is cancelled. Giving
+        // the first three frames one timestamp makes the replay deliver them and then park on the fourth, so the test
+        // needs no real time.
+        let clock = HangingClock()
+        var frames = sampleFrames(count: 600)
+        frames[1].t = frames[0].t
+        frames[2].t = frames[0].t
+        let source = ReplayPoseSource(fixture: fixture(frames: frames), pacing: .realTime(), clock: clock)
+        var received: [PoseFrame] = []
+        for await frame in source.frames() {
+            received.append(frame)
+            if received.count == 3 { break }
         }
-        #expect(count == 3)
-        // Played to the end, the 600 frames at 30 fps take 20 s. Half of that leaves a busy machine ample room
-        // and still fails a replay that does not stop.
-        #expect(clock.now - start < .seconds(10))
+        #expect(received == Array(frames.prefix(3)))
+        // Leaving the loop ended the stream, which cancelled the replay out of its wait for frame 3.
+        for _ in 0..<400 where clock.cancelledSleeps == 0 { try await Task.sleep(for: .milliseconds(5)) }
+        #expect(clock.cancelledSleeps == 1)
+        #expect(clock.sleeping == 0)
     }
 }

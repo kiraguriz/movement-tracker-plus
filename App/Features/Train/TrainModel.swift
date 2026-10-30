@@ -68,12 +68,22 @@ final class TrainModel {
     /// An unfinished workout survives relaunches and crashes.
     private func resumeDraft() async {
         defer { isLoaded = true }
-        guard workout == nil else { return }
         do {
-            workout = try await environment.workouts.latestDraft()
+            try await adoptLatestDraft()
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    /// Looks for a draft again, for one that was started elsewhere (the coach) since this screen loaded. It runs
+    /// after the changes already queued and does nothing while a workout is open here, so it never disturbs one.
+    func refreshDraft() {
+        perform { try await self.adoptLatestDraft() }
+    }
+
+    private func adoptLatestDraft() async throws {
+        guard workout == nil, let draft = try await environment.workouts.latestDraft(), workout == nil else { return }
+        workout = draft
     }
 
     // MARK: Reading
@@ -92,6 +102,10 @@ final class TrainModel {
 
     func start() {
         perform {
+            // A draft that is already stored (one the coach started that this screen has not picked up yet) is resumed,
+            // never joined by a second one that would hide it.
+            try await self.adoptLatestDraft()
+            guard self.workout == nil else { return }
             let transition = self.reducer.start(at: self.environment.now(), in: self.environment.timeZone())
             try await self.environment.workouts.apply(transition.effects)
             self.workout = transition.workout

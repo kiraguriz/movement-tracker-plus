@@ -41,7 +41,9 @@ class AppUITestCase: XCTestCase {
         static let mealKcal = "meal.kcal"
         static let mealProtein = "meal.protein"
         static let mealSave = "meal.save"
+        static let mealCancel = "meal.cancel"
         static let mealDelete = "meal.delete"
+        static let mealDeleteConfirm = "meal.delete.confirm"
 
         static let editProfile = "me.edit"
         static let meKcal = "me.kcal"

@@ -217,27 +217,34 @@ final class ProfileDraft {
         case incomplete
     }
 
-    /// Writes the weight, the new active goal and the profile, in that order, so an interrupted first run
-    /// still starts onboarding again (the profile is what ends it).
+    private struct AttemptIDs {
+        let measurement: EntityID
+        let goal: EntityID
+        let profile: EntityID
+    }
+
+    /// Set by the first attempt of a save and cleared once it succeeds.
+    @ObservationIgnored private var attemptIDs: AttemptIDs?
+
+    /// Writes the profile, the new active goal and, when the weight changed, a weight measurement in one transaction,
+    /// so an interrupted save leaves what was stored before. A failed save keeps the ids it used, so trying again
+    /// rewrites the same rows instead of adding a second weight or goal. Returns the stored measurement, if any.
     @MainActor
-    func save(using environment: AppEnvironment, existing: Profile?, latestWeight: Mass?) async throws {
+    @discardableResult
+    func save(using environment: AppEnvironment, existing: Profile?, latestWeight: Mass?) async throws -> BodyMeasurement? {
         guard let plan, let sex, let birthYear, let height, let weight else { throw SaveError.incomplete }
         let now = environment.now()
         let timeZone = environment.timeZone()
+        let ids = attemptIDs ?? AttemptIDs(measurement: environment.newID(), goal: environment.newID(), profile: environment.newID())
+        attemptIDs = ids
 
         let weightChanged = latestWeight.map { abs($0.kilograms - weight.kilograms) > 0.05 } ?? true
-        if weightChanged {
-            try await environment.bodyMeasurements.save(BodyMeasurement(
-                id: environment.newID(), kind: .weight, value: weight.kilograms,
-                measuredAt: now, timeZone: timeZone, source: .app
-            ))
-        }
-
-        let goal = plan.makeGoal(id: environment.newID(), startDay: LocalDay(now, in: timeZone), createdAt: now)
-        try await environment.profiles.setActiveGoal(goal)
-
+        let measurement = weightChanged
+            ? BodyMeasurement(id: ids.measurement, kind: .weight, value: weight.kilograms, measuredAt: now, timeZone: timeZone, source: .app)
+            : nil
+        let goal = plan.makeGoal(id: ids.goal, startDay: LocalDay(now, in: timeZone), createdAt: now)
         let profile = Profile(
-            id: existing?.id ?? environment.newID(),
+            id: existing?.id ?? ids.profile,
             displayName: existing?.displayName,
             birthYear: birthYear,
             sex: sex,
@@ -248,6 +255,8 @@ final class ProfileDraft {
             createdAt: existing?.createdAt ?? now,
             updatedAt: now
         )
-        try await environment.profiles.save(profile)
+        let saved = try await environment.profiles.saveProfile(profile, activeGoal: goal, weight: measurement)
+        attemptIDs = nil
+        return saved
     }
 }

@@ -15,6 +15,7 @@ final class AccessibilityUITests: AppUITestCase {
         assertTapTarget(ID.logWeight, in: app)
 
         openTab(3, in: app)
+        scrollClearOfBottomBars(element(ID.privacyLink, in: app), in: app)
         assertTapTarget(ID.privacyLink, in: app)
     }
 

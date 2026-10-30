@@ -25,8 +25,10 @@ final class CoachEatUITests: AppUITestCase {
         static let proposalDismiss = "coach.proposal.dismiss"
         static let proposalNote = "coach.proposal.note"
         static let proposalResolved = "coach.proposal.resolved"
+        static let openTrain = "coach.openTrain"
         static let proposalKcal = "coach.proposal.kcal"
         static let stubBadge = "stub.badge"
+        static let trainStart = "train.start"
 
         static let mealItems = "mealItems"
         static let mealItemsSave = "mealItems.save"
@@ -49,6 +51,7 @@ final class CoachEatUITests: AppUITestCase {
         static let stubArguments = ["-MTCoachStub"]
         static let optedIn = ["-MTCoachStub", "-MTAIOptIn"]
 
+        static func addSet(_ exercise: String) -> String { "train.addSet.\(exercise)" }
         static func foodResult(_ id: Int) -> String { "foodSearch.result.\(id)" }
         static func mealItemName(_ index: Int) -> String { "mealItem.\(index).name" }
         static func mealItemGrams(_ index: Int) -> String { "mealItem.\(index).grams" }
@@ -166,6 +169,32 @@ final class CoachEatUITests: AppUITestCase {
         XCTAssertTrue(element(CoachID.proposalResolved, in: app).waitForExistence(timeout: 10), "the card did not resolve")
         XCTAssertTrue(element(CoachID.proposalNote, in: app).waitForExistence(timeout: 10), "the card does not say what it left out")
         attachScreenshot("coach-plan-started")
+    }
+
+    /// Train is open and empty when the coach starts a day of the plan; the drafted exercises are on it afterwards,
+    /// without a relaunch. Day 1's three exercises are all in the catalog.
+    @MainActor
+    func testAPlanStartedFromTheChatShowsOnATrainTabThatIsAlreadyOpen() {
+        let app = launchApp(seed: .profile, startTab: "train", extraArguments: CoachID.optedIn)
+        XCTAssertTrue(element(CoachID.trainStart, in: app).waitForExistence(timeout: 10), "Train does not start empty")
+        startDayOneFromTheChat(in: app)
+        tapButton(CoachID.openTrain, in: app)
+        XCTAssertTrue(element(CoachID.sheet, in: app).waitForNonExistence(timeout: 10), "the sheet did not close")
+        expectDayOneOnTrain(in: app)
+    }
+
+    /// The same when Train was opened earlier and the user is on another tab: switching to it shows the draft.
+    @MainActor
+    func testAPlanStartedFromTheChatShowsWhenSwitchingBackToTrain() {
+        let app = launchApp(seed: .profile, extraArguments: CoachID.optedIn)
+        openTab(1, in: app)
+        XCTAssertTrue(element(CoachID.trainStart, in: app).waitForExistence(timeout: 10), "Train does not start empty")
+        openTab(0, in: app)
+        startDayOneFromTheChat(in: app)
+        tapButton(CoachID.close, in: app)
+        XCTAssertTrue(element(CoachID.sheet, in: app).waitForNonExistence(timeout: 10), "the sheet did not close")
+        openTab(1, in: app)
+        expectDayOneOnTrain(in: app)
     }
 
     @MainActor
@@ -388,6 +417,28 @@ final class CoachEatUITests: AppUITestCase {
     }
 
     // MARK: Helpers
+
+    /// Asks for a plan in a new chat and starts its first day.
+    @MainActor
+    private func startDayOneFromTheChat(in app: XCUIApplication) {
+        openCoach(app)
+        send("Plan my training week", in: app)
+        XCTAssertTrue(element(CoachID.proposalPlan, in: app).waitForExistence(timeout: 30), "no plan card")
+        XCTAssertTrue(element(CoachID.stop, in: app).waitForNonExistence(timeout: 10), "the turn did not finish")
+        tapButton(CoachID.proposalConfirm, in: app)
+        let day = app.buttons["Day 1: legs and push"]
+        XCTAssertTrue(day.waitForExistence(timeout: 10), "no day in the start menu")
+        day.tap()
+        XCTAssertTrue(element(CoachID.proposalResolved, in: app).waitForExistence(timeout: 10), "the card did not resolve")
+    }
+
+    @MainActor
+    private func expectDayOneOnTrain(in app: XCUIApplication) {
+        for exercise in ["squat.bodyweight", "pushup", "overhead.press"] {
+            XCTAssertTrue(element(CoachID.addSet(exercise), in: app).waitForExistence(timeout: 10), "\(exercise) is not on Train")
+        }
+        XCTAssertFalse(element(CoachID.trainStart, in: app).exists, "Train still offers to start a workout")
+    }
 
     @MainActor
     private func openCoach(_ app: XCUIApplication) {
