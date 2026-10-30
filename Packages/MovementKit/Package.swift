@@ -32,5 +32,6 @@ let package = Package(
         .testTarget(name: "PoseCaptureTests", dependencies: ["PoseCapture", "MotionCore", "MotionEval"]),
         .testTarget(name: "PersistenceTests", dependencies: ["Persistence"]),
         .testTarget(name: "CoachKitTests", dependencies: ["CoachKit"]),
+        .testTarget(name: "HealthBridgeTests", dependencies: ["HealthBridge", "Domain", "Persistence"]),
     ]
 )
