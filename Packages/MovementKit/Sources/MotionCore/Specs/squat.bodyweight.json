@@ -1,0 +1,24 @@
+{
+  "id": "squat.bodyweight",
+  "version": 1,
+  "view": "side",
+  "requiredJoints": ["shoulder", "hip", "knee", "ankle"],
+  "signal": { "kind": "relativeHeight", "of": "hip", "to": "knee", "scale": "thigh" },
+  "rep": {
+    "polarity": "down",
+    "topPrior": 1.0,
+    "bottomPrior": 0.05,
+    "minRom": 0.45,
+    "dwellMs": 100,
+    "minPeriodMs": 600,
+    "maxPeriodMs": 12000,
+    "idleSeconds": 20
+  },
+  "metrics": ["bottomValue", "rom", "eccMs", "conMs", "conVelocity", "maxTorsoLeanDeg@descent"],
+  "rules": [
+    { "id": "depth", "metric": "bottomValue", "op": "<=", "value": 0.10, "severity": "major", "cue": "cue.squat.deeper" },
+    { "id": "chest", "metric": "maxTorsoLeanDeg@descent", "op": "<=", "value": 50, "severity": "minor", "cue": "cue.squat.chestUp" },
+    { "id": "tempo", "metric": "eccMs", "op": ">=", "value": 700, "severity": "minor", "cue": "cue.controlDown" }
+  ],
+  "score": { "depth": 0.5, "chest": 0.25, "tempo": 0.25 }
+}

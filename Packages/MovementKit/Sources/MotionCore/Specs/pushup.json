@@ -1,0 +1,24 @@
+{
+  "id": "pushup",
+  "version": 1,
+  "view": "side",
+  "requiredJoints": ["shoulder", "elbow", "wrist", "hip", "ankle"],
+  "signal": { "kind": "jointAngle", "a": "shoulder", "b": "elbow", "c": "wrist" },
+  "rep": {
+    "polarity": "down",
+    "topPrior": 165,
+    "bottomPrior": 85,
+    "minRom": 45,
+    "dwellMs": 100,
+    "minPeriodMs": 600,
+    "maxPeriodMs": 12000,
+    "idleSeconds": 20
+  },
+  "metrics": ["bottomValue", "rom", "eccMs", "conMs", "conVelocity", "minBodyLineDeg", "topElbowDeg"],
+  "rules": [
+    { "id": "depth", "metric": "bottomValue", "op": "<=", "value": 100, "severity": "major", "cue": "cue.pushup.lower" },
+    { "id": "bodyLine", "metric": "minBodyLineDeg", "op": ">=", "value": 160, "severity": "major", "cue": "cue.pushup.hipsLevel" },
+    { "id": "lockout", "metric": "topElbowDeg", "op": ">=", "value": 155, "severity": "minor", "cue": "cue.pushup.lockOut" }
+  ],
+  "score": { "depth": 0.4, "bodyLine": 0.35, "lockout": 0.25 }
+}

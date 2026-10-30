@@ -19,7 +19,7 @@ let package = Package(
         .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.11.1"),
     ],
     targets: [
-        .target(name: "MotionCore"),
+        .target(name: "MotionCore", resources: [.copy("Specs")]),
         .target(name: "Domain"),
         .target(name: "PoseCapture", dependencies: ["MotionCore"]),
         .target(name: "Persistence", dependencies: ["Domain", .product(name: "GRDB", package: "GRDB.swift")]),
