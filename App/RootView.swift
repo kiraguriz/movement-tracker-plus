@@ -1,17 +1,22 @@
 import SwiftUI
 
-struct RootView: View {
-    private enum AppTab: Hashable {
-        case today, train, eat, me
-    }
+enum AppTab: String, Hashable {
+    case today, train, eat, me
+}
 
-    @State private var selection = AppTab.today
+struct RootView: View {
+    @Environment(\.appEnvironment) private var environment
+    @State private var selection: AppTab
     @State private var isCoachPresented = false
+
+    init(startTab: AppTab? = nil) {
+        _selection = State(initialValue: startTab ?? .today)
+    }
 
     var body: some View {
         TabView(selection: $selection) {
             Tab(value: AppTab.today) {
-                NavigationStack { TodayView() }
+                NavigationStack { TodayView(environment: environment, openTrain: { selection = .train }) }
             } label: {
                 Label("Today", systemImage: "sun.max")
             }
@@ -23,13 +28,13 @@ struct RootView: View {
             }
             .accessibilityIdentifier(AccessibilityID.tabTrain)
             Tab(value: AppTab.eat) {
-                NavigationStack { EatView() }
+                NavigationStack { EatView(environment: environment) }
             } label: {
                 Label("Eat", systemImage: "fork.knife")
             }
             .accessibilityIdentifier(AccessibilityID.tabEat)
             Tab(value: AppTab.me) {
-                NavigationStack { MeView() }
+                NavigationStack { MeView(environment: environment) }
             } label: {
                 Label("Me", systemImage: "person")
             }
@@ -54,6 +59,7 @@ struct RootView: View {
 }
 
 #Preview {
-    RootView()
-        .environment(\.appEnvironment, .preview())
+    SeededPreview { _ in
+        RootView()
+    }
 }

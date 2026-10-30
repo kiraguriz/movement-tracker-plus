@@ -2,12 +2,11 @@ import SwiftUI
 
 @main
 struct MovementTrackerApp: App {
-    private let environment = AppEnvironment.live()
+    @State private var launch = AppLaunch()
 
     var body: some Scene {
         WindowGroup {
-            RootView()
-                .environment(\.appEnvironment, environment)
+            LaunchGate(launch: launch)
         }
     }
 }

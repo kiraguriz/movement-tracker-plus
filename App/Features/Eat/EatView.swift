@@ -1,12 +1,292 @@
+import Domain
 import SwiftUI
 
 struct EatView: View {
+    @Environment(UserSession.self) private var session
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var model: EatModel
+    @State private var addRoute: EatAddRoute?
+    @State private var editing: MealEntry?
+    @State private var isPickingDate = false
+
+    private let environment: AppEnvironment
+
+    init(environment: AppEnvironment) {
+        self.environment = environment
+        _model = State(initialValue: EatModel(environment: environment))
+    }
+
     var body: some View {
-        ContentUnavailableView("Eat", systemImage: "fork.knife")
+        content
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                DateStrip(
+                    days: model.days,
+                    today: model.today,
+                    loggedDays: model.loggedDays,
+                    timeZone: model.timeZone,
+                    selection: $model.selectedDay
+                )
+                .padding(.vertical, 4)
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        isPickingDate = true
+                    } label: {
+                        Image(systemName: "calendar")
+                    }
+                    .accessibilityLabel("Choose date")
+                    .accessibilityIdentifier(AccessibilityID.eatCalendar)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    addControl
+                }
+            }
+            .task(id: model.selectedDay) { await model.watch(day: model.selectedDay) }
+            .task(id: model.stripStart) { await model.watchLoggedDays(from: model.stripStart, through: model.today) }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { model.refreshToday() }
+            }
+            .sheet(item: $addRoute) { route in
+                EatAddDestination(route: route, context: addContext) { addRoute = nil }
+            }
+            .sheet(item: $editing) { meal in
+                MealEditorSheet(
+                    draft: MealDraft(editing: meal),
+                    day: meal.localDay,
+                    environment: environment,
+                    onDelete: { await model.delete(meal) },
+                    onSave: { try await model.save($0) }
+                )
+            }
+            .sheet(isPresented: $isPickingDate) {
+                DatePickerSheet(day: model.selectedDay, today: model.today, timeZone: model.timeZone) { model.select($0) }
+            }
+            .errorAlert($model.errorMessage)
             .testIdentifier(AccessibilityID.screenEat)
+    }
+
+    // MARK: Title and actions
+
+    private var title: Text {
+        let day = model.selectedDay
+        if day == model.today { return Text("Today") }
+        if day == model.today.adding(days: -1) { return Text("Yesterday") }
+        return Text(day.date(in: model.timeZone), format: .dateTime.weekday(.abbreviated).month(.abbreviated).day())
+    }
+
+    @ViewBuilder
+    private var addControl: some View {
+        if EatAddRoute.available.count > 1 {
+            Menu {
+                ForEach(EatAddRoute.available) { route in
+                    Button { addRoute = route } label: { Label(route.title, systemImage: route.systemImage) }
+                }
+            } label: {
+                Image(systemName: "plus")
+            }
+            .accessibilityLabel("Add meal")
+            .accessibilityIdentifier(AccessibilityID.eatAdd)
+        } else {
+            Button {
+                addRoute = EatAddRoute.available.first
+            } label: {
+                Image(systemName: "plus")
+            }
+            .accessibilityLabel("Add meal")
+            .accessibilityIdentifier(AccessibilityID.eatAdd)
+        }
+    }
+
+    private var addContext: EatAddContext {
+        EatAddContext(
+            day: model.selectedDay,
+            suggestedSlot: model.suggestedSlot(),
+            environment: environment,
+            log: { meals, foods in try await environment.nutrition.log(meals, foods: foods) }
+        )
+    }
+
+    // MARK: Content
+
+    @ViewBuilder
+    private var content: some View {
+        if sizeClass == .regular {
+            HStack(alignment: .top, spacing: 0) {
+                ScrollView {
+                    summaryCard.padding(16)
+                }
+                .frame(maxWidth: 380)
+                mealList(includesSummary: false)
+            }
+            .background(Color(.systemGroupedBackground))
+        } else {
+            mealList(includesSummary: true)
+        }
+    }
+
+    private var summaryCard: some View {
+        Card {
+            NutritionSummaryView(total: model.total.value ?? nil, goal: session.goal, idPrefix: "eat")
+        }
+    }
+
+    private func mealList(includesSummary: Bool) -> some View {
+        let meals = model.meals.value ?? []
+        return List {
+            if includesSummary {
+                Section {
+                    summaryCard
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
+            }
+            if model.meals.isLoaded && meals.isEmpty {
+                Section {
+                    emptyDay
+                        .listRowBackground(Color.clear)
+                }
+            }
+            ForEach(MealSlot.allCases, id: \.self) { slot in
+                let entries = meals.filter { $0.slot == slot }
+                if !entries.isEmpty {
+                    Section {
+                        ForEach(entries) { meal in
+                            MealRow(meal: meal)
+                                .contentShape(.rect)
+                                .onTapGesture { editing = meal }
+                                .accessibilityAddTraits(.isButton)
+                                .accessibilityIdentifier(AccessibilityID.mealRow(meal.label))
+                                .swipeActions(edge: .trailing) {
+                                    Button(role: .destructive) {
+                                        Task { await model.delete(meal) }
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                    Button { editing = meal } label: {
+                                        Label("Edit", systemImage: "pencil")
+                                    }
+                                    .tint(.accentColor)
+                                }
+                        }
+                    } header: {
+                        slotHeader(slot, entries: entries)
+                    }
+                }
+            }
+        }
+    }
+
+    private var emptyDay: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "fork.knife")
+                .font(.largeTitle)
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+            Text("No meals")
+                .font(.headline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 24)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier(AccessibilityID.eatEmpty)
+    }
+
+    private func slotHeader(_ slot: MealSlot, entries: [MealEntry]) -> some View {
+        let known = entries.compactMap { $0.nutrients.energy?.kilocalories }
+        return HStack {
+            Text(slot.title)
+            Spacer()
+            if !known.isEmpty {
+                Text(UnitFormatter.energy(known.reduce(0, +)))
+                    .monospacedDigit()
+            }
+        }
+    }
+}
+
+// MARK: - Rows
+
+private struct MealRow: View {
+    let meal: MealEntry
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(meal.label)
+                    .font(.body)
+                HStack(spacing: 10) {
+                    if meal.grams.grams > 0 {
+                        Text(UnitFormatter.grams(meal.grams.grams))
+                    }
+                    ForEach(Macro.allCases) { macro in
+                        HStack(spacing: 3) {
+                            Circle().fill(macro.color).frame(width: 6, height: 6)
+                            Text(macro.grams(in: meal.nutrients).map { UnitFormatter.number($0) } ?? "–")
+                        }
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+            }
+            Spacer(minLength: 8)
+            Text(meal.nutrients.energy.map { UnitFormatter.energy($0.kilocalories) } ?? "–")
+                .font(.body.weight(.semibold))
+                .monospacedDigit()
+        }
+        .frame(minHeight: 44)
+    }
+}
+
+// MARK: - Date picker
+
+private struct DatePickerSheet: View {
+    let today: LocalDay
+    let timeZone: TimeZone
+    let onPick: (LocalDay) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var date: Date
+
+    init(day: LocalDay, today: LocalDay, timeZone: TimeZone, onPick: @escaping (LocalDay) -> Void) {
+        self.today = today
+        self.timeZone = timeZone
+        self.onPick = onPick
+        _date = State(initialValue: day.date(in: timeZone))
+    }
+
+    var body: some View {
+        NavigationStack {
+            DatePicker("Date", selection: $date, in: ...today.date(in: timeZone), displayedComponents: .date)
+                .datePickerStyle(.graphical)
+                .labelsHidden()
+                .padding(.horizontal)
+                .frame(maxHeight: .infinity, alignment: .top)
+                .navigationTitle("Choose date")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(role: .cancel) { dismiss() }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(role: .confirm) {
+                            onPick(LocalDay(date, in: timeZone))
+                            dismiss()
+                        }
+                    }
+                }
+        }
+        .presentationDetents([.medium, .large])
     }
 }
 
 #Preview {
-    NavigationStack { EatView() }
+    SeededPreview { environment in
+        NavigationStack { EatView(environment: environment) }
+    }
 }
