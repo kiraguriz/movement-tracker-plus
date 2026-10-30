@@ -108,7 +108,7 @@ public enum MetricKey: String, CaseIterable, Codable, CodingKeyRepresentable, Se
     case conMs
     /// Whole-rep duration in ms (includes any pause at the bottom).
     case durationMs
-    /// Mean concentric velocity of the signal in signal units per second.
+    /// Mean concentric velocity of the signal in signal units per second: the range of the rise over its duration.
     case conVelocity
     /// Torso lean from vertical in degrees: the 90th percentile between the start of the descent and
     /// the bottom (a robust maximum).

@@ -93,10 +93,13 @@ public struct SetSummary: Equatable, Codable, Sendable {
     public var goodReps: Int
     /// Mean score of the counted reps; nil before the first one.
     public var averageScore: Double?
-    /// Fatigue estimate for the latest rep: `1 − v / max(v of the first two reps)`, never below 0.
-    /// Mean concentric velocity is a proxy from velocity-based training; treat it as an estimate.
+    /// Fatigue estimate after the latest rep: how much slower the set's concentric velocity has become
+    /// since its first rep, as a fraction (0.2 is 20 % slower). A robust trend over all counted reps,
+    /// held back by its own uncertainty, so it reads 0 for a steady set and is nil before
+    /// `minimumRepsForVelocityLoss` reps. See `velocityLosses(velocities:)`. Mean concentric velocity is
+    /// a proxy from velocity-based training; treat it as an estimate.
     public var velocityLoss: Double?
-    /// Largest velocity loss seen in the set.
+    /// The largest `velocityLoss` the set reached after any rep.
     public var peakVelocityLoss: Double?
     /// The movement stopped for the spec's idle time; the user should end the set.
     public var isIdle: Bool
@@ -140,15 +143,77 @@ public struct SetSummary: Equatable, Codable, Sendable {
         )
     }
 
-    /// Per-rep velocity loss against the faster of the first two reps. Nil for the first rep, which has
-    /// no reference yet; clamped at 0 when a rep is faster than the reference.
+    /// Reps needed before a velocity loss is reported: fewer cannot tell a trend from rep-to-rep noise.
+    public static let minimumRepsForVelocityLoss = 4
+
+    /// The prior for how much one rep's measured velocity scatters, as a fraction: what the pipeline
+    /// measures on Vision-like noise (about 7 % for squats, 11 % for push-ups, whose short arm segments
+    /// make the elbow angle noisier). It stands in for the scatter of the set itself while the set is short.
+    static let velocityNoisePrior = 0.10
+    static let velocityNoisePriorWeight = 4.0
+
+    /// Velocity loss after each counted rep; nil until `minimumRepsForVelocityLoss`.
+    ///
+    /// One rep's velocity is only good to roughly ±10 % (the movement is read off a noisy pose), so
+    /// comparing the latest rep with the first ones, as velocity-based training does with a bar sensor,
+    /// makes a steady set look fatigued by chance. Instead, for the reps so far:
+    ///
+    /// 1. Fit a line to the logarithm of the velocities against rep number with the Theil–Sen estimator
+    ///    (the median of the slopes between all pairs of reps), so one bad rep cannot tilt it.
+    /// 2. Read the loss off the line: `1 − v(latest) / v(first)`, the fitted fall over the set.
+    /// 3. Move the slope one standard error toward zero. The standard error uses the rep-to-rep scatter of
+    ///    the set (a robust estimate from successive differences, so a real trend does not inflate it),
+    ///    blended with `velocityNoisePrior` while the set is short. A fall the noise could explain
+    ///    therefore reads 0, and a clear one is reported slightly low, never high.
+    ///
+    /// The result is never below 0: a set that speeds up has no loss. Reps with no usable velocity are
+    /// skipped.
     public static func velocityLosses(velocities: [Double]) -> [Double?] {
-        guard velocities.count >= 2 else { return velocities.map { _ in nil } }
-        let reference = max(velocities[0], velocities[1])
-        guard reference > 0 else { return velocities.map { _ in nil } }
-        return velocities.enumerated().map { i, v in
-            i == 0 ? nil : max(0, 1 - v / reference)
+        var losses: [Double?] = []
+        losses.reserveCapacity(velocities.count)
+        for count in velocities.indices.map({ $0 + 1 }) {
+            losses.append(velocityLoss(velocities.prefix(count)))
         }
+        return losses
+    }
+
+    static func velocityLoss(_ velocities: ArraySlice<Double>) -> Double? {
+        var positions: [Double] = []
+        var logs: [Double] = []
+        for (index, velocity) in velocities.enumerated() where velocity.isFinite && velocity > 0 {
+            positions.append(Double(index))
+            logs.append(Foundation.log(velocity))
+        }
+        let n = logs.count
+        guard n >= minimumRepsForVelocityLoss else { return nil }
+
+        var slopes: [Double] = []
+        slopes.reserveCapacity(n * (n - 1) / 2)
+        for i in 0..<n {
+            for j in (i + 1)..<n { slopes.append((logs[j] - logs[i]) / (positions[j] - positions[i])) }
+        }
+        let slope = median(slopes)
+
+        // Scatter from successive differences: a smooth trend cancels, a bad rep is down-weighted by the MAD.
+        let steps = zip(logs, logs.dropFirst()).map { $1 - $0 }
+        let stepMedian = median(steps)
+        let scatter = 1.4826 * median(steps.map { abs($0 - stepMedian) }) / 2.0.squareRoot()
+        let degrees = Double(n - 2)
+        let variance = (velocityNoisePriorWeight * velocityNoisePrior * velocityNoisePrior + degrees * scatter * scatter)
+            / (velocityNoisePriorWeight + degrees)
+
+        let meanPosition = positions.reduce(0, +) / Double(n)
+        let spread = positions.reduce(0) { $0 + ($1 - meanPosition) * ($1 - meanPosition) }
+        let standardError = (variance / spread).squareRoot()
+        let held = min(0, slope + standardError)
+        return 1 - exp(held * (positions[n - 1] - positions[0]))
+    }
+
+    private static func median(_ values: [Double]) -> Double {
+        guard !values.isEmpty else { return 0 }
+        let sorted = values.sorted()
+        let middle = sorted.count / 2
+        return sorted.count % 2 == 1 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2
     }
 }
 

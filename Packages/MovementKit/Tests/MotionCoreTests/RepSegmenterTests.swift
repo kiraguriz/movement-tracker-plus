@@ -141,9 +141,8 @@ struct RepSegmenterTests {
         #expect(abs(rep.tLift - 2.5) < 0.1 && abs(rep.tEnd - 3.5) < 0.1, "lift \(rep.tLift) end \(rep.tEnd)")
         #expect(abs(rep.durationMs - 2500) < 150, "duration \(rep.durationMs)")
         #expect(abs(rep.rom - 1.0) < 0.05 && abs(rep.bottomValue) < 0.05 && abs(rep.topValue - 1.0) < 0.05)
-        // 80 % of the range over the 10 %-to-90 % rise time.
-        let scale = 1 - 2 * acos(0.8) / .pi
-        #expect(abs(rep.conVelocity - 0.8 / (1.0 * scale)) < 0.15)
+        // The whole range over the whole 1.0 s rise.
+        #expect(abs(rep.conVelocity - 1.0) < 0.1, "velocity \(rep.conVelocity)")
     }
 
     @Test("a descent of 0.8, 1.5 or 3 s measures within 15 %, and so does the rise",
@@ -160,6 +159,23 @@ struct RepSegmenterTests {
         }
     }
 
+    @Test("concentric velocity is the range of the rise over its duration, at any speed and range",
+          arguments: [(0.7, 1.0), (1.2, 1.0), (2.5, 1.0), (1.1, 85.0), (0.8, 85.0)])
+    func concentricVelocity(con: Double, range: Double) throws {
+        for pauseBottom in [0.0, 0.5] {
+            // A squat-like range of 1, or a push-up elbow angle from 85 to 170 degrees.
+            let bottom = range > 2 ? 85.0 : 0.0
+            var seg = segmenter(range > 2
+                ? RepParameters(polarity: .down, topPrior: 165, bottomPrior: 85, minRom: 45) : squatLikeParameters())
+            var wave = Waveform(fps: 30, value: bottom + range)
+            wave.hold(1)
+            wave.rep(bottom: bottom, top: bottom + range, ecc: 1.2, con: con, pauseBottom: pauseBottom, pauseTop: 1)
+            let rep = try #require(drive(&seg, wave).reps.first)
+            let truth = range / con
+            #expect(abs(rep.conVelocity - truth) < 0.1 * truth, "velocity \(rep.conVelocity) for \(range) over \(con) s")
+        }
+    }
+
     @Test("a pause at the bottom lengthens the rep but not the eccentric or concentric times")
     func bottomPause() throws {
         var fast = segmenter(), slow = segmenter()
@@ -168,7 +184,8 @@ struct RepSegmenterTests {
         b.hold(1); b.rep(bottom: 0, top: 1, pauseBottom: 3, pauseTop: 1)
         let repA = try #require(drive(&fast, a).reps.first)
         let repB = try #require(drive(&slow, b).reps.first)
-        #expect(abs(repA.eccMs - repB.eccMs) < 60 && abs(repA.conMs - repB.conMs) < 60)
+        #expect(abs(repA.eccMs - repB.eccMs) < 60 && abs(repA.conMs - repB.conMs) < 60,
+                "ecc \(repA.eccMs) vs \(repB.eccMs), con \(repA.conMs) vs \(repB.conMs)")
         #expect(repB.durationMs - repA.durationMs > 2800)
     }
 

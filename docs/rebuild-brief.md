@@ -235,8 +235,21 @@ during framing; switch only after ≥ 1 s of clearly better confidence) → sign
   Timing edges are where the signal leaves and reaches each plateau, read off the steep middle of each
   movement, not the 70 % / 30 % counting thresholds.
   A dip that never reaches the bottom threshold → `partialRep` (shown, not counted).
-- Velocity: mean concentric velocity of the signal (units/s, scale-free). Set-level **velocity loss**
-  `1 − v_rep / max(v_first two reps)` as a fatigue proxy (VBT literature; phrase as an estimate).
+- Velocity: per-rep mean concentric velocity of the signal (units/s, scale-free) = the fitted range of the rise
+  over its fitted duration (a least-squares cosine-ease step with free plateau levels), not two threshold
+  crossings. The timing edges (`eccMs`, `conMs`) stay with the band fit above. One rep is only good to about
+  ±7 % (squat) and ±11 % (push-up, whose short arm segments make the elbow angle noisier) because the pose
+  noise wanders over about 0.5 s and cannot be averaged out inside a rep. Set-level **velocity loss** is
+  therefore a trend, not a comparison of two reps. After each rep, from the 4th, fit a Theil–Sen line (median
+  of pairwise slopes) to ln(v) against rep number and report `1 − exp(slope · (n − 1))`: the fitted fall from
+  the first to the latest rep. The slope is first moved one standard error toward 0, the scatter coming from
+  successive differences (MAD) blended with a 10 % prior on 4 degrees of freedom, so a fall the noise could
+  explain reads 0, and a real one is reported a few points low (median 2–5 points on the synthetic fatigue
+  clips), never much high. Floored at 0, nil below 4 reps. `peakVelocityLoss` is the largest live value, so
+  it is noisier than the final loss (it includes the readings from only 4–5 reps); show `velocityLoss`.
+  Measured on the synthetic benchmark clips over 24 noise seeds: sets without fatigue read 0 typically, at most
+  0.25 (push-up) and 0.10 (squat), and about 4 % of 10-rep push-up sets read above 0.10 by chance;
+  `VelocityLossTests` states the tolerances. Fatigue proxy from the VBT literature; phrase as an estimate.
 - No auto-finish. Idle ≥ 20 s shows a prompt; the user ends the set.
 
 ### 6.6 ExerciseSpec (data) and RuleEngine

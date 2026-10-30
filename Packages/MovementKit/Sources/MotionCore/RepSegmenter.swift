@@ -38,7 +38,8 @@ public struct RepSegment: Equatable, Codable, Sendable {
     public var rom: Double
     public var bottomValue: Double
     public var topValue: Double
-    /// Mean concentric velocity in signal units per second (positive).
+    /// Mean concentric velocity in signal units per second (positive): the fitted range of the rise over
+    /// its fitted duration.
     public var conVelocity: Double
 
     public var eccMs: Double { (tBottom - tStart) * 1000 }
@@ -479,6 +480,100 @@ public struct RepSegmenter: Sendable {
         return (meanT - meanS * duration, duration)
     }
 
+    /// A cosine-eased step between two levels, fitted to the trace.
+    private struct StepFit {
+        var start: Double
+        var duration: Double
+        var from: Double
+        var to: Double
+    }
+
+    /// Least-squares fit of one cosine-eased step, `y = from + (to - from) * (0.5 - 0.5 cos(pi s))` with
+    /// `s = (t - start) / duration` clamped to 0...1, to the trace samples around a movement. The plateau
+    /// levels `from` and `to` are fitted with the timing instead of being read off the noisy plateaus, and
+    /// every sample counts, not only the few inside a band; that is what keeps the duration and the range
+    /// steady when each sample carries a few percent of noise and the noise drifts for as long as a rep
+    /// lasts. For a fixed start and duration the two levels are a linear least-squares problem, so the
+    /// search is over two numbers only: a coarse grid around `guess` (from `fitTransition`), then a finer
+    /// one around the best cell.
+    ///
+    /// The samples are those within `padding` seconds of the guessed movement, limited to `first...last`.
+    /// Only the concentric velocity uses it: the timing edges stay with `fitTransition`, whose edges are
+    /// what a lifter would quote and which do not assume the movement is a cosine.
+    private func fitStep(guess: (start: Double, duration: Double), padding: Double, first: Int, last: Int) -> StepFit? {
+        guard guess.duration > 1e-3, last > first else { return nil }
+        let from = guess.start - padding
+        let to = guess.start + guess.duration + padding
+        var times: [Double] = []
+        var values: [Double] = []
+        times.reserveCapacity(last - first + 1)
+        values.reserveCapacity(last - first + 1)
+        for i in first...last {
+            let point = trace[absolute: i]
+            guard point.t >= from, point.t <= to else { continue }
+            times.append(point.t)
+            values.append(point.u)
+        }
+        let n = times.count
+        guard n >= 6 else { return nil }
+
+        func evaluate(middle: Double, duration: Double) -> (error: Double, from: Double, to: Double)? {
+            let start = middle - duration / 2
+            var a = 0.0, b = 0.0, c = 0.0, p = 0.0, q = 0.0
+            for i in 0..<n {
+                let s = min(1, max(0, (times[i] - start) / duration))
+                let g = 0.5 - 0.5 * cos(Double.pi * s)
+                let w = 1 - g
+                a += w * w
+                b += w * g
+                c += g * g
+                p += w * values[i]
+                q += g * values[i]
+            }
+            let determinant = a * c - b * b
+            guard determinant > 1e-6 else { return nil }
+            let levelFrom = (p * c - q * b) / determinant
+            let levelTo = (a * q - b * p) / determinant
+            var error = 0.0
+            for i in 0..<n {
+                let s = min(1, max(0, (times[i] - start) / duration))
+                let g = 0.5 - 0.5 * cos(Double.pi * s)
+                let residual = values[i] - (levelFrom + (levelTo - levelFrom) * g)
+                error += residual * residual
+            }
+            return (error, levelFrom, levelTo)
+        }
+
+        let guessMiddle = guess.start + guess.duration / 2
+        var best: (error: Double, middle: Double, duration: Double, from: Double, to: Double)?
+        func consider(middle: Double, duration: Double) {
+            guard let e = evaluate(middle: middle, duration: duration) else { return }
+            if best == nil || e.error < best!.error { best = (e.error, middle, duration, e.from, e.to) }
+        }
+        for k in -9...9 {
+            let duration = guess.duration * pow(1.06, Double(k))
+            for j in -8...8 { consider(middle: guessMiddle + Double(j) * 0.04 * guess.duration, duration: duration) }
+        }
+        guard let coarse = best else { return nil }
+        for k in -4...4 {
+            let duration = coarse.duration * pow(1.015, Double(k))
+            for j in -4...4 { consider(middle: coarse.middle + Double(j) * 0.01 * coarse.duration, duration: duration) }
+        }
+        guard let fit = best else { return nil }
+        return StepFit(start: fit.middle - fit.duration / 2, duration: fit.duration, from: fit.from, to: fit.to)
+    }
+
+    /// How far beyond the guessed movement `fitStep` looks for plateau samples: a quarter of the movement,
+    /// so a pause is seen but the next movement of a pause-less set is not.
+    private func stepPadding(_ duration: Double) -> Double { min(0.3, max(0.08, 0.25 * duration)) }
+
+    /// A fitted rise is used only if its levels have the right direction and a range near the plateau
+    /// estimate; otherwise the velocity falls back to the plateau range over the timing edges.
+    private func isRise(_ step: StepFit, expectedSpan: Double) -> Bool {
+        let range = step.to - step.from
+        return range > 0.6 * expectedSpan && range < 1.6 * expectedSpan
+    }
+
     /// Measures a rep from the sample trace. Plateau levels are percentiles of the samples in each phase
     /// window (the bottom window is the time spent in the bottom phase; the top windows are before the
     /// descent and just after the rise), not the raw minimum and maximum: an extreme of a noisy plateau
@@ -556,9 +651,16 @@ public struct RepSegmenter: Sendable {
         let iTop = firstIndex(from: iLift, upTo: end) { $0 >= riseBandTop } ?? end
         var tLift: Double
         var tEnd: Double
+        var velocity: Double?
         if let fit = fitTransition(from: uLow, to: uHigh1, first: iLift, last: max(iTop, min(iLift + 1, end))) {
             tLift = fit.start
             tEnd = fit.start + fit.duration
+            // The velocity comes from a second, freer fit of the same rise (see `fitStep`).
+            if let step = fitStep(
+                guess: fit, padding: stepPadding(fit.duration), first: min(iArrival, riseSearchFrom), last: end
+            ), isRise(step, expectedSpan: span1) {
+                velocity = abs(step.to - step.from) / max(step.duration, 1e-3)
+            }
         } else {
             tLift = iLift < end ? crossing(iLift, iLift + 1, riseBandBottom) : trace[absolute: iLift].t
             tEnd = iTop > iLift ? crossing(iTop - 1, iTop, riseBandTop) : trace[absolute: iTop].t
@@ -571,25 +673,17 @@ public struct RepSegmenter: Sendable {
         }
         tEnd = max(tLift, min(tEnd, trace[absolute: end].t))
 
-        // Mean concentric velocity from the 10 %-to-90 % part of the rise: the steep part, where noise
-        // moves the crossing times least.
-        let velocityLow = uLow + 0.1 * span1
-        let velocityHigh = uLow + 0.9 * span1
-        let velocityFrom = max(iLift, iArrival)
-        var iV0 = velocityFrom
-        while iV0 < end, trace[absolute: iV0].u < velocityLow { iV0 += 1 }
-        var iV1 = iV0
-        while iV1 < end, trace[absolute: iV1].u < velocityHigh { iV1 += 1 }
-        let tV0 = iV0 > velocityFrom ? crossing(iV0 - 1, iV0, velocityLow) : trace[absolute: iV0].t
-        let tV1 = iV1 > iV0 ? crossing(iV1 - 1, iV1, velocityHigh) : trace[absolute: iV1].t
-        let riseSeconds = max(tV1 - tV0, 1e-3)
+        // Mean concentric velocity: the fitted range of the rise over its fitted duration, so the two
+        // noise-prone numbers come from one fit instead of two level crossings. Without a usable fit it is
+        // the plateau range over the timing edges.
+        let conVelocity = velocity ?? span1 / max(tEnd - tLift, 1e-3)
 
         let segment = RepSegment(
             tStart: tStart, tBottom: tBottom, tLift: tLift, tEnd: tEnd,
             rom: min(span0, span1),
             bottomValue: sign * uLow,
             topValue: sign * uHigh1,
-            conVelocity: 0.8 * span1 / riseSeconds
+            conVelocity: conVelocity
         )
         return Measurement(segment: segment, uLow: uLow, uHigh0: uHigh0, uHigh1: uHigh1)
     }

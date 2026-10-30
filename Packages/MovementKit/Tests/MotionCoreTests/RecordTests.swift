@@ -82,37 +82,116 @@ struct RecordTests {
         #expect(MetricKey.maxTorsoLeanDegDescent.rawValue == "maxTorsoLeanDeg@descent")
     }
 
-    @Test("velocity loss compares each rep with the faster of the first two")
-    func velocityLosses() {
+    /// The set's true loss for a velocity that falls by a constant factor per rep.
+    private func geometric(_ ratio: Double, reps: Int) -> (velocities: [Double], truth: Double) {
+        ((0..<reps).map { pow(ratio, Double($0)) }, 1 - pow(ratio, Double(reps - 1)))
+    }
+
+    @Test("velocity loss needs four reps")
+    func velocityLossNeedsFourReps() {
         #expect(SetSummary.velocityLosses(velocities: []).isEmpty)
         #expect(SetSummary.velocityLosses(velocities: [1.0]) == [nil])
-        let losses = SetSummary.velocityLosses(velocities: [1.0, 1.2, 1.2, 1.08, 0.9, 1.5])
-        #expect(losses[0] == nil)
-        let expected: [Double] = [0, 0, 0.1, 0.25, 0]   // reference is the faster of the first two: 1.2
-        for (loss, want) in zip(losses.dropFirst(), expected) {
-            #expect(abs((loss ?? -1) - want) < 1e-6, "\(String(describing: loss)) vs \(want)")
+        let losses = SetSummary.velocityLosses(velocities: [1.0, 0.9, 0.8, 0.7, 0.6])
+        #expect(losses.count == 5)
+        #expect(losses[0..<3].allSatisfy { $0 == nil }, "three reps cannot tell a trend from noise")
+        #expect(losses[3] != nil && losses[4] != nil)
+        #expect(SetSummary.minimumRepsForVelocityLoss == 4)
+    }
+
+    @Test("a steady set reads 0, and so does one that speeds up")
+    func velocityLossSteadyOrFaster() {
+        let steady = SetSummary.velocityLosses(velocities: Array(repeating: 1.2, count: 8))
+        #expect(steady.dropFirst(3).allSatisfy { abs($0 ?? -1) < 1e-12 })
+        let faster = SetSummary.velocityLosses(velocities: [1.0, 1.05, 1.1, 1.2, 1.25, 1.3])
+        #expect(faster.dropFirst(3).allSatisfy { abs($0 ?? -1) < 1e-12 }, "no negative loss: \(faster)")
+    }
+
+    @Test("a steady decline is reported close to the truth and never above it")
+    func velocityLossFollowsADecline() throws {
+        for (ratio, reps) in [(0.97, 10), (0.93, 10), (0.88, 12), (0.9, 8)] {
+            let (velocities, truth) = geometric(ratio, reps: reps)
+            let loss = try #require(SetSummary.velocityLosses(velocities: velocities).last ?? nil)
+            #expect(loss <= truth + 1e-9 && loss > truth - 0.07, "ratio \(ratio): \(loss) against \(truth)")
         }
-        #expect(SetSummary.velocityLosses(velocities: [0, 0, 1]).allSatisfy { $0 == nil }, "no reference speed")
+    }
+
+    @Test("one bad rep cannot swing the loss, wherever it falls")
+    func velocityLossIgnoresOneBadRep() throws {
+        for bad in 0..<10 {
+            var velocities = Array(repeating: 1.0, count: 10)
+            velocities[bad] = 0.4
+            let loss = try #require(SetSummary.velocityLosses(velocities: velocities).last ?? nil)
+            #expect(loss < 0.02, "rep \(bad) at 0.4: \(loss)")
+        }
+        // The same slow last rep read 60 % under the old rule (the last rep against the faster of the first two).
+        var tired = Array(repeating: 1.0, count: 9)
+        tired += [0.4]
+        #expect(try #require(SetSummary.velocityLosses(velocities: tired).last ?? nil) < 0.02)
+    }
+
+    @Test("scatter around a flat velocity is not fatigue")
+    func velocityLossIgnoresScatter() throws {
+        let velocities = [1.12, 1.0, 1.1, 0.92, 1.05, 1.08, 0.95, 1.1, 1.0, 0.88]
+        // The old rule read 1 − 0.88 / 1.12 = 21 % here.
+        let loss = try #require(SetSummary.velocityLosses(velocities: velocities).last ?? nil)
+        #expect(loss < 0.05, "loss \(loss)")
+    }
+
+    @Test("a set that holds its pace and then slows down shows the slowing")
+    func velocityLossLateFatigue() throws {
+        let velocities = [1, 1.02, 0.99, 1.01, 1, 0.97, 0.9, 0.82, 0.74, 0.66, 0.6, 0.55]
+        let loss = try #require(SetSummary.velocityLosses(velocities: velocities).last ?? nil)
+        #expect(loss > 0.25, "the last reps are 45 % slower; the trend is conservative: \(loss)")
+        #expect(loss < 0.5)
+    }
+
+    @Test("reps without a usable velocity are skipped and keep their place in the trend")
+    func velocityLossSkipsBadVelocities() throws {
+        #expect(SetSummary.velocityLosses(velocities: [0, 0, 1]).allSatisfy { $0 == nil }, "no speed to compare")
+        #expect(SetSummary.velocityLosses(velocities: [1, .nan, 1, 1, 1, .infinity, 1, 1]).last! == 0)
+        let (velocities, truth) = geometric(0.9, reps: 10)
+        var holey = velocities
+        holey[3] = 0
+        holey[6] = .nan
+        let loss = try #require(SetSummary.velocityLosses(velocities: holey).last ?? nil)
+        #expect(loss <= truth + 1e-9 && loss > truth - 0.07, "\(loss) against \(truth)")
+    }
+
+    @Test("the live value after each rep never depends on later reps")
+    func velocityLossesArePrefixes() {
+        let velocities = [1.0, 1.1, 0.95, 1.0, 0.9, 0.85, 0.8, 0.82, 0.7]
+        let live = SetSummary.velocityLosses(velocities: velocities)
+        for index in velocities.indices {
+            #expect(live[index] == SetSummary.velocityLosses(velocities: Array(velocities[...index])).last!)
+        }
     }
 
     @Test("set-level numbers follow from the records")
-    func summaryNumbers() {
+    func summaryNumbers() throws {
+        let velocities = [1.2, 1.2, 1.1, 1.0, 0.9, 0.8]
         let reps = [
-            record(index: 1, score: 100, velocity: 1.2),
-            record(index: 2, score: 75, issues: [issue(.minor)], velocity: 1.2),
-            record(index: 4, score: 50, issues: [issue(.major)], velocity: 0.9),
+            record(index: 1, score: 100, velocity: velocities[0]),
+            record(index: 2, score: 75, issues: [issue(.minor)], velocity: velocities[1]),
+            record(index: 4, score: 50, issues: [issue(.major)], velocity: velocities[2]),
+            record(index: 5, score: 75, velocity: velocities[3]),
+            record(index: 6, score: 100, velocity: velocities[4]),
+            record(index: 7, score: 100, velocity: velocities[5]),
         ]
         let s = SetSummary(records: reps, partialRecords: [record(index: 3, counted: false)], isIdle: false, rejected: 1)
-        #expect(s.reps == 3 && s.partials == 1 && s.goodReps == 2 && s.rejected == 1)
-        #expect(s.averageScore == 75)
-        #expect(abs((s.velocityLoss ?? -1) - 0.25) < 1e-9)
-        #expect(abs((s.peakVelocityLoss ?? -1) - 0.25) < 1e-9)
+        #expect(s.reps == 6 && s.partials == 1 && s.goodReps == 5 && s.rejected == 1)
+        #expect(abs((s.averageScore ?? -1) - 500.0 / 6) < 1e-9)
+        let live = SetSummary.velocityLosses(velocities: velocities)
+        #expect(s.velocityLoss == live.last!)
+        #expect(s.peakVelocityLoss == live.compactMap { $0 }.max())
+        #expect(try #require(s.velocityLoss) > 0.1, "a clear slowdown")
         #expect(!s.isIdle)
 
         let none = SetSummary(records: [], partialRecords: [], isIdle: false, rejected: 0)
         #expect(none.averageScore == nil && none.velocityLoss == nil && none.peakVelocityLoss == nil)
         let one = SetSummary(records: [record()], partialRecords: [], isIdle: false, rejected: 0)
         #expect(one.velocityLoss == nil, "one rep has nothing to compare with")
+        let three = SetSummary(records: (1...3).map { record(index: $0) }, partialRecords: [], isIdle: false, rejected: 0)
+        #expect(three.velocityLoss == nil && three.peakVelocityLoss == nil, "three reps are too few")
     }
 
     @Test("velocity loss on a fatiguing set grows as the bar slows")
