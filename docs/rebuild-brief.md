@@ -234,7 +234,20 @@ during framing; switch only after ≥ 1 s of clearly better confidence) → sign
 - Valid rep: ROM ≥ `minRom`; duration within `[minPeriodMs 400, maxPeriodMs 12 000]` (allows pauses).
   Timing edges are where the signal leaves and reaches each plateau, read off the steep middle of each
   movement, not the 70 % / 30 % counting thresholds.
-  A dip that never reaches the bottom threshold → `partialRep` (shown, not counted).
+  A dip that never reaches the bottom threshold → `partialRep` (shown, not counted). So is a dip that reaches
+  it by less than noise can add: once a rep has been counted, its bottom must lie 2 jitters below the 30 %
+  line (`bottomNoiseMargin`; jitter = median absolute second difference of the trace over the rep, scaled to
+  the σ of white noise, about 2 % of the range for push-ups and 1.4 % for squats on the synthetic noise).
+  Noise that wanders over about 0.5 s carries a push-up that really stops at 44 % of the range across the line
+  in about 1 set in 50; the counted fake also drags the calibration toward itself. The price is a boundary: a
+  rep whose true depth is within about 2 jitters of the line (roughly 0.26 to 0.30 of the range) cannot be told
+  from such a dip, so under Vision-like noise some of those reps are reported as partials; on a clean signal the
+  line is exact. The first rep has no margin (nothing is calibrated yet, and uniformly shallow reps would
+  otherwise never start counting). A spec may move where a descent begins (`rep.topLeave`, default 0.60 of the
+  range): the squat spec uses 0.65, because its synthetic partial dips only to 53 % and noise hid the descent
+  in about 1 set in 20. Measured on the "8 reps and 2 partials" clips: before, 6 push-up and 17 squat sets of 300
+  were wrong; now 1 push-up and 2 squat sets of 600 are. At 1.5 times the synthetic noise the push-up clips
+  (all eight) are wrong in 14 of 480 sets, against 28 without the margin; the squat clips stay exact.
 - Velocity: per-rep mean concentric velocity of the signal (units/s, scale-free) = the fitted range of the rise
   over its fitted duration (a least-squares cosine-ease step with free plateau levels), not two threshold
   crossings. The timing edges (`eccMs`, `conMs`) stay with the band fit above. One rep is only good to about

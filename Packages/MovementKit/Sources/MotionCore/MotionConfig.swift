@@ -107,6 +107,12 @@ public struct MotionConfig: Equatable, Codable, Sendable {
         public var bottomEnter: Double = 0.30
         /// Above this the signal has left the bottom (starts the ascent).
         public var bottomLeave: Double = 0.40
+        /// A counted rep must end at least this many multiples of the signal's own jitter below the bottom
+        /// threshold, so a dip that only noise carried across the line is a partial. With no noise the
+        /// threshold is exact. Jitter is the standard deviation of the sample-to-sample noise (see
+        /// `RepSegmenter`); the wander of a few tenths of a second that goes with it is larger, which is why
+        /// the multiple is large.
+        public var bottomNoiseMargin: Double = 2.0
         /// Rep timing is read off the part of each movement between this fraction and one minus it of
         /// the rep's own range (see `RepSegmenter`): clear of the plateau noise, wide enough to carry
         /// several samples of a brisk rep.

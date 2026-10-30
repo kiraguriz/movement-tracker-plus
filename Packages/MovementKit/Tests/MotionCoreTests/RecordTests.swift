@@ -69,6 +69,7 @@ struct RecordTests {
         #expect(config.framing.holdSeconds == 1 && config.framing.lossSeconds == 0.5)
         #expect(config.segmenter.topEnter == 0.7 && config.segmenter.bottomEnter == 0.3)
         #expect(config.segmenter.topLeave == 0.6 && config.segmenter.bottomLeave == 0.4)
+        #expect(config.segmenter.bottomNoiseMargin == 2)
         #expect(config.cues.minIntervalSeconds == 3)
     }
 

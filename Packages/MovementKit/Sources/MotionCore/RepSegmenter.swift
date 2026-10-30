@@ -63,7 +63,7 @@ public enum SegmenterEvent: Equatable, Sendable {
 /// The signal is mapped to a normalized height `h` (1 at the calibrated top, 0 at the calibrated
 /// bottom). The machine walks `top → descending → bottom → ascending → top`:
 ///
-/// * `top → descending` when `h` stays below `topLeave` (0.60) for `dwellMs`;
+/// * `top → descending` when `h` stays below `topLeave` (0.60, or the spec's own value) for `dwellMs`;
 /// * `descending → bottom` when `h` stays at or below `bottomEnter` (0.30) for `dwellMs`;
 /// * `bottom → ascending` when `h` stays above `bottomLeave` (0.40) for `dwellMs`;
 /// * `ascending → top` when `h` stays at or above `topEnter` (0.70) for `dwellMs`.
@@ -74,7 +74,13 @@ public enum SegmenterEvent: Equatable, Sendable {
 ///
 /// Top and bottom start at the spec's priors, so rep 1 counts without any learning. Each counted rep
 /// then pulls both estimates toward what it actually did (EMA), which follows depth drift from fatigue.
-/// Reps that never reach the bottom threshold are partials. A completed rep is held back for
+/// Reps that never reach the bottom threshold are partials. So are reps that reach it by less than noise can
+/// add: the signal's jitter (`jitter`) times `bottomNoiseMargin`. Noise that wanders for a few tenths of a
+/// second can carry a dip that really stops well above the line across it, and a counted fake would also pull
+/// the calibration toward itself. A clean signal has no margin; a rep whose true depth is within the margin of
+/// the line cannot be told from such a dip and is reported as a partial. The first rep has no margin, because
+/// until a rep is counted the line is only the spec's guess, and a set of uniformly shallow reps would never
+/// get the calibration that makes them count. A completed rep is held back for
 /// `settleSeconds` after it stops rising so lockout can be measured, then reported with timing edges that
 /// are found from the rep's own trace (see `measure`): where the signal actually leaves one plateau and
 /// arrives at the next, independent of the calibration and of the 70 % / 30 % counting thresholds.
@@ -106,6 +112,8 @@ public struct RepSegmenter: Sendable {
         var uLow: Double
         var uHigh0: Double
         var uHigh1: Double
+        /// Typical sample-to-sample jitter of the signal over the rep, in signal units (see `jitter`).
+        var jitter: Double
     }
 
     private let parameters: RepParameters
@@ -114,9 +122,13 @@ public struct RepSegmenter: Sendable {
     /// falls toward the bottom, so the machine is written once.
     private let sign: Double
     private let priorRange: Double
+    /// Where a descent begins (fraction of the range): the spec's own value, else the engine default.
+    private let topLeave: Double
 
     private var uTop: Double
     private var uBottom: Double
+    /// True once a counted rep has moved the top and bottom estimates off the spec's priors.
+    private var isCalibrated = false
     private var trace: Ring<TracePoint>
     private var lastTime: Double?
     private var lastU = 0.0
@@ -138,6 +150,7 @@ public struct RepSegmenter: Sendable {
         self.tuning = tuning
         sign = parameters.polarity == .down ? 1 : -1
         priorRange = abs(parameters.topPrior - parameters.bottomPrior)
+        topLeave = parameters.topLeave ?? tuning.topLeave
         uTop = sign * parameters.topPrior
         uBottom = sign * parameters.bottomPrior
         let seconds = parameters.maxPeriodMs / 1000 + 8
@@ -197,7 +210,7 @@ public struct RepSegmenter: Sendable {
 
         switch phase {
         case .top:
-            let threshold = level(tuning.topLeave)
+            let threshold = level(topLeave)
             if held(&candidateA, u < threshold, threshold, t, u) {
                 finalizePending(into: &events)
                 context = Context(topWindowStart: context.topWindowStart, descentIndex: index, descentTime: t, bottomFirstIndex: -1, bottomLastIndex: -1)
@@ -354,7 +367,13 @@ public struct RepSegmenter: Sendable {
         guard let m = measure(p.context, confirmIndex: p.confirmIndex, end: end) else { return }
 
         let duration = m.segment.durationMs
-        if m.segment.rom < parameters.minRom {
+        // Once a rep has been counted the depth line is the lifter's own, and a dip must clear it by what noise
+        // can add. Before that the line is only the spec's guess and nothing has been learned, so the plain
+        // threshold applies: a margin there would leave a set of uniformly shallow reps without a count, and
+        // so without the calibration that makes the next rep count.
+        let margin = isCalibrated ? tuning.bottomNoiseMargin * m.jitter / (uTop - uBottom) : 0
+        let shallow = height(m.uLow) > tuning.bottomEnter - margin
+        if m.segment.rom < parameters.minRom || shallow {
             events.append(.partial(m.segment))
         } else if duration < parameters.minPeriodMs {
             events.append(.rejected(.tooFast))
@@ -379,6 +398,7 @@ public struct RepSegmenter: Sendable {
     /// EMA of top and bottom toward what a counted rep did, kept within sane bounds of the priors.
     private mutating func calibrate(with m: Measurement) {
         let alpha = tuning.calibrationAlpha
+        isCalibrated = true
         uTop += alpha * ((m.uHigh0 + m.uHigh1) / 2 - uTop)
         uBottom += alpha * (m.uLow - uBottom)
         let minRange = max(parameters.minRom, 0.5 * priorRange)
@@ -392,6 +412,21 @@ public struct RepSegmenter: Sendable {
             uTop = mid + maxRange / 2
             uBottom = mid - maxRange / 2
         }
+    }
+
+    /// Sample-to-sample jitter of the trace samples `from...to`, in signal units: the median absolute second
+    /// difference scaled to the standard deviation of white noise. A second difference cancels a steady level
+    /// and a steady slope, so a movement hardly contributes, and the median ignores the few samples at its
+    /// ends, so the estimate is the jitter of the plateaus. A clean signal reads close to zero.
+    private func jitter(_ from: Int, _ to: Int) -> Double {
+        guard to - from >= 4 else { return 0 }
+        var magnitudes: [Double] = []
+        magnitudes.reserveCapacity(to - from - 1)
+        for i in (from + 1)..<to {
+            magnitudes.append(abs(trace[absolute: i - 1].u - 2 * trace[absolute: i].u + trace[absolute: i + 1].u))
+        }
+        magnitudes.sort()
+        return magnitudes[magnitudes.count / 2] / (0.6745 * 6.0.squareRoot())
     }
 
     /// The value below which `fraction` of the samples in `from...to` fall.
@@ -685,6 +720,6 @@ public struct RepSegmenter: Sendable {
             topValue: sign * uHigh1,
             conVelocity: conVelocity
         )
-        return Measurement(segment: segment, uLow: uLow, uHigh0: uHigh0, uHigh1: uHigh1)
+        return Measurement(segment: segment, uLow: uLow, uHigh0: uHigh0, uHigh1: uHigh1, jitter: jitter(first, end))
     }
 }

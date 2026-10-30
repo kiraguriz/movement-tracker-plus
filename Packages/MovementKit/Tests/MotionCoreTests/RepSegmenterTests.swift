@@ -258,6 +258,76 @@ struct RepSegmenterTests {
         #expect(run.partials.count == 1)
     }
 
+    /// The wave's samples with a fixed alternating jitter of `amplitude` added: noise the segmenter can measure.
+    private func jittered(_ wave: Waveform, _ amplitude: Double) -> [(t: Double, value: Double?)] {
+        wave.samples.enumerated().map { i, s in (s.t, s.value.map { $0 + (i.isMultiple(of: 2) ? amplitude : -amplitude) }) }
+    }
+
+    private func driveSamples(_ segmenter: inout RepSegmenter, _ samples: [(t: Double, value: Double?)]) -> SegmenterRun {
+        var run = SegmenterRun()
+        for sample in samples { run.events += segmenter.update(t: sample.t, value: sample.value) }
+        run.events += segmenter.finish()
+        return run
+    }
+
+    @Test("a dip within the signal's jitter of the bottom line counts when the signal is clean and is a partial when it is not")
+    func noiseMargin() {
+        var wave = Waveform(value: 1.0)
+        wave.hold(1)
+        wave.rep(bottom: 0.0, top: 1.0)
+        wave.rep(bottom: 0.0, top: 1.0)
+        wave.rep(bottom: 0.27, top: 1.0)
+        wave.hold(1)
+
+        var clean = segmenter()
+        let exact = drive(&clean, wave)
+        #expect(exact.reps.count == 3 && exact.partials.isEmpty)
+
+        var noisy = segmenter()
+        let run = driveSamples(&noisy, jittered(wave, 0.012))
+        #expect(run.reps.count == 2 && run.partials.count == 1, "a dip at 0.27 is under two jitters from the line at 0.30")
+        #expect(run.rejected.isEmpty)
+
+        var deepEnough = segmenter()
+        var deep = Waveform(value: 1.0)
+        deep.hold(1)
+        deep.rep(bottom: 0.0, top: 1.0)
+        deep.rep(bottom: 0.0, top: 1.0)
+        deep.rep(bottom: 0.12, top: 1.0)
+        deep.hold(1)
+        let clear = driveSamples(&deepEnough, jittered(deep, 0.012))
+        #expect(clear.reps.count == 3 && clear.partials.isEmpty, "a dip at 0.12 is far past the margin")
+    }
+
+    @Test("the first rep has no noise margin: a set of uniformly shallow reps still starts counting")
+    func firstRepHasNoMargin() {
+        var wave = Waveform(value: 1.0)
+        wave.hold(1)
+        for _ in 0..<4 { wave.rep(bottom: 0.27, top: 1.0) }
+        wave.hold(1)
+        var seg = segmenter()
+        let run = driveSamples(&seg, jittered(wave, 0.012))
+        #expect(run.reps.count >= 3, "rep 1 counts and calibrates, and the reps after it are measured against that")
+    }
+
+    @Test("a spec can move where a descent begins, so a dip that stops just above the default line is still seen")
+    func specTopLeave() {
+        var wave = Waveform(value: 1.0)
+        wave.hold(1)
+        wave.rep(bottom: 0.62, top: 1.0)
+        wave.hold(1)
+
+        var byDefault = segmenter()
+        let missed = drive(&byDefault, wave)
+        #expect(missed.partials.isEmpty && missed.phases == [.top])
+
+        var parameters = squatLikeParameters()
+        parameters.topLeave = 0.65
+        var raised = segmenter(parameters)
+        let seen = drive(&raised, wave)
+        #expect(seen.reps.isEmpty && seen.partials.count == 1)
+    }
+
     @Test("a rep that is too fast to be real is rejected, not counted")
     func tooFast() {
         var seg = segmenter()

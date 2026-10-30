@@ -208,10 +208,16 @@ public struct RepParameters: Equatable, Codable, Sendable {
     public var maxPeriodMs: Double
     /// Seconds without movement before the idle event.
     public var idleSeconds: Double
+    /// Where a descent begins, as a fraction of the range from the calibrated bottom (0) to the top (1): the
+    /// signal must fall below it. Nil uses the engine's `SegmenterTuning.topLeave`. An exercise whose
+    /// shallowest dip worth reporting as a partial rep is close to that line raises it, so that a little noise
+    /// cannot hide the dip.
+    public var topLeave: Double?
 
     public init(
         polarity: Polarity, topPrior: Double, bottomPrior: Double, minRom: Double,
-        dwellMs: Double = 70, minPeriodMs: Double = 400, maxPeriodMs: Double = 12_000, idleSeconds: Double = 20
+        dwellMs: Double = 70, minPeriodMs: Double = 400, maxPeriodMs: Double = 12_000, idleSeconds: Double = 20,
+        topLeave: Double? = nil
     ) {
         self.polarity = polarity
         self.topPrior = topPrior
@@ -221,10 +227,11 @@ public struct RepParameters: Equatable, Codable, Sendable {
         self.minPeriodMs = minPeriodMs
         self.maxPeriodMs = maxPeriodMs
         self.idleSeconds = idleSeconds
+        self.topLeave = topLeave
     }
 
     private enum CodingKeys: String, CodingKey {
-        case polarity, topPrior, bottomPrior, minRom, dwellMs, minPeriodMs, maxPeriodMs, idleSeconds
+        case polarity, topPrior, bottomPrior, minRom, dwellMs, minPeriodMs, maxPeriodMs, idleSeconds, topLeave
     }
 
     public init(from decoder: any Decoder) throws {
@@ -237,6 +244,7 @@ public struct RepParameters: Equatable, Codable, Sendable {
         minPeriodMs = try c.decodeIfPresent(Double.self, forKey: .minPeriodMs) ?? 400
         maxPeriodMs = try c.decodeIfPresent(Double.self, forKey: .maxPeriodMs) ?? 12_000
         idleSeconds = try c.decodeIfPresent(Double.self, forKey: .idleSeconds) ?? 20
+        topLeave = try c.decodeIfPresent(Double.self, forKey: .topLeave)
     }
 }
 
@@ -428,6 +436,9 @@ extension ExerciseSpec {
         check(rep.dwellMs > 0 && rep.dwellMs <= 1000, "rep.dwellMs: must be in 1...1000 (found \(rep.dwellMs))")
         check(rep.minPeriodMs > 0, "rep.minPeriodMs: must be greater than 0")
         check(rep.maxPeriodMs > rep.minPeriodMs, "rep.maxPeriodMs: must exceed minPeriodMs")
+        if let topLeave = rep.topLeave {
+            check(topLeave > 0.4 && topLeave < 0.7, "rep.topLeave: must be in 0.4...0.7, below the top threshold (found \(topLeave))")
+        }
         check(rep.maxPeriodMs <= 120_000, "rep.maxPeriodMs: must be at most 120000")
         check(rep.idleSeconds >= 5, "rep.idleSeconds: must be at least 5 (found \(rep.idleSeconds))")
 

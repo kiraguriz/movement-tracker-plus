@@ -395,6 +395,8 @@ struct ReplayPoseSourceTests {
             if count == 3 { break }
         }
         #expect(count == 3)
-        #expect(clock.now - start < .seconds(2))
+        // Played to the end, the 600 frames at 30 fps take 20 s. Half of that leaves a busy machine ample room
+        // and still fails a replay that does not stop.
+        #expect(clock.now - start < .seconds(10))
     }
 }

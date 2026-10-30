@@ -76,6 +76,15 @@ struct ExerciseSpecTests {
         let json = #"{"polarity":"down","topPrior":1,"bottomPrior":0,"minRom":0.5}"#
         let rep = try JSONDecoder().decode(RepParameters.self, from: Data(json.utf8))
         #expect(rep.dwellMs == 70 && rep.minPeriodMs == 400 && rep.maxPeriodMs == 12_000 && rep.idleSeconds == 20)
+        #expect(rep.topLeave == nil, "the engine's own threshold applies unless a spec sets one")
+    }
+
+    @Test("the squat spec raises the line where a descent begins, the push-up spec keeps the engine's")
+    func topLeave() throws {
+        #expect(try ExerciseSpec.bundled(.squatBodyweight).rep.topLeave == 0.65)
+        #expect(try ExerciseSpec.bundled(.pushUp).rep.topLeave == nil)
+        let rep = RepParameters(polarity: .down, topPrior: 1, bottomPrior: 0, minRom: 0.5, topLeave: 0.65)
+        #expect(try JSONDecoder().decode(RepParameters.self, from: JSONEncoder().encode(rep)) == rep)
     }
 
     // MARK: Decoding errors
@@ -188,6 +197,8 @@ struct ExerciseSpecTests {
         #expect(try problems { $0.rep.minRom = 2 }.contains { $0.hasPrefix("rep: |topPrior − bottomPrior|") })
         #expect(try problems { $0.rep.dwellMs = 0 }.contains { $0.hasPrefix("rep.dwellMs") })
         #expect(try problems { $0.rep.maxPeriodMs = 300 }.contains("rep.maxPeriodMs: must exceed minPeriodMs"))
+        #expect(try problems { $0.rep.topLeave = 0.9 }.contains { $0.hasPrefix("rep.topLeave") })
+        #expect(try problems { $0.rep.topLeave = 0.3 }.contains { $0.hasPrefix("rep.topLeave") })
         #expect(try problems { $0.rep.idleSeconds = 1 }.contains { $0.hasPrefix("rep.idleSeconds") })
         #expect(try problems { $0.signal = .relativeHeight(of: .hip, to: .hip, scale: .thigh) }
             .contains("signal: relativeHeight 'of' and 'to' must differ"))

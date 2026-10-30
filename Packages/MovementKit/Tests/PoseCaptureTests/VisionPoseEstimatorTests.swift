@@ -111,9 +111,13 @@ struct VisionPoseEstimatorTests {
     @Test func blockingBridgeWorksFromAPlainQueue() async throws {
         let estimator = VisionPoseEstimator()
         let buffer = UncheckedSendable(try pixelBuffer(of: makeImage(width: 640, height: 480)))
+        // The default timeout is the camera's. This test is about the hand-off from a plain queue, not about
+        // Vision's latency, and the first call can take several seconds on a busy machine.
         let estimate = await withCheckedContinuation { continuation in
             DispatchQueue(label: "test.video").async {
-                continuation.resume(returning: estimator.measureBlocking(pixelBuffer: buffer.value, orientation: .up, mirrored: false, time: 7))
+                continuation.resume(returning: estimator.measureBlocking(
+                    pixelBuffer: buffer.value, orientation: .up, mirrored: false, time: 7, timeout: 60
+                ))
             }
         }
         let value = try #require(estimate)

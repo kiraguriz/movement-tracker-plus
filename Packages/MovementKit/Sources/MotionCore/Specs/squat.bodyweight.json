@@ -12,7 +12,8 @@
     "dwellMs": 70,
     "minPeriodMs": 400,
     "maxPeriodMs": 12000,
-    "idleSeconds": 20
+    "idleSeconds": 20,
+    "topLeave": 0.65
   },
   "metrics": ["bottomValue", "rom", "eccMs", "conMs", "conVelocity", "maxTorsoLeanDeg@descent"],
   "rules": [

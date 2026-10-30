@@ -59,16 +59,23 @@ struct BlockingBridgeTests {
         let bridge = BlockingBridge()
         let gate = Gate()
         _ = await onQueue { bridge.run(timeout: 0.02) { await gate.pass(); return 1 } }
+        // On a busy machine the stuck call's task may not have been scheduled yet when its short wait ends.
+        for _ in 0..<1000 where gate.startedCount == 0 { try await Task.sleep(for: .milliseconds(5)) }
         #expect(gate.startedCount == 1)
 
-        // The capture queue would otherwise wait a full timeout on every frame behind the stuck call.
+        // The capture queue would otherwise wait a full timeout on every frame behind the stuck call. Each
+        // call gets a long timeout and must come back in under half of it. The bound is per call, so a
+        // machine that is slow overall cannot trip it, and a call that waits for its timeout always does.
+        let timeout = 10.0
         let ran = Mutex(0)
-        let started = ContinuousClock.now
         for _ in 0..<20 {
-            let value: Int? = await onQueue { bridge.run(timeout: 5) { ran.withLock { $0 += 1 }; return 2 } }
+            let began = ContinuousClock.now
+            let value: Int? = await onQueue { bridge.run(timeout: timeout) { ran.withLock { $0 += 1 }; return 2 } }
             #expect(value == nil)
+            let took = ContinuousClock.now - began
+            #expect(took < .seconds(timeout / 2))
+            if took >= .seconds(timeout / 2) { break }
         }
-        #expect(ContinuousClock.now - started < .seconds(1))
         #expect(ran.withLock { $0 } == 0)
 
         gate.open()
