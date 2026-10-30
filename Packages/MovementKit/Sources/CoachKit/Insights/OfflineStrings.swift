@@ -45,13 +45,15 @@ extension OfflineStrings {
 public struct BuiltInOfflineStrings: OfflineStrings {
     public init() {}
 
+    /// One entry for every `cue` of a bundled exercise spec (`MotionCore/Specs/*.json`); `OfflineCueTests`
+    /// compares the two, because this module does not depend on MotionCore.
     private static let cues: [String: (en: String, zh: String)] = [
         "cue.squat.deeper": ("Sit deeper: hips to knee height", "再蹲深一点：髋部降到膝盖高度"),
         "cue.squat.chestUp": ("Keep your chest up", "挺胸，保持上身直立"),
         "cue.controlDown": ("Lower slowly and stay in control", "下放时放慢速度，保持控制"),
-        "cue.pushup.deeper": ("Lower your chest closer to the floor", "胸部再靠近地面一点"),
-        "cue.pushup.bodyLine": ("Keep hips, shoulders and ankles in one line", "保持肩、髋、踝成一条直线"),
-        "cue.pushup.lockout": ("Press all the way up until your arms are straight", "向上推到手臂完全伸直"),
+        "cue.pushup.lower": ("Lower your chest closer to the floor", "胸部再靠近地面一点"),
+        "cue.pushup.hipsLevel": ("Keep hips, shoulders and ankles in one line", "保持肩、髋、踝成一条直线"),
+        "cue.pushup.lockOut": ("Press all the way up until your arms are straight", "向上推到手臂完全伸直"),
     ]
 
     public func cueText(forKey key: String, locale: CoachLocale) -> String? {
