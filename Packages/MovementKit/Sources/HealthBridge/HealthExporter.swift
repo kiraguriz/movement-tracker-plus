@@ -8,8 +8,8 @@ public struct HealthExportPolicy: Equatable, Sendable {
     /// The wait after the first failure; it doubles with every further one, up to `maxDelay`.
     public var baseDelay: TimeInterval
     public var maxDelay: TimeInterval
-    /// The initial outstanding-row scan size. The store returns the oldest first, so rows waiting for access
-    /// or retries would hide newer ones; the scan doubles up to `maxScanLimit` while the page is full.
+    /// Page size for an outstanding-row scan. Each drain scans at most `maxScanLimit` rows,
+    /// and the next drain resumes after them so denied/exhausted rows cannot hide newer work.
     public var scanLimit: Int
     public var maxScanLimit: Int
 
@@ -159,6 +159,7 @@ public actor HealthExporter {
     private let drainLock = FIFOLock()
     /// Held for one read-modify-write of an export row.
     private let rowLock = FIFOLock()
+    private var nextScanCursor: HealthExportCursor?
 
     public init(
         exports: any HealthExportStore,
@@ -209,18 +210,7 @@ public actor HealthExporter {
         let exports = self.exports
         let date = now()
         try await updatingRows {
-            let existing = try await exports.export(entity: entity, entityID: entityID)
-            try await exports.upsert(HealthExport(
-                entity: entity,
-                entityID: entityID,
-                syncIdentifier: existing?.syncIdentifier ?? HealthSyncIdentifier.base(entity: entity, entityID: entityID),
-                syncVersion: (existing?.syncVersion ?? 0) + 1,
-                healthUUID: existing?.healthUUID,
-                status: .pending,
-                attempts: 0,
-                lastError: nil,
-                updatedAt: date
-            ))
+            try await exports.enqueue(entity: entity, entityID: entityID, at: date)
         }
     }
 
@@ -249,34 +239,64 @@ public actor HealthExporter {
         }
     }
 
-    private func dueExports(into report: inout HealthDrainReport) async throws -> [HealthExport] {
-        var limit = max(1, policy.scanLimit)
-        while true {
-            try Task.checkCancellation()
-            let page = try await exports.outstanding(limit: limit)
-            let date = now()
-            var due: [HealthExport] = []
-            var backingOff = 0
-            var exhausted = 0
-            for row in page where row.status != .synced {
-                switch policy.readiness(of: row, at: date) {
-                case .due: due.append(row)
-                case .backingOff: backingOff += 1
-                case .exhausted: exhausted += 1
+    /// Cleans up gone/ineligible entities without exporting any live data. This remains available
+    /// when the user turns exports off, including a delete that failed while Health was locked.
+    public func drainRemovals() async throws -> HealthDrainReport {
+        try await exclusively {
+            var report = HealthDrainReport()
+            for row in try await dueExports(into: &report) {
+                try Task.checkCancellation()
+                switch try await process(row, removalsOnly: true) {
+                case .synced: report.synced += 1
+                case .failed: report.failed += 1
+                case .deferred: report.deferred += 1
+                case .superseded: report.superseded += 1
                 }
             }
-            if page.count < limit || limit >= policy.maxScanLimit {
-                report.backingOff = backingOff
-                report.exhausted = exhausted
-                return due
-            }
-            limit = min(limit * 2, policy.maxScanLimit)
+            return report
         }
     }
 
-    private func process(_ row: HealthExport) async throws -> Outcome {
+    private func dueExports(into report: inout HealthDrainReport) async throws -> [HealthExport] {
+        let budget = max(1, policy.maxScanLimit)
+        let pageSize = max(1, min(policy.scanLimit, budget))
+        var remaining = budget
+        var due: [HealthExport] = []
+        var cursor = nextScanCursor
+        var scanned = 0
+        while remaining > 0 {
+            try Task.checkCancellation()
+            let limit = min(pageSize, remaining)
+            let page = try await exports.outstanding(after: cursor, limit: limit)
+            if page.isEmpty, scanned == 0, cursor != nil {
+                cursor = nil
+                nextScanCursor = nil
+                continue
+            }
+            let date = now()
+            for row in page where row.status != .synced {
+                switch policy.readiness(of: row, at: date) {
+                case .due: due.append(row)
+                case .backingOff: report.backingOff += 1
+                case .exhausted: report.exhausted += 1
+                }
+            }
+            scanned += page.count
+            remaining -= page.count
+            if page.count < limit {
+                nextScanCursor = nil
+                return due
+            }
+            cursor = page.last.map(HealthExportCursor.init)
+            nextScanCursor = cursor
+        }
+        return due
+    }
+
+    private func process(_ row: HealthExport, removalsOnly: Bool = false) async throws -> Outcome {
         do {
             let plan = try await makePlan(for: row)
+            if removalsOnly, !plan.isEmpty { return .deferred }
             var uuid = Self.noObjectUUID
             if plan.isEmpty {
                 try await writer.remove(plan.removals)
@@ -334,9 +354,7 @@ public actor HealthExporter {
         let exports = self.exports
         let date = now()
         let recorded = try await updatingRows {
-            guard try await Self.isCurrent(row, in: exports) else { return false }
-            try await exports.markSynced(entity: row.entity, entityID: row.entityID, healthUUID: uuid, at: date)
-            return true
+            try await exports.markSynced(ifUnchanged: row, healthUUID: uuid, at: date)
         }
         guard recorded else { return .superseded }
         if row.entity == .workout {
@@ -356,16 +374,9 @@ public actor HealthExporter {
         let message = Self.describe(error)
         let date = now()
         let recorded = try await updatingRows {
-            guard try await Self.isCurrent(row, in: exports) else { return false }
-            try await exports.markFailed(entity: row.entity, entityID: row.entityID, error: message, at: date)
-            return true
+            try await exports.markFailed(ifUnchanged: row, error: message, at: date)
         }
         return recorded ? .failed : .superseded
-    }
-
-    private static func isCurrent(_ row: HealthExport, in exports: any HealthExportStore) async throws -> Bool {
-        let latest = try await exports.export(entity: row.entity, entityID: row.entityID)
-        return latest?.syncVersion == row.syncVersion
     }
 
     // MARK: Removal
@@ -389,6 +400,7 @@ public actor HealthExporter {
                 return row
             }
             guard let row = queued else { return .nothingExported }
+            guard try await makePlan(for: row).isEmpty else { return .requeued }
             do {
                 try await writer.remove(HealthWritePlan(export: row).removals)
                 switch try await recordSuccess(of: row, uuid: Self.noObjectUUID) {

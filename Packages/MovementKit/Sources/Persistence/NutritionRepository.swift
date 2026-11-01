@@ -34,6 +34,7 @@ public struct NutritionRepository: NutritionStore {
             for meal in meals {
                 let foodID = meal.foodID.map { idMap[$0.rawValue] ?? $0.rawValue }
                 try MealEntryRecord(meal, foodID: foodID).save(db)
+                try HealthOutbox.enqueueIfEnabled(.meal, id: meal.id, in: db)
             }
         }
     }
@@ -41,6 +42,7 @@ public struct NutritionRepository: NutritionStore {
     public func deleteMeal(id: EntityID) async throws {
         try await database.writer.write { db in
             _ = try MealEntryRecord.deleteOne(db, key: id.rawValue)
+            try HealthOutbox.removeIfExported(.meal, id: id, in: db)
         }
     }
 

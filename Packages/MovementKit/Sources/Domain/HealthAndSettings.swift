@@ -14,6 +14,11 @@ public enum HealthExportStatus: String, Codable, CaseIterable, Sendable {
 
 /// Tracks one entity's export to Apple Health so retries update the sample instead of duplicating it.
 public struct HealthExport: Equatable, Sendable {
+    public static let syncNamespace = "movementtracker"
+
+    public static func syncIdentifier(entity: HealthEntityKind, entityID: EntityID) -> String {
+        "\(syncNamespace).\(entity.rawValue).\(entityID.rawValue)"
+    }
     public var entity: HealthEntityKind
     public var entityID: EntityID
     /// Written to `HKMetadataKeySyncIdentifier`: stable for the life of the entity.
@@ -46,6 +51,19 @@ public struct HealthExport: Equatable, Sendable {
         self.attempts = attempts
         self.lastError = lastError
         self.updatedAt = updatedAt
+    }
+}
+
+/// Stable keyset position for a bounded, fair scan of outstanding exports.
+public struct HealthExportCursor: Equatable, Sendable {
+    public var updatedAt: Date
+    public var entityID: EntityID
+    public var entity: HealthEntityKind
+
+    public init(_ export: HealthExport) {
+        updatedAt = export.updatedAt
+        entityID = export.entityID
+        entity = export.entity
     }
 }
 
@@ -85,6 +103,8 @@ public enum AppLanguage: String, Codable, CaseIterable, Sendable {
 
 /// Settings the package knows about. The app can declare more keys of its own.
 extension SettingKey where Value == Bool {
+    /// The app opted into exporting new writes. Persistence reads this in the business transaction.
+    public static var appleHealth: SettingKey<Bool> { SettingKey("health.export", default: false) }
     /// The user agreed to send data to the coach model.
     public static var aiOptIn: SettingKey<Bool> { SettingKey("ai.optIn", default: false) }
     /// Keep pose recordings (JSONL fixtures) of camera sets.

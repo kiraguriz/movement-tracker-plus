@@ -9,6 +9,10 @@ public struct HealthExportRepository: HealthExportStore {
         self.database = database
     }
 
+    public func enqueue(entity: HealthEntityKind, entityID: EntityID, at date: Date) async throws {
+        try await database.writer.write { db in try HealthOutbox.enqueue(entity, id: entityID, in: db, at: date) }
+    }
+
     public func upsert(_ export: HealthExport) async throws {
         let record = HealthExportRecord(export)
         try await database.writer.write { db in
@@ -35,13 +39,18 @@ public struct HealthExportRepository: HealthExportStore {
     }
 
     public func outstanding(limit: Int) async throws -> [HealthExport] {
+        try await outstanding(after: nil, limit: limit)
+    }
+
+    public func outstanding(after cursor: HealthExportCursor?, limit: Int) async throws -> [HealthExport] {
         try await database.writer.read { db in
-            try HealthExportRecord
-                .filter(Column("status") != HealthExportStatus.synced.rawValue)
-                .order(Column("updated_at"), Column("entity_id"))
-                .limit(max(0, limit))
-                .fetchAll(db)
-                .map { $0.domain() }
+            var request = HealthExportRecord.filter(Column("status") != HealthExportStatus.synced.rawValue)
+            if let cursor {
+                request = request.filter(sql: "(updated_at, entity_id, entity) > (?, ?, ?)",
+                    arguments: [cursor.updatedAt, cursor.entityID.rawValue, cursor.entity.rawValue])
+            }
+            return try request.order(Column("updated_at"), Column("entity_id"), Column("entity"))
+                .limit(max(0, limit)).fetchAll(db).map { $0.domain() }
         }
     }
 
@@ -66,6 +75,26 @@ public struct HealthExportRepository: HealthExportStore {
             guard db.changesCount > 0 else {
                 throw RecordError.recordNotFound(databaseTableName: "health_export", key: ["entity_id": entityID.rawValue.databaseValue])
             }
+        }
+    }
+
+    public func markSynced(ifUnchanged export: HealthExport, healthUUID: String, at date: Date) async throws -> Bool {
+        try await database.writer.write { db in
+            try db.execute(sql: """
+                UPDATE health_export SET status = 'synced', hk_uuid = ?, last_error = NULL, updated_at = ?
+                WHERE entity = ? AND entity_id = ? AND sync_version = ?
+                """, arguments: [healthUUID, date, export.entity.rawValue, export.entityID.rawValue, export.syncVersion])
+            return db.changesCount > 0
+        }
+    }
+
+    public func markFailed(ifUnchanged export: HealthExport, error: String, at date: Date) async throws -> Bool {
+        try await database.writer.write { db in
+            try db.execute(sql: """
+                UPDATE health_export SET status = 'failed', attempts = attempts + 1, last_error = ?, updated_at = ?
+                WHERE entity = ? AND entity_id = ? AND sync_version = ?
+                """, arguments: [error, date, export.entity.rawValue, export.entityID.rawValue, export.syncVersion])
+            return db.changesCount > 0
         }
     }
 }

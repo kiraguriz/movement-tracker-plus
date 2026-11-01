@@ -1,3 +1,4 @@
+import HealthBridge
 import Domain
 
 // Wrappers for the four stores whose writes belong in Apple Health. Each forwards every call to the store it wraps and,

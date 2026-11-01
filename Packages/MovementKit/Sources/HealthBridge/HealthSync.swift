@@ -52,11 +52,11 @@ public struct HealthObjectRef: Hashable, Sendable {
 /// `HealthExport.syncIdentifier` is a namespace for an entity; every object it produces appends its kind.
 /// The base is stored with the export row, so a later change of this scheme never orphans earlier samples.
 public enum HealthSyncIdentifier {
-    public static let namespace = "movementtracker"
+    public static let namespace = HealthExport.syncNamespace
 
     /// The base stored in `health_export` the first time an entity is queued.
     public static func base(entity: HealthEntityKind, entityID: EntityID) -> String {
-        "\(namespace).\(entity.rawValue).\(entityID.rawValue)"
+        HealthExport.syncIdentifier(entity: entity, entityID: entityID)
     }
 
     public static func object(_ kind: HealthObjectKind, base: String) -> String {

@@ -78,7 +78,7 @@ final class FoodSearchModel {
     /// A new entry like an earlier one: the same food and amount when the food is stored, else the same numbers.
     func draft(reusing meal: MealEntry, slot: MealSlot) async -> MealDraft {
         if let id = meal.foodID, let food = try? await environment.nutrition.food(id: id) {
-            return MealDraft(food: food, amount: meal.grams.grams > 0 ? meal.grams.grams : nil, slot: slot, source: meal.source)
+            return MealDraft(reusing: meal, food: food, slot: slot)
         }
         return MealDraft(reusing: meal, slot: slot)
     }

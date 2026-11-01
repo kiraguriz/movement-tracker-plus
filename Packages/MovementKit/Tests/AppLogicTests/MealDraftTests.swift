@@ -94,6 +94,18 @@ struct MealDraftTests {
         #expect(draft.makeEntry(day: LocalDay(now, in: zone), id: "x", loggedAt: now, timeZone: zone) == nil)
     }
 
+    @Test func recentReuseKeepsCorrectionsAndQuantityEvenWhenTheFoodRowDiffers() throws {
+        let saved = meal(unit: .milliliters)
+        let food = Food(id: "f1", source: .usda, name: "Earlier food", amountUnit: .grams,
+                        per100g: Nutrients(energy: Energy(kilocalories: 900)), createdAt: now)
+        let draft = MealDraft(reusing: saved, food: food, slot: .snack)
+        draft.gramsText = "100"
+        draft.amountChanged()
+        let copied = try entry(draft)
+        #expect(copied.amountUnit == .milliliters && copied.nutrients.energy?.kilocalories == 200)
+        #expect(copied.foodID == food.id && draft.servings.isEmpty)
+    }
+
     @Test func aFoodPreservesVolumeThroughTheRealRepository() async throws {
         let database = try AppDatabase.inMemory()
         let food = Food(id: "f1", source: .usda, name: "Milk", amountUnit: .milliliters,

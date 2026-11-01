@@ -62,10 +62,12 @@ public final class MealDraft: Identifiable {
     }
 
     /// A new entry with the numbers of an earlier one; the earlier entry is not changed.
-    public convenience init(reusing meal: MealEntry, slot: MealSlot) {
+    public convenience init(reusing meal: MealEntry, food: Food? = nil, slot: MealSlot) {
         self.init(slot: slot)
         name = meal.label
         source = meal.source
+        self.food = food
+        if food?.amountUnit == meal.amountUnit { servings = food?.servings ?? [] }
         amountUnit = meal.amountUnit
         basis = meal.portionBasis ?? .unknown
         gramsText = meal.grams.grams > 0 ? NumberInput.text(meal.grams.grams) : ""

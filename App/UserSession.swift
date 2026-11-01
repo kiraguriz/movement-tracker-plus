@@ -1,3 +1,4 @@
+import HealthBridge
 import Domain
 import SwiftUI
 

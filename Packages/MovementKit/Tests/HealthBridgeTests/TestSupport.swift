@@ -257,6 +257,16 @@ actor FakeHealthExportStore: HealthExportStore {
     func row(_ entity: HealthEntityKind, _ id: EntityID) -> HealthExport? { storage[Key(entity: entity, id: id)] }
     var count: Int { storage.count }
 
+    func enqueue(entity: HealthEntityKind, entityID: EntityID, at date: Date) async throws {
+        try Task.checkCancellation()
+        let old = row(entity, entityID)
+        seed(HealthExport(
+            entity: entity, entityID: entityID,
+            syncIdentifier: old?.syncIdentifier ?? HealthExport.syncIdentifier(entity: entity, entityID: entityID),
+            syncVersion: (old?.syncVersion ?? 0) + 1, healthUUID: old?.healthUUID, updatedAt: date
+        ))
+    }
+
     // Like GRDB's async access, a call made from a cancelled task throws before it touches the database.
     func upsert(_ export: HealthExport) async throws {
         try Task.checkCancellation()
@@ -272,8 +282,19 @@ actor FakeHealthExportStore: HealthExportStore {
     }
 
     func outstanding(limit: Int) async throws -> [HealthExport] {
-        let open = storage.values.filter { $0.status != .synced }
-        let ordered = open.sorted { ($0.updatedAt, $0.entityID.rawValue) < ($1.updatedAt, $1.entityID.rawValue) }
+        try await outstanding(after: nil, limit: limit)
+    }
+
+    func outstanding(after cursor: HealthExportCursor?, limit: Int) async throws -> [HealthExport] {
+        let open = storage.values.filter {
+            guard $0.status != .synced else { return false }
+            guard let cursor else { return true }
+            return ($0.updatedAt, $0.entityID.rawValue, $0.entity.rawValue)
+                > (cursor.updatedAt, cursor.entityID.rawValue, cursor.entity.rawValue)
+        }
+        let ordered = open.sorted {
+            ($0.updatedAt, $0.entityID.rawValue, $0.entity.rawValue) < ($1.updatedAt, $1.entityID.rawValue, $1.entity.rawValue)
+        }
         return Array(ordered.prefix(max(0, limit)))
     }
 
@@ -298,6 +319,30 @@ actor FakeHealthExportStore: HealthExportStore {
         export.lastError = error
         export.updatedAt = date
         seed(export)
+    }
+
+    func markSynced(ifUnchanged expected: HealthExport, healthUUID: String, at date: Date) async throws -> Bool {
+        try Task.checkCancellation()
+        if holdingMarks { await withCheckedContinuation { heldMarks.append($0) } }
+        guard var export = row(expected.entity, expected.entityID), export.syncVersion == expected.syncVersion else { return false }
+        export.status = .synced
+        export.healthUUID = healthUUID
+        export.lastError = nil
+        export.updatedAt = date
+        seed(export)
+        return true
+    }
+
+    func markFailed(ifUnchanged expected: HealthExport, error: String, at date: Date) async throws -> Bool {
+        try Task.checkCancellation()
+        if holdingMarks { await withCheckedContinuation { heldMarks.append($0) } }
+        guard var export = row(expected.entity, expected.entityID), export.syncVersion == expected.syncVersion else { return false }
+        export.status = .failed
+        export.attempts += 1
+        export.lastError = error
+        export.updatedAt = date
+        seed(export)
+        return true
     }
 }
 

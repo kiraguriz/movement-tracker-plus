@@ -24,6 +24,7 @@ public struct BodyMeasurementRepository: BodyMeasurementStore {
     public func delete(id: EntityID) async throws {
         try await database.writer.write { db in
             _ = try BodyMeasurementRecord.deleteOne(db, key: id.rawValue)
+            try HealthOutbox.removeIfExported(.bodyMeasurement, id: id, in: db)
         }
     }
 
@@ -54,6 +55,11 @@ public struct BodyMeasurementRepository: BodyMeasurementStore {
             record.id = existingID
         }
         try record.save(db)
+        if record.kind == .weight, record.source == .app {
+            try HealthOutbox.enqueueIfEnabled(.bodyMeasurement, id: EntityID(record.id), in: db)
+        } else {
+            try HealthOutbox.removeIfExported(.bodyMeasurement, id: EntityID(record.id), in: db)
+        }
         return record
     }
 

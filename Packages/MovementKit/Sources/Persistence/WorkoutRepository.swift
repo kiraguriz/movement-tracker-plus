@@ -15,9 +15,32 @@ public struct WorkoutRepository: WorkoutStore {
         guard !effects.isEmpty else { return }
         // `write` wraps the closure in a transaction: if any effect throws, none are kept.
         try await database.writer.write { db in
+            var sessions: Set<String> = []
             for effect in effects {
+                if let session = try Self.sessionID(for: effect, in: db) { sessions.insert(session) }
                 try Self.apply(effect, in: db)
             }
+            for id in sessions {
+                let session = try WorkoutSessionRecord.fetchOne(db, key: id)
+                if session?.status == .completed {
+                    try HealthOutbox.enqueueIfEnabled(.workout, id: EntityID(id), in: db)
+                } else {
+                    try HealthOutbox.removeIfExported(.workout, id: EntityID(id), in: db)
+                }
+            }
+        }
+    }
+
+    private static func sessionID(for effect: WorkoutEffect, in db: Database) throws -> String? {
+        switch effect {
+        case .upsertSession(let session): return session.id.rawValue
+        case .upsertExerciseEntry(let entry): return entry.sessionID.rawValue
+        case .deleteExerciseEntry(let id):
+            return try String.fetchOne(db, sql: "SELECT session_id FROM exercise_entry WHERE id = ?", arguments: [id.rawValue])
+        case .upsertSet(let set):
+            return try String.fetchOne(db, sql: "SELECT session_id FROM exercise_entry WHERE id = ?", arguments: [set.entryID.rawValue])
+        case .replaceReps(let id, _), .deleteSet(let id):
+            return try String.fetchOne(db, sql: "SELECT e.session_id FROM exercise_entry e JOIN set_entry s ON s.entry_id = e.id WHERE s.id = ?", arguments: [id.rawValue])
         }
     }
 
@@ -59,6 +82,7 @@ public struct WorkoutRepository: WorkoutStore {
     public func deleteSession(id: EntityID) async throws {
         try await database.writer.write { db in
             _ = try WorkoutSessionRecord.deleteOne(db, key: id.rawValue)
+            try HealthOutbox.removeIfExported(.workout, id: id, in: db)
         }
     }
 

@@ -195,13 +195,20 @@ extension SettingsStore {
 // MARK: - Health export
 
 public protocol HealthExportStore: Sendable {
+    /// Atomically creates a pending export or increments the existing revision, resetting retry state.
+    func enqueue(entity: HealthEntityKind, entityID: EntityID, at date: Date) async throws
     /// Inserts the row or replaces the stored one, unless the stored one has a newer `syncVersion`: then nothing changes.
     func upsert(_ export: HealthExport) async throws
     func export(entity: HealthEntityKind, entityID: EntityID) async throws -> HealthExport?
     /// Exports still `pending` or `failed`, oldest first.
     func outstanding(limit: Int) async throws -> [HealthExport]
+    func outstanding(after cursor: HealthExportCursor?, limit: Int) async throws -> [HealthExport]
     /// Marks the export synced, stores the Health uuid and clears the error.
     func markSynced(entity: HealthEntityKind, entityID: EntityID, healthUUID: String, at date: Date) async throws
     /// Marks the export failed, counts the attempt and keeps the message.
     func markFailed(entity: HealthEntityKind, entityID: EntityID, error: String, at date: Date) async throws
+    /// A completion may update only the revision it actually wrote. False means a business transaction
+    /// queued a newer revision while Health was working.
+    func markSynced(ifUnchanged export: HealthExport, healthUUID: String, at date: Date) async throws -> Bool
+    func markFailed(ifUnchanged export: HealthExport, error: String, at date: Date) async throws -> Bool
 }

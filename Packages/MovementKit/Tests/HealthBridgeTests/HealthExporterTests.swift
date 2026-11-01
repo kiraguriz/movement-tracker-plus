@@ -259,6 +259,21 @@ struct ExporterRetryTests {
         #expect(try #require(await h.exports.row(.meal, "m1")).status == .synced)
     }
 
+    @Test func boundedScansRotatePastMoreExhaustedRowsThanTheirBudget() async throws {
+        let h = Harness(policy: HealthExportPolicy(maxAttempts: 2, scanLimit: 2, maxScanLimit: 2))
+        for index in 0..<5 {
+            await h.exports.seed(Fixture.export(.meal, EntityID("dead\(index)"), status: .failed,
+                attempts: 2, updatedAt: Fixture.t0.addingTimeInterval(Double(index))))
+        }
+        h.clock.advance(by: 3600)
+        try await h.logMeal(Fixture.meal("fresh"))
+        #expect(try await h.exporter.drain().exhausted == 2)
+        #expect(try await h.exporter.drain().exhausted == 2)
+        #expect(try await h.exporter.drain().synced == 1)
+        // The exhausted tail wraps, rather than stranding the cursor forever after a removed last row.
+        #expect(try await h.exporter.drain().exhausted == 2)
+    }
+
     @Test(arguments: [HealthAccessError.unavailable, .temporarilyUnavailable])
     func otherAccessProblemsAreAlsoNotCountedAsAttempts(error: HealthAccessError) async throws {
         let h = Harness()

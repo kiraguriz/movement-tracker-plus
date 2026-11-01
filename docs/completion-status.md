@@ -5,7 +5,7 @@ Scope: finish the locally executable MVP work identified in the repository revie
 | Work | Acceptance | Status |
 | --- | --- | --- |
 | Nutrition quantity and editing | Persist g/ml; retain unknown nutrients; editing/reusing a saved amount rescales correctly; v1 data survives migration | Passed feature, repository and migration tests; Debug app compiled |
-| Durable Health outbox | Business data and sync intent commit together; deletes retry while export is off; service tests run on macOS | In progress |
+| Durable Health outbox | Business data and sync intent commit together; deletes retry while export is off; service tests run on macOS | Passed 127 repository tests, 133 Health tests, 10 feature tests; Debug app compiled |
 | Recording and recovery | Mixed cameras cannot masquerade as one camera; interrupted live sets retain counted work; valid captures remain exportable | Pending |
 | Workout execution | Coach prescriptions retain sets/reps/rest; workout history and exercise progress are accessible | Pending |
 | Feature-level regression coverage | Exercise application logic through portable tests and real repositories; do not rely on UI tests for data correctness | Pending |
