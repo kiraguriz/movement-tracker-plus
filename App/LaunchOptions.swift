@@ -3,8 +3,10 @@ import Foundation
 /// Launch arguments that change how the app starts. They apply to Debug builds only; a Release build ignores them.
 ///
 /// - `-MTInMemoryDatabase`: use a throwaway in-memory database instead of the file in Application Support.
-/// - `-MTSeed profile|sample`: with the in-memory database, start with a finished profile (`profile`)
-///   or with a profile plus weights, meals and a workout (`sample`).
+/// - `-MTPersistentTestDatabase`: use a separate, durable Debug database under MovementTracker/Acceptance.
+///   `-MTSeed` fills it only while it has no profile; relaunching preserves edits. In-memory mode takes precedence.
+/// - `-MTSeed profile|sample`: with an in-memory or empty acceptance database, start with a finished profile
+///   (`profile`) or with a profile plus weights, meals and a workout (`sample`).
 /// - `-MTStartTab today|train|eat|me`: the tab to show first.
 /// - `-MTFailDatabase`: behave as if the database could not be opened.
 /// - `-MTCoachURL <url>`: talk to the coach proxy at this address (for example `wrangler dev`) instead of
@@ -50,6 +52,7 @@ struct LaunchOptions: Equatable {
     var aiOptIn = false
     var mealPhotoSample = false
     #if DEBUG
+    var persistentTestDatabase = false
     var healthStub = false
     var healthStubDenies = false
     #endif
@@ -74,6 +77,7 @@ struct LaunchOptions: Equatable {
         aiOptIn = arguments.contains("-MTAIOptIn")
         mealPhotoSample = arguments.contains("-MTMealPhotoSample")
         #if DEBUG
+        persistentTestDatabase = arguments.contains("-MTPersistentTestDatabase") && !inMemoryDatabase
         healthStub = arguments.contains("-MTHealthStub")
         healthStubDenies = healthStub && Self.value(after: "-MTHealthStub", in: arguments) == "denied"
         #endif

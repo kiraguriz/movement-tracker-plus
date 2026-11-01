@@ -2,7 +2,7 @@ import Domain
 import SwiftUI
 
 #if DEBUG
-/// Fills an empty in-memory database for screenshots, previews and UI tests. Debug builds only.
+/// Fills an empty Debug database for screenshots, previews and acceptance tests.
 ///
 /// `profile`: one adult profile with a goal from the planner and a first weight.
 /// `sample`: the same plus eight weeks of weights, a week of meals and a finished workout.

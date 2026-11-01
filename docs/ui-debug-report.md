@@ -26,3 +26,22 @@ Targeted logs: `/tmp/mt-affected-pro.log`, `/tmp/mt-focused-ui-2.log`, `/tmp/mt-
 - The debug-generated sample meal illustration was sent to the deployed service. Muse identified egg and toast and warned the picture was stylized; a USDA fried-egg match appeared. After confirmation Eat showed 98 + 78 = 176 kcal. [Photo review screenshot](ui-evidence/live-meal-photo.jpg).
 - An empty Bench Press plus one performed Squat set produced `1 exercise, 1 set, 10 reps`; completed history showed one exercise and its detail showed the logged set. Empty entries remain stored for draft editing. Focused package tests passed: WorkoutRepository 22/22 and DebriefService 6/6.
 - Today in landscape initially places lower content behind the bottom accessory. Dragging from the visible workout card exposes all workout metrics and the weight chart, and the History button opens. Evidence: [scrolled landscape screenshot](ui-evidence/today-landscape-scrolled.png), `/tmp/mt-landscape-bottom-3.log`.
+
+## Subsequent physical-device fixes
+
+These checks are separate from the Simulator matrix above. On iPhone 17 Pro Max, iOS 27.2:
+
+- Expired rest originally left an empty List cell. The TimelineView now wraps the List so the expiry
+  condition removes the entire row. The installed fix passed both an expired relaunch and live countdown
+  through zero; both saved sets remained present.
+- The first manual-workout Summary truncated its duration as `18m 3...`. Increasing its StatTileGrid minimum
+  from 100 to 140 points gave the tiles more width; the installed update displayed `23m 53s` completely.
+  The observed phone still used three columns. Other locales, very long durations and accessibility sizes
+  are not proved by this one screenshot.
+- Each change compiled in Debug Simulator, signed physical Debug and Release Simulator configurations.
+  `WorkoutExecutionTests` passed 5/5. No package or proxy behavior changed.
+
+The user paused human camera counting. Manual draft/completed recovery, real Health nutrition results,
+test-data cleanup and the acceptance-fixture transfer caveat are documented in
+[physical-device-acceptance.md](physical-device-acceptance.md). No private phone screenshots or raw poses
+were added to repository evidence.

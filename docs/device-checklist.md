@@ -236,6 +236,20 @@ What Muse sees, and read the list.
 
 Additional recovery checks after the 2026-11-01 changes:
 
+For process-termination checks, use a Debug build with
+`-MTPersistentTestDatabase -MTSeed profile -MTStartTab train -MTNoCoach`. This durable database lives under
+`Library/Application Support/MovementTracker/Acceptance/`, separate from normal app data. Seeding happens only
+while no profile exists, so relaunching does not overwrite saved work. Do not also supply
+`-MTInMemoryDatabase`: it takes precedence and loses data on termination. Neither persistent mode nor its seed
+automatically enables Coach consent or Apple Health export. Keep synthetic workout recovery checks separate
+from Health writes. Release ignores these launch overrides.
+
+Prefer normal app actions to clean up synthetic records. Before replacing any on-device fixture files,
+back up the entire disposable container, including pose archives and Documents exports. The Nov 1 fixture
+transfer/reinstall pass required restoring both pose copies from a prior private backup; avoid
+`devicectl copy to --remove-existing-content` without that coverage. See the acceptance report for the
+observed scope and byte-for-byte restoration proof.
+
 - [ ] With Health on, save a meal and immediately terminate/relaunch. The business row and export intent
   are committed together; foreground drain retries the same sync identifier/version.
 - [ ] Delete an exported meal while Health is temporarily unavailable, then switch exports off. On the

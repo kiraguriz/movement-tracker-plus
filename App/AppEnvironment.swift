@@ -128,21 +128,38 @@ extension AppEnvironment {
     }
 
     /// Opens the app's database and builds the environment. The file lives in Application Support;
-    /// `-MTInMemoryDatabase` (Debug) swaps in an in-memory one, optionally with sample data.
+    /// Debug can use an in-memory database or an isolated durable acceptance database, optionally seeded.
     static func make(launch: LaunchOptions = .current) async throws -> AppEnvironment {
         if launch.failDatabase { throw LaunchError.simulatedFailure }
         let database: AppDatabase
         if launch.inMemoryDatabase {
             database = try AppDatabase.inMemory()
         } else {
-            let url = Self.databaseURL
+            var url = Self.databaseURL
+            #if DEBUG
+            if launch.persistentTestDatabase {
+                url = url.deletingLastPathComponent()
+                    .appending(path: "Acceptance", directoryHint: .isDirectory)
+                    .appending(path: "movement-tracker.sqlite", directoryHint: .notDirectory)
+            }
+            #endif
             database = try await Task.detached { try AppDatabase.open(at: url) }.value
         }
         let environment = AppEnvironment(database: database, launch: launch)
         #if DEBUG
+        let needsSeed: Bool
         if launch.inMemoryDatabase {
+            needsSeed = true
+        } else if launch.persistentTestDatabase {
+            needsSeed = try await environment.profiles.profile() == nil
+        } else {
+            needsSeed = false
+        }
+        if needsSeed {
             try await SampleData.seed(into: environment, level: launch.seed)
-            if launch.aiOptIn { try await environment.settings.set(SettingKey.aiOptIn, to: true) }
+        }
+        if launch.inMemoryDatabase && launch.aiOptIn {
+            try await environment.settings.set(SettingKey.aiOptIn, to: true)
         }
         #endif
         return environment

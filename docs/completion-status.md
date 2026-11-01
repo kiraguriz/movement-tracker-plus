@@ -9,7 +9,7 @@ outside the app/repository, preserve unrelated edits, and commit/push validated 
 | Nutrition quantity and editing | Persist g/ml; retain unknown nutrients; editing/reusing a saved amount rescales correctly; v1 data survives migration | Passed feature, repository and migration tests; Debug app compiled |
 | Durable Health outbox | Business data and sync intent commit together; deletes retry while export is off; service tests run on macOS | Passed 128 repository tests, 133 Health tests and portable feature regressions; Debug app compiled |
 | Recording and recovery | Mixed cameras cannot masquerade as one camera; interrupted live sets retain counted work; valid captures remain exportable | Passed recorder/reopen/retry tests; stable set and rep IDs; camera preference persists |
-| Workout execution | Coach prescriptions retain sets/reps/rest; workout history and exercise progress are accessible | Feature-tested; simulator manual/replay/save and history/filter/charts checked; completed counts exclude empty exercise entries |
+| Workout execution | Coach prescriptions retain sets/reps/rest; workout history and exercise progress are accessible | Feature-tested; simulator manual/replay/save and history/filter/charts checked; real-device manual draft/completed recovery and absolute rest deadline passed; completed counts exclude empty exercise entries |
 | Feature-level regression coverage | Exercise application logic through portable tests and real repositories; do not rely on UI tests for data correctness | 17 portable feature tests including real SQLite saves, reopen, plan application, history and deletion |
 | Proxy and configuration | Deployed endpoint; bounded service usage; offline tests and real service checks pass | 146 tests; SQLite durable limits, Worker deploy, Muse/SSE/USDA live checks and seeded Coach UI turn passed; npm audit zero findings |
 | Simulator UI | Exercise the functional matrix and inspect rendered layouts; preserve failures and scoped retests | Complete functional run 56/57 before onboarding fix; post-fix affected group 13/13 and ordered reproduction 2/2; screenshots 25/25; combined coverage of 82 distinct cases |
@@ -25,7 +25,14 @@ nutrient types had one updated sample, then No Data after cleanup. The real OS s
 advancing from 1 to 2 with a stable identifier. No stub was used.
 The real front camera also launched with continuous Device Hub sharing off; single-shot device screenshots
 showed 30 fps, initial Vision p50 14.5–15.0 ms / p95 15.8–16.1 ms and zero failures. The cumulative drop count
-stayed at 18 over another 5,804 processed frames. A fully framed human subject is still needed for the next gate.
+stayed at 18 over another 5,804 processed frames. A later partially framed subject raised Vision p50/p95 to
+20.3/23.6 ms; that is not a fully framed performance pass. The user paused human camera testing; the ended
+29,882-frame recording remains private and unlabeled.
+Manual workout acceptance uses a separate durable Debug database: two sets survived SIGKILL as a draft and
+as one completed session, with 18 reps / 400 kg and no Health intents. Rest resumed from its original deadline;
+the empty row at expiry and truncated summary duration were fixed and retested on the phone. The synthetic
+workout was deleted; the final acceptance database had no workouts, sets, reps or Health intents. The normal
+SQLite database was never created. The pose-file restoration/tooling caveat is recorded in the acceptance report.
 External acceptance remains separate: real human pose recordings, framed-human/back-camera performance, additional HealthKit
 workout/body-mass/permission/recovery cases, and full device/accessibility acceptance. Cloudflare deployment and both secrets
 are now configured; real Muse non-streaming/SSE, USDA and one simulator live Coach call passed.
@@ -56,7 +63,7 @@ at `569bb57` succeeded in both native and proxy jobs. The native job's raw log c
 (1,184 declared tests), eight explicit Vision hardware skips, and all three builds. The local full run
 enabled those eight integration cases. At that earlier checkpoint only the two booted simulators were connected
 and the project had no selected signing team. The subsequent physical signing/install result above supersedes
-that environment snapshot; actual HealthKit writes remain open.
+that environment snapshot; nutrition writes have since passed, while the remaining Health cases stay open.
 
 Previous backend baseline: implementation `940e69e`; test capability probe/workflow `65f24d2`. GitHub verification:
 [Validate run 41300391099](https://github.com/kiraguriz/movement-tracker-plus/actions/runs/41300391099) — **success**, both jobs completed.

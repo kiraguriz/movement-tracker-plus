@@ -58,7 +58,7 @@ struct SessionSummaryView: View {
 
     private var sets: some View {
         VStack(spacing: 16) {
-            StatTileGrid(minimum: 100) {
+            StatTileGrid(minimum: 140) {
                 StatTile(title: "Sets", value: "\(model.workout.setCount)")
                 StatTile(title: "Reps", value: "\(model.workout.totalReps)", identifier: AccessibilityID.summaryReps)
                 if let duration = model.duration {

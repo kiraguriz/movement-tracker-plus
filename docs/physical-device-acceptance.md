@@ -27,7 +27,7 @@ into this report.
 
 ## Runtime setup
 
-The current Debug launch uses:
+The camera and nutrition passes used this temporary Debug launch:
 
 ```text
 -MTInMemoryDatabase -MTSeed profile -MTStartTab train -MTDebugHUD -MTRecordPoses -MTNoCoach
@@ -56,11 +56,22 @@ also documents a camera/microphone conflict during physical-device interaction. 
 for that restriction: stop the Device Hub interaction before judging real sensor capture. A camera failure while
 screen sharing is active cannot establish that the app's normal camera path fails.
 
-## Awaiting runtime evidence
+The subsequent manual-workout recovery pass uses:
 
-- Camera permission, live preview, skeleton alignment and framing gate.
+```text
+-MTPersistentTestDatabase -MTSeed profile -MTStartTab train -MTNoCoach
+```
+
+This Debug-only mode uses `Library/Application Support/MovementTracker/Acceptance/movement-tracker.sqlite`,
+separate from the normal database. It seeds only while no profile exists and preserves subsequent edits across
+process termination. In-memory mode wins if both database flags are supplied. The ordinary database did not
+exist before this pass and was not created by it. Health export stays off and no Health stub or pose replay is used.
+
+## Remaining runtime evidence
+
+- Fully framed skeleton alignment and framing gate. Camera permission and live preview were observed below.
 - Independently counted reps, partials and an idle clip, with separate front/back recordings.
-- Actual Vision p50/p95, frame rate, dropped frames, Center Stage and stabilization readings.
+- Framed-human and rear-camera Vision p50/p95, frame rate and dropped frames. Initial front-camera readings are below.
 - Additional HealthKit coverage: workout/estimated energy, body mass, partial or revoked permission and
   process-termination recovery. The nutrition save/edit/deduplication/delete pass below succeeded.
 - The full real-data target in brief §6.8 (10 squat sets, 10 push-up sets, two people, two rooms) remains open.
@@ -139,11 +150,70 @@ A second single-shot capture at about 4:46 PM CST showed 8,757 processed frames,
 p95 16.1 ms, 0 failures and the same 18 cumulative drops. Across the additional 5,804 frames the drop count
 did not increase; the pressure remained nominal and both cropping features stayed off. The view still had
 no framed subject, Step into view and zero reps. This is continued no-person operation, not a human idle or
-accuracy fixture. The user has been asked to position the phone and stand sideways fully in frame before
-the first independently counted set.
+accuracy fixture.
+
+A later single-shot snapshot at about 4:54 PM CST detected an upper-body skeleton but still requested the
+whole body: 0 reps, 30 fps, Vision p50 20.3 ms / p95 23.6 ms / max 25.0 ms, 23,302 processed frames,
+109 cumulative drops, 0 failures and nominal pressure. Center Stage and stabilization remained off.
+These values must not be replaced by the faster no-person snapshots when judging human performance.
+
+The user then paused the human framing/counting test. The live set was ended without logging an empty set.
+Its local front-camera recording contains 29,882 valid JSON frames and an empty tag list, without ground-truth
+counts. The completed JSONL and its Documents/PoseCaptures export copy were retrieved through `devicectl`;
+their byte sizes match. Files.app visibility has not been checked. The raw file remains private outside git
+and was not imported as verified accuracy evidence. Human count/idle and rear-camera acceptance remain paused.
 
 The permission-sheet screenshot also exposed a Debug HUD label bug: before camera statistics existed, it
 said `replay` regardless of the selected source. `LiveDebugHUD` now selects `camera` or `replay` from
 `model.source`; the normal camera statistics branch is unchanged. Debug Simulator compilation and a signed
-physical-device build passed. The current live acceptance session still uses the prior installed binary;
-installing the HUD-only update is deferred until that active capture finishes.
+physical-device build passed. The update was subsequently installed with the isolated acceptance database
+and rest-row fix after the camera session ended.
+
+## Manual workout recovery
+
+The isolated durable database was seeded with one profile, goal and synthetic weight. A manually entered
+10-rep / 20 kg set was saved, then the app process was terminated with SIGKILL. A stopped-process copy of
+the SQLite directory (including WAL/SHM) contained one draft session, one exercise and exactly one manual
+set with those values, no rep rows and no Health export intents. Relaunch restored the same set. Profile,
+goal and weight counts remained one each, rather than duplicating the seed.
+
+This pass exposed an empty List row after the rest timer expired. Moving the TimelineView around the List
+lets expiry remove the entire row. Debug Simulator, signed physical Debug and Release Simulator builds passed;
+the installed fix removed the expired row on the physical phone while preserving the saved set.
+
+A second manually entered set, 8 reps / 25 kg, was saved. The phone showed both sets and 1:27 remaining rest.
+After another SIGKILL and relaunch, both sets were present and rest showed 1:15, continuing from its original
+deadline instead of resetting to 1:30. This proves actual process-termination recovery of the draft and timer;
+it does not prove recovery of a Health export or an interrupted camera set.
+
+With the app left open, the rest row disappeared automatically at expiry, without leaving the original blank
+card. Finish showed 2 sets and 18 reps, with the original two loads. Save returned Train to its idle state.
+A third SIGKILL, stopped-process SQLite copy and relaunch confirmed one completed session with an end time,
+exactly two manual sets, 18 total reps and 400 kg total volume. Profile, goal and synthetic weight counts were
+still one each; Health export intents remained zero. The relaunched history showed one exercise, 2 sets,
+18 reps and 400 kg; its detail view showed 10 reps / 20 kg and 8 reps / 25 kg.
+
+The first summary also exposed truncation of its duration tile (`18m 3...`). The summary grid minimum width
+was increased from 100 to 140 points. Debug Simulator, signed physical Debug and Release Simulator compilation
+passed. For the installed layout check, the earlier isolated one-set draft snapshot was restored; the new
+Summary displayed `23m 53s` completely. This layout-only fixture restore is
+separate from the preceding two-set persistence proof. The phone still showed three columns with the wider
+cards, so this result does not claim that the device switched to two columns or that every locale/duration fits.
+
+Deleting the original synthetic workout through history removed its record and both trend charts. A
+stopped-process SQLite copy confirmed zero sessions, exercise entries, sets, reps and Health export rows.
+After the layout check, that clean acceptance snapshot was restored and read back from the phone: the same
+zero counts, with only the one seeded profile, goal and synthetic weight retained in the isolated database.
+No normal app SQLite database existed before or after this pass.
+
+After the layout-fixture transfers, a final inventory found the phone's earlier pose archive and Documents
+export directories missing. The transfer/reinstall sequence does not establish which operation removed them.
+Both copies were restored from the private recording retrieved before the database tests; each was then read
+back from the phone and compared byte-for-byte with the 2,652,857-byte backup (29,882 valid frames). They match.
+Do not use `devicectl copy to --remove-existing-content` during future acceptance-fixture restores without a
+complete disposable-container backup. This observation is an acceptance tooling caveat, not an established
+app deletion defect. The raw capture is still private and unlabeled.
+
+The user authorized temporary Do Not Disturb to prevent notification banners from intercepting navigation.
+It was visibly off again at the end. The acceptance process was stopped after cleanup. Five targeted
+`WorkoutExecutionTests` also passed, including the persisted absolute rest deadline and history/deletion tests.

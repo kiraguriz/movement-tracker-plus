@@ -104,9 +104,9 @@ private struct TrainScreen: View {
     // MARK: Workout
 
     private var workoutList: some View {
-        List {
-            if let workout = model.workout, let rest = RestPeriod(workout: workout), skippedRest != rest.id {
-                TimelineView(.periodic(from: .now, by: 1)) { context in
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            List {
+                if let workout = model.workout, let rest = RestPeriod(workout: workout), skippedRest != rest.id {
                     let seconds = rest.remaining(at: context.date)
                     if seconds > 0 {
                         HStack {
@@ -119,18 +119,18 @@ private struct TrainScreen: View {
                         }
                     }
                 }
-            }
-            ForEach(model.exerciseEntries) { workoutExercise in
-                exerciseSection(workoutExercise)
-            }
-            Section {
-                Button {
-                    model.isPickingExercise = true
-                } label: {
-                    Label("Add exercise", systemImage: "plus")
-                        .frame(minHeight: 44, alignment: .leading)
+                ForEach(model.exerciseEntries) { workoutExercise in
+                    exerciseSection(workoutExercise)
                 }
-                .accessibilityIdentifier(AccessibilityID.trainAddExercise)
+                Section {
+                    Button {
+                        model.isPickingExercise = true
+                    } label: {
+                        Label("Add exercise", systemImage: "plus")
+                            .frame(minHeight: 44, alignment: .leading)
+                    }
+                    .accessibilityIdentifier(AccessibilityID.trainAddExercise)
+                }
             }
         }
     }
