@@ -2,7 +2,7 @@
 
 What was built when, generated from `git log main` by `tools/build-log.sh`. Times are author times in Chicago time (CST/CDT); merge commits are left out.
 
-Source: `main` at `a3d7783`, 20 commits, 2026-10-29 to 2026-10-30.
+Source: `main` at `93d979e`, 23 commits, 2026-10-29 to 2026-11-01.
 
 ## 2026-10-29 (Thu)
 
@@ -29,3 +29,9 @@ Source: `main` at `a3d7783`, 20 commits, 2026-10-29 to 2026-10-30.
 - 06:55 CDT `65353a8` Add the README, accuracy report, device checklist and build log
 - 10:59 CDT `42cd84c` Harden Train drafts, profile saves, health exports and timing tests
 - 11:18 CDT `a3d7783` Send workouts, meals and weight to Apple Health
+- 11:32 CDT `ecdabc4` Describe the Apple Health switch in the README and device checklist
+
+## 2026-11-01 (Sun)
+
+- 02:35 CST `1635d0e` Preserve pose recordings and validate evaluation imports
+- 02:43 CST `93d979e` Honor partial Health access and keep incomplete exports queued
