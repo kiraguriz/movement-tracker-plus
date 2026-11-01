@@ -134,10 +134,10 @@ delivery checks, including Debug/Release and unsigned device SDK builds, without
 GitHub Actions runs the native and proxy checks on every push/PR. See `docs/completion-status.md` for the
 last verified results and outstanding device/service acceptance.
 
-The proxy deploy steps are in `proxy/README.md`. Set its public HTTPS address with the `COACH_PROXY_URL`
-Xcode build setting; credentials stay in Worker secrets. Until that is configured, the app has no online coach:
-the Coach sheet says it is unavailable, the set review
-shows only the on-device numbers, and Eat offers manual entry only.
+This checkout already configures the deployed proxy in both Debug and Release. For a different deployment,
+follow `proxy/README.md` and set its public HTTPS address with the `COACH_PROXY_URL` Xcode build setting;
+credentials stay in Worker secrets. With no URL configured, the Coach sheet is unavailable, set review
+uses on-device fallback, and Eat offers manual entry only.
 
 ## Run in the Simulator with the replay fixtures
 
@@ -157,6 +157,7 @@ Scheme, Edit Scheme, Run, Arguments. They apply to Debug builds only.
 | `-MTReplaySpeed 3` | Replay three times faster; counts do not change because the engine runs on recorded time. |
 | `-MTReplayHoldReps 8` | Stop the replay after the 8th counted rep and leave the screen as it is. |
 | `-MTCoachStub` | Canned in-process coach, no network. Screens show a stub badge. `-MTCoachStubFail offline\|budget\|paused` makes every call fail that way. |
+| `-MTNoCoach` | Show the unconfigured-coach state even with the deployed URL present. |
 | `-MTAIOptIn` | With the in-memory database, start with Coach consent already given. |
 | `-MTCoachURL <url>` | Use a proxy at this address, for example `wrangler dev`, instead of the deployed one. |
 | `-MTDebugHUD` | Show camera and engine numbers over the live set (a long press on the rep counter toggles it). |
@@ -199,10 +200,11 @@ with the counts you gave. The procedure is in `docs/device-checklist.md`.
 
 ## Real device checks
 
-Everything that needs the iPhone or a live Muse call, in order, with pass and fail criteria:
-[`docs/device-checklist.md`](docs/device-checklist.md). Until those are done, these are unverified: Vision
-latency and joint stability on the device, counting accuracy on real people, live Muse answers, Apple Health
-writes, and the deployed proxy.
+Physical-device acceptance steps and criteria are in [`docs/device-checklist.md`](docs/device-checklist.md).
+Vision latency/joint stability, real-person counting accuracy and actual Health writes remain unverified.
+The proxy is now deployed; real Muse non-streaming/SSE, USDA search, seeded Coach conversation, set review,
+session debrief and illustrated meal-photo logging passed. See [`docs/cloudflare-deployment.md`](docs/cloudflare-deployment.md) and
+[`docs/ui-debug-report.md`](docs/ui-debug-report.md) for the exact evidence and remaining UI coverage.
 
 ## More
 

@@ -122,8 +122,9 @@ Answered by the user 2026-10-29:
    Simulator runtime installed: iOS 27.0 only.
 3. Dependencies: **GRDB approved**. MediaPipe Tasks Vision via SPM only if the Vision gate fails (ask again).
 4. Proxy host: **Cloudflare Workers** (user has an account).
-7. Muse: Model API key exists; hackathon credits **not yet landed** (10/29). Deploying the Worker and
-   setting its secrets is the user's step (`wrangler login`, `wrangler secret put`).
+7. Muse: Model API key exists. On 2026-11-01 the user completed Cloudflare login and entered both Worker
+   secrets in hidden prompts. The proxy is deployed and enabled; real Muse non-streaming/SSE, USDA search
+   and a seeded simulator Coach turn passed. See `docs/cloudflare-deployment.md` for current operations.
 
 Still defaults: 5. demo exercises bodyweight squat + push-up; 6. only skeleton renders go to Muse;
 8. English UI with zh-Hans.
@@ -474,8 +475,9 @@ Vision 3D checks, SAM 3.1 replay, App Attest, iCloud sync via CKSyncEngine if mu
 App Store privacy labels.
 
 ## 13. Risks
-Muse access/credits unconfirmed (check D0); Vision accuracy/latency unmeasured (D0 gate, MediaPipe
-fallback); only one test iPhone and no camera in Simulator (ReplayPoseSource); 6-day schedule (cut
+Muse connectivity verified 2026-11-01; remaining credit balance is not established by a successful request.
+Vision accuracy/latency unmeasured (D0 gate, MediaPipe fallback); no physical-device acceptance yet and no
+camera in Simulator (ReplayPoseSource); 6-day schedule (cut
 order above); hackathon rules on ownership and prior work only seen in secondary sources (read the
 official rules); health data leaving the device (consent, minimization, standard tier); HealthKit
 signing on the user's developer account.

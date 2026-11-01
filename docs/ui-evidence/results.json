@@ -1,0 +1,1039 @@
+{
+  "schemaVersion": 1,
+  "generatedAtUTC": "2026-11-01T20:31:21.017492+00:00",
+  "finalCodeCommit": "ae9d29dd4a8da9d3d92d6518e757074711feb06b",
+  "data": "Synthetic profiles, workouts and meal illustration; no physical-camera or real HealthKit acceptance.",
+  "verifiedUniqueFinalCases": 82,
+  "finalCoverage": {
+    "functional": 57,
+    "screenshots": 25
+  },
+  "coverageMethod": "Aggregate of unchanged passing cases and post-fix targeted reruns. Complete-run failures remain visible; this does not assert every case passed in one invocation.",
+  "runs": [
+    {
+      "name": "discovery-baseline",
+      "device": "iPhone 18 Pro",
+      "os": "iOS 27.0 Simulator",
+      "sourceNote": "Frozen UI sources equivalent to 569bb57; before assertion/input fixes.",
+      "localLog": "/tmp/mt-full-ui.log",
+      "logSHA256": "f7ad932e9b954544fc764051c7e1d425bf8bb66b1de25e4fc8bd5893a2b78540",
+      "counts": {
+        "passed": 49,
+        "failed": 8,
+        "skipped": 25
+      },
+      "cases": [
+        {
+          "test": "MovementTrackerUITests.AccessibilityUITests testEatWorksAtTheLargestTextSize",
+          "status": "failed",
+          "durationSeconds": 34.602
+        },
+        {
+          "test": "MovementTrackerUITests.AccessibilityUITests testMainControlsAreAtLeast44PointsTall",
+          "status": "passed",
+          "durationSeconds": 30.407
+        },
+        {
+          "test": "MovementTrackerUITests.AccessibilityUITests testOnboardingWorksAtTheLargestTextSize",
+          "status": "passed",
+          "durationSeconds": 36.793
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatScreenshotUITests testChineseDark",
+          "status": "skipped",
+          "durationSeconds": 0.072
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatScreenshotUITests testChineseLight",
+          "status": "skipped",
+          "durationSeconds": 0.041
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatScreenshotUITests testEnglishDark",
+          "status": "skipped",
+          "durationSeconds": 0.042
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatScreenshotUITests testEnglishLandscape",
+          "status": "skipped",
+          "durationSeconds": 0.043
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatScreenshotUITests testEnglishLargeText",
+          "status": "skipped",
+          "durationSeconds": 0.044
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatScreenshotUITests testEnglishLight",
+          "status": "skipped",
+          "durationSeconds": 0.042
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testAFailedSendStaysVisibleAndCanBeRetried",
+          "status": "passed",
+          "durationSeconds": 15.927
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testAPlanStartedFromTheChatShowsOnATrainTabThatIsAlreadyOpen",
+          "status": "passed",
+          "durationSeconds": 33.114
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testAPlanStartedFromTheChatShowsWhenSwitchingBackToTrain",
+          "status": "passed",
+          "durationSeconds": 51.016
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testAPlanStartsADraftAndTheCardNamesWhatItLeftOut",
+          "status": "passed",
+          "durationSeconds": 25.763
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testChatStreamsAnswerShowsToolChipAndMealProposalLogsToEat",
+          "status": "passed",
+          "durationSeconds": 51.083
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testClosingTheSheetStopsTheReplyAndTheMessageCanBeRetried",
+          "status": "passed",
+          "durationSeconds": 31.588
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testCoachShowsOneUnavailableStateWithoutAProxy",
+          "status": "passed",
+          "durationSeconds": 23.86
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testConsentCardShowsWhileSharingIsOffAndTheToggleOpensTheComposer",
+          "status": "passed",
+          "durationSeconds": 15.96
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testDismissingProposalsWritesNothing",
+          "status": "passed",
+          "durationSeconds": 55.82
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testFoodSearchAddsAResultWithEditedGramsAndEatTotalsChange",
+          "status": "passed",
+          "durationSeconds": 50.394
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testFoodSearchLiquidIsPer100mlAndAMissingNutrientStaysEmpty",
+          "status": "passed",
+          "durationSeconds": 55.022
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testFoodSearchOfflineOffersARetry",
+          "status": "passed",
+          "durationSeconds": 22.969
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testFoodSearchShowsTheBudgetLimitWithoutARetry",
+          "status": "passed",
+          "durationSeconds": 16.757
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testGoalChangeProposalShowsThePlannerNumbersAndAppliesOnConfirm",
+          "status": "passed",
+          "durationSeconds": 33.773
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testMealPhotoAsksForConsentBeforeAnythingIsSent",
+          "status": "passed",
+          "durationSeconds": 22.743
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testMealPhotoEstimatesLooksUpAndSavesEveryItem",
+          "status": "failed",
+          "durationSeconds": 63.705
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testStopEndsTheReplyAndTheMessageCanBeRetried",
+          "status": "passed",
+          "durationSeconds": 25.596
+        },
+        {
+          "test": "MovementTrackerUITests.HealthScreenshotUITests testChineseDark",
+          "status": "skipped",
+          "durationSeconds": 0.095
+        },
+        {
+          "test": "MovementTrackerUITests.HealthScreenshotUITests testChineseLight",
+          "status": "skipped",
+          "durationSeconds": 0.045
+        },
+        {
+          "test": "MovementTrackerUITests.HealthScreenshotUITests testEnglishDark",
+          "status": "skipped",
+          "durationSeconds": 0.043
+        },
+        {
+          "test": "MovementTrackerUITests.HealthScreenshotUITests testEnglishLight",
+          "status": "skipped",
+          "durationSeconds": 0.055
+        },
+        {
+          "test": "MovementTrackerUITests.HealthUITests testDeniedAccessKeepsTheSwitchOff",
+          "status": "failed",
+          "durationSeconds": 33.837
+        },
+        {
+          "test": "MovementTrackerUITests.HealthUITests testEditingAMealSendsItAgainAndDeletingItRemovesIt",
+          "status": "passed",
+          "durationSeconds": 96.699
+        },
+        {
+          "test": "MovementTrackerUITests.HealthUITests testFinishedWorkoutIsSentAndTheDraftIsNot",
+          "status": "passed",
+          "durationSeconds": 69.385
+        },
+        {
+          "test": "MovementTrackerUITests.HealthUITests testMealIsSentOnceHealthIsOnAndEarlierDataIsNot",
+          "status": "passed",
+          "durationSeconds": 57.612
+        },
+        {
+          "test": "MovementTrackerUITests.HealthUITests testTurningHealthOffStopsExports",
+          "status": "passed",
+          "durationSeconds": 95.705
+        },
+        {
+          "test": "MovementTrackerUITests.HealthUITests testWeightChangedInTheProfileEditorIsSent",
+          "status": "failed",
+          "durationSeconds": 45.543
+        },
+        {
+          "test": "MovementTrackerUITests.HealthUITests testWeightIsSent",
+          "status": "passed",
+          "durationSeconds": 35.683
+        },
+        {
+          "test": "MovementTrackerUITests.LocalizationUITests testOnboardingInChinese",
+          "status": "passed",
+          "durationSeconds": 9.409
+        },
+        {
+          "test": "MovementTrackerUITests.LocalizationUITests testTodayEatAndMeInChinese",
+          "status": "passed",
+          "durationSeconds": 37.307
+        },
+        {
+          "test": "MovementTrackerUITests.MealFlowUITests testAddEditAndDeleteAMealChangesTodaysTotals",
+          "status": "failed",
+          "durationSeconds": 54.79
+        },
+        {
+          "test": "MovementTrackerUITests.MealFlowUITests testAMealWithMissingValuesIsAllowed",
+          "status": "passed",
+          "durationSeconds": 23.159
+        },
+        {
+          "test": "MovementTrackerUITests.MealFlowUITests testAnyPastDayCanBeOpenedFromTheStrip",
+          "status": "passed",
+          "durationSeconds": 15.15
+        },
+        {
+          "test": "MovementTrackerUITests.MealFlowUITests testDecimalCommaIsReadWhereTheRegionUsesIt",
+          "status": "failed",
+          "durationSeconds": 33.874
+        },
+        {
+          "test": "MovementTrackerUITests.MealFlowUITests testDeletingFromTheEditorAsksForConfirmation",
+          "status": "passed",
+          "durationSeconds": 54.902
+        },
+        {
+          "test": "MovementTrackerUITests.MealFlowUITests testImplausibleNumbersCannotBeSaved",
+          "status": "failed",
+          "durationSeconds": 51.915
+        },
+        {
+          "test": "MovementTrackerUITests.MealFlowUITests testMealLoggedOnAPastDayCountsThatDayOnly",
+          "status": "passed",
+          "durationSeconds": 41.79
+        },
+        {
+          "test": "MovementTrackerUITests.MovementTrackerUITests testChineseLocalization",
+          "status": "passed",
+          "durationSeconds": 16.475
+        },
+        {
+          "test": "MovementTrackerUITests.MovementTrackerUITests testEachTabShowsOnlyItsOwnScreen",
+          "status": "passed",
+          "durationSeconds": 37.524
+        },
+        {
+          "test": "MovementTrackerUITests.MovementTrackerUITests testRegularWidthLandscape",
+          "status": "passed",
+          "durationSeconds": 39.25
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testChangingUnitsConvertsTheBodyValues",
+          "status": "failed",
+          "durationSeconds": 42.369
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testCoachSwitchAsksBeforeSendingData",
+          "status": "passed",
+          "durationSeconds": 22.899
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testDatabaseFailureOffersRetry",
+          "status": "passed",
+          "durationSeconds": 5.949
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testEditingTheGoalSetsANewActiveGoal",
+          "status": "passed",
+          "durationSeconds": 23.733
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testOnboardingLandsOnTodayWithPlannedTargets",
+          "status": "passed",
+          "durationSeconds": 39.779
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testPreferNotToSayAsksForTheEquation",
+          "status": "passed",
+          "durationSeconds": 22.817
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testPrivacyScreenStatesWhatLeavesThePhone",
+          "status": "passed",
+          "durationSeconds": 23.216
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testTrainingLevelIsEditableAndSaved",
+          "status": "passed",
+          "durationSeconds": 23.194
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testUnderSixteenIsRejectedAndUnderEighteenIsWarned",
+          "status": "passed",
+          "durationSeconds": 35.571
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testUnitsApplyEverywhereAndPrivacyScreenOpens",
+          "status": "passed",
+          "durationSeconds": 31.026
+        },
+        {
+          "test": "MovementTrackerUITests.ScreenshotUITests testChineseDark",
+          "status": "skipped",
+          "durationSeconds": 0.077
+        },
+        {
+          "test": "MovementTrackerUITests.ScreenshotUITests testChineseLight",
+          "status": "skipped",
+          "durationSeconds": 0.072
+        },
+        {
+          "test": "MovementTrackerUITests.ScreenshotUITests testConsentAndPrivacy",
+          "status": "skipped",
+          "durationSeconds": 0.071
+        },
+        {
+          "test": "MovementTrackerUITests.ScreenshotUITests testEnglishDark",
+          "status": "skipped",
+          "durationSeconds": 0.095
+        },
+        {
+          "test": "MovementTrackerUITests.ScreenshotUITests testEnglishLight",
+          "status": "skipped",
+          "durationSeconds": 0.079
+        },
+        {
+          "test": "MovementTrackerUITests.ScreenshotUITests testLandscape",
+          "status": "skipped",
+          "durationSeconds": 0.067
+        },
+        {
+          "test": "MovementTrackerUITests.ScreenshotUITests testLargestText",
+          "status": "skipped",
+          "durationSeconds": 0.069
+        },
+        {
+          "test": "MovementTrackerUITests.ScreenshotUITests testLaunchFailure",
+          "status": "skipped",
+          "durationSeconds": 0.068
+        },
+        {
+          "test": "MovementTrackerUITests.TrainFlowUITests testDeniedCameraOffersSettings",
+          "status": "passed",
+          "durationSeconds": 25.162
+        },
+        {
+          "test": "MovementTrackerUITests.TrainFlowUITests testDiscardingAWorkout",
+          "status": "passed",
+          "durationSeconds": 38.609
+        },
+        {
+          "test": "MovementTrackerUITests.TrainFlowUITests testManualSetThroughToToday",
+          "status": "passed",
+          "durationSeconds": 47.671
+        },
+        {
+          "test": "MovementTrackerUITests.TrainFlowUITests testNextSetReturnsToTheCamera",
+          "status": "passed",
+          "durationSeconds": 42.145
+        },
+        {
+          "test": "MovementTrackerUITests.TrainFlowUITests testNoCameraReplaysAutomatically",
+          "status": "passed",
+          "durationSeconds": 25.824
+        },
+        {
+          "test": "MovementTrackerUITests.TrainFlowUITests testOnlyTheLatestCueIsShown",
+          "status": "passed",
+          "durationSeconds": 31.382
+        },
+        {
+          "test": "MovementTrackerUITests.TrainFlowUITests testReplayedSquatSetFromLiveSetToToday",
+          "status": "passed",
+          "durationSeconds": 74.858
+        },
+        {
+          "test": "MovementTrackerUITests.TrainFlowUITests testRestrictedCameraShowsItsState",
+          "status": "passed",
+          "durationSeconds": 22.912
+        },
+        {
+          "test": "MovementTrackerUITests.TrainScreenshotUITests testCameraStates",
+          "status": "skipped",
+          "durationSeconds": 0.049
+        },
+        {
+          "test": "MovementTrackerUITests.TrainScreenshotUITests testChineseLandscape",
+          "status": "skipped",
+          "durationSeconds": 0.036
+        },
+        {
+          "test": "MovementTrackerUITests.TrainScreenshotUITests testChinesePortrait",
+          "status": "skipped",
+          "durationSeconds": 0.037
+        },
+        {
+          "test": "MovementTrackerUITests.TrainScreenshotUITests testDebugHUD",
+          "status": "skipped",
+          "durationSeconds": 0.037
+        },
+        {
+          "test": "MovementTrackerUITests.TrainScreenshotUITests testEnglishLandscape",
+          "status": "skipped",
+          "durationSeconds": 0.036
+        },
+        {
+          "test": "MovementTrackerUITests.TrainScreenshotUITests testEnglishPortrait",
+          "status": "skipped",
+          "durationSeconds": 0.038
+        },
+        {
+          "test": "MovementTrackerUITests.TrainScreenshotUITests testLargestTextSize",
+          "status": "skipped",
+          "durationSeconds": 0.036
+        }
+      ]
+    },
+    {
+      "name": "light-large-landscape",
+      "device": "iPhone 18 Pro Max",
+      "os": "iOS 27.0 Simulator",
+      "sourceNote": "5761da3 screenshot sources; local Coach/Health stubs.",
+      "localLog": "/tmp/mt-screens-light.log",
+      "logSHA256": "c1c04808dc352e0c0a93d395aa35858406c76234e922b3160ce79ee8885eb7d5",
+      "counts": {
+        "passed": 19,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cases": [
+        {
+          "test": "MovementTrackerUITests.CoachEatScreenshotUITests testChineseLight",
+          "status": "passed",
+          "durationSeconds": 54.247
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatScreenshotUITests testEnglishLandscape",
+          "status": "passed",
+          "durationSeconds": 55.991
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatScreenshotUITests testEnglishLargeText",
+          "status": "passed",
+          "durationSeconds": 52.933
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatScreenshotUITests testEnglishLight",
+          "status": "passed",
+          "durationSeconds": 53.192
+        },
+        {
+          "test": "MovementTrackerUITests.HealthScreenshotUITests testChineseLight",
+          "status": "passed",
+          "durationSeconds": 24.688
+        },
+        {
+          "test": "MovementTrackerUITests.HealthScreenshotUITests testEnglishLight",
+          "status": "passed",
+          "durationSeconds": 25.025
+        },
+        {
+          "test": "MovementTrackerUITests.ScreenshotUITests testChineseLight",
+          "status": "passed",
+          "durationSeconds": 83.427
+        },
+        {
+          "test": "MovementTrackerUITests.ScreenshotUITests testConsentAndPrivacy",
+          "status": "passed",
+          "durationSeconds": 22.219
+        },
+        {
+          "test": "MovementTrackerUITests.ScreenshotUITests testEnglishLight",
+          "status": "passed",
+          "durationSeconds": 80.47
+        },
+        {
+          "test": "MovementTrackerUITests.ScreenshotUITests testLandscape",
+          "status": "passed",
+          "durationSeconds": 26.909
+        },
+        {
+          "test": "MovementTrackerUITests.ScreenshotUITests testLargestText",
+          "status": "passed",
+          "durationSeconds": 32.717
+        },
+        {
+          "test": "MovementTrackerUITests.ScreenshotUITests testLaunchFailure",
+          "status": "passed",
+          "durationSeconds": 8.091
+        },
+        {
+          "test": "MovementTrackerUITests.TrainScreenshotUITests testCameraStates",
+          "status": "passed",
+          "durationSeconds": 49.407
+        },
+        {
+          "test": "MovementTrackerUITests.TrainScreenshotUITests testChineseLandscape",
+          "status": "passed",
+          "durationSeconds": 79.854
+        },
+        {
+          "test": "MovementTrackerUITests.TrainScreenshotUITests testChinesePortrait",
+          "status": "passed",
+          "durationSeconds": 79.606
+        },
+        {
+          "test": "MovementTrackerUITests.TrainScreenshotUITests testDebugHUD",
+          "status": "passed",
+          "durationSeconds": 26.591
+        },
+        {
+          "test": "MovementTrackerUITests.TrainScreenshotUITests testEnglishLandscape",
+          "status": "passed",
+          "durationSeconds": 82.285
+        },
+        {
+          "test": "MovementTrackerUITests.TrainScreenshotUITests testEnglishPortrait",
+          "status": "passed",
+          "durationSeconds": 78.064
+        },
+        {
+          "test": "MovementTrackerUITests.TrainScreenshotUITests testLargestTextSize",
+          "status": "passed",
+          "durationSeconds": 78.818
+        }
+      ]
+    },
+    {
+      "name": "dark",
+      "device": "iPhone 18 Pro Max",
+      "os": "iOS 27.0 Simulator",
+      "sourceNote": "5761da3 screenshot sources; local Coach/Health stubs.",
+      "localLog": "/tmp/mt-screens-dark.log",
+      "logSHA256": "04826111d384d5b90b1f216c8b1e55377fa23ac3287db5a22e60b3f430fef428",
+      "counts": {
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cases": [
+        {
+          "test": "MovementTrackerUITests.CoachEatScreenshotUITests testChineseDark",
+          "status": "passed",
+          "durationSeconds": 53.28
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatScreenshotUITests testEnglishDark",
+          "status": "passed",
+          "durationSeconds": 56.368
+        },
+        {
+          "test": "MovementTrackerUITests.HealthScreenshotUITests testChineseDark",
+          "status": "passed",
+          "durationSeconds": 33.873
+        },
+        {
+          "test": "MovementTrackerUITests.HealthScreenshotUITests testEnglishDark",
+          "status": "passed",
+          "durationSeconds": 24.855
+        },
+        {
+          "test": "MovementTrackerUITests.ScreenshotUITests testChineseDark",
+          "status": "passed",
+          "durationSeconds": 31.104
+        },
+        {
+          "test": "MovementTrackerUITests.ScreenshotUITests testEnglishDark",
+          "status": "passed",
+          "durationSeconds": 68.201
+        }
+      ]
+    },
+    {
+      "name": "input-targeted",
+      "device": "iPhone 18 Pro",
+      "os": "iOS 27.0 Simulator",
+      "sourceNote": "Pre-freeze portrait regression; final small-height gesture guard is compiled in the final run.",
+      "localLog": "/tmp/mt-input-fixed.log",
+      "logSHA256": "c475960bb24ba0cfba48593b84beb1a7b0bb0d6a94f5b3d2c3dc6b8178ce395b",
+      "counts": {
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cases": [
+        {
+          "test": "MovementTrackerUITests.HealthUITests testWeightChangedInTheProfileEditorIsSent",
+          "status": "passed",
+          "durationSeconds": 42.738
+        },
+        {
+          "test": "MovementTrackerUITests.MealFlowUITests testAddEditAndDeleteAMealChangesTodaysTotals",
+          "status": "passed",
+          "durationSeconds": 103.431
+        },
+        {
+          "test": "MovementTrackerUITests.MealFlowUITests testDecimalCommaIsReadWhereTheRegionUsesIt",
+          "status": "passed",
+          "durationSeconds": 34.176
+        },
+        {
+          "test": "MovementTrackerUITests.MealFlowUITests testImplausibleNumbersCannotBeSaved",
+          "status": "passed",
+          "durationSeconds": 51.271
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testChangingUnitsConvertsTheBodyValues",
+          "status": "passed",
+          "durationSeconds": 38.326
+        }
+      ]
+    },
+    {
+      "name": "functional-complete",
+      "device": "iPhone 18 Pro",
+      "os": "iOS 27.0 Simulator",
+      "sourceNote": "23395a2; one serial UI session; screenshot classes excluded. Preserve this run even if later fixes require targeted follow-up.",
+      "localLog": "/tmp/mt-functional-final.log",
+      "logSHA256": "d4557c0a86dfd042b08b1e417f4833154a34ae9d9c146d0ca6e3eb590b0e429c",
+      "counts": {
+        "passed": 56,
+        "failed": 1,
+        "skipped": 0
+      },
+      "cases": [
+        {
+          "test": "MovementTrackerUITests.AccessibilityUITests testEatWorksAtTheLargestTextSize",
+          "status": "passed",
+          "durationSeconds": 26.527
+        },
+        {
+          "test": "MovementTrackerUITests.AccessibilityUITests testMainControlsAreAtLeast44PointsTall",
+          "status": "passed",
+          "durationSeconds": 28.427
+        },
+        {
+          "test": "MovementTrackerUITests.AccessibilityUITests testOnboardingWorksAtTheLargestTextSize",
+          "status": "passed",
+          "durationSeconds": 36.752
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testAFailedSendStaysVisibleAndCanBeRetried",
+          "status": "passed",
+          "durationSeconds": 16.452
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testAPlanStartedFromTheChatShowsOnATrainTabThatIsAlreadyOpen",
+          "status": "passed",
+          "durationSeconds": 32.831
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testAPlanStartedFromTheChatShowsWhenSwitchingBackToTrain",
+          "status": "passed",
+          "durationSeconds": 51.289
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testAPlanStartsADraftAndTheCardNamesWhatItLeftOut",
+          "status": "passed",
+          "durationSeconds": 26.922
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testChatStreamsAnswerShowsToolChipAndMealProposalLogsToEat",
+          "status": "passed",
+          "durationSeconds": 48.935
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testClosingTheSheetStopsTheReplyAndTheMessageCanBeRetried",
+          "status": "passed",
+          "durationSeconds": 27.389
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testCoachShowsOneUnavailableStateWithoutAProxy",
+          "status": "passed",
+          "durationSeconds": 21.974
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testConsentCardShowsWhileSharingIsOffAndTheToggleOpensTheComposer",
+          "status": "passed",
+          "durationSeconds": 15.719
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testDismissingProposalsWritesNothing",
+          "status": "passed",
+          "durationSeconds": 56.783
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testFoodSearchAddsAResultWithEditedGramsAndEatTotalsChange",
+          "status": "passed",
+          "durationSeconds": 39.974
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testFoodSearchLiquidIsPer100mlAndAMissingNutrientStaysEmpty",
+          "status": "passed",
+          "durationSeconds": 33.106
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testFoodSearchOfflineOffersARetry",
+          "status": "passed",
+          "durationSeconds": 16.266
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testFoodSearchShowsTheBudgetLimitWithoutARetry",
+          "status": "passed",
+          "durationSeconds": 16.194
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testGoalChangeProposalShowsThePlannerNumbersAndAppliesOnConfirm",
+          "status": "passed",
+          "durationSeconds": 30.275
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testMealPhotoAsksForConsentBeforeAnythingIsSent",
+          "status": "passed",
+          "durationSeconds": 17.043
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testMealPhotoEstimatesLooksUpAndSavesEveryItem",
+          "status": "passed",
+          "durationSeconds": 48.516
+        },
+        {
+          "test": "MovementTrackerUITests.CoachEatUITests testStopEndsTheReplyAndTheMessageCanBeRetried",
+          "status": "passed",
+          "durationSeconds": 23.082
+        },
+        {
+          "test": "MovementTrackerUITests.HealthUITests testDeniedAccessKeepsTheSwitchOff",
+          "status": "passed",
+          "durationSeconds": 55.603
+        },
+        {
+          "test": "MovementTrackerUITests.HealthUITests testEditingAMealSendsItAgainAndDeletingItRemovesIt",
+          "status": "passed",
+          "durationSeconds": 94.37
+        },
+        {
+          "test": "MovementTrackerUITests.HealthUITests testFinishedWorkoutIsSentAndTheDraftIsNot",
+          "status": "passed",
+          "durationSeconds": 70.678
+        },
+        {
+          "test": "MovementTrackerUITests.HealthUITests testMealIsSentOnceHealthIsOnAndEarlierDataIsNot",
+          "status": "passed",
+          "durationSeconds": 62.276
+        },
+        {
+          "test": "MovementTrackerUITests.HealthUITests testTurningHealthOffStopsExports",
+          "status": "passed",
+          "durationSeconds": 106.308
+        },
+        {
+          "test": "MovementTrackerUITests.HealthUITests testWeightChangedInTheProfileEditorIsSent",
+          "status": "passed",
+          "durationSeconds": 38.469
+        },
+        {
+          "test": "MovementTrackerUITests.HealthUITests testWeightIsSent",
+          "status": "passed",
+          "durationSeconds": 34.151
+        },
+        {
+          "test": "MovementTrackerUITests.LocalizationUITests testOnboardingInChinese",
+          "status": "passed",
+          "durationSeconds": 7.741
+        },
+        {
+          "test": "MovementTrackerUITests.LocalizationUITests testTodayEatAndMeInChinese",
+          "status": "passed",
+          "durationSeconds": 37.595
+        },
+        {
+          "test": "MovementTrackerUITests.MealFlowUITests testAddEditAndDeleteAMealChangesTodaysTotals",
+          "status": "passed",
+          "durationSeconds": 106.997
+        },
+        {
+          "test": "MovementTrackerUITests.MealFlowUITests testAMealWithMissingValuesIsAllowed",
+          "status": "passed",
+          "durationSeconds": 23.303
+        },
+        {
+          "test": "MovementTrackerUITests.MealFlowUITests testAnyPastDayCanBeOpenedFromTheStrip",
+          "status": "passed",
+          "durationSeconds": 15.291
+        },
+        {
+          "test": "MovementTrackerUITests.MealFlowUITests testDecimalCommaIsReadWhereTheRegionUsesIt",
+          "status": "passed",
+          "durationSeconds": 30.917
+        },
+        {
+          "test": "MovementTrackerUITests.MealFlowUITests testDeletingFromTheEditorAsksForConfirmation",
+          "status": "passed",
+          "durationSeconds": 58.084
+        },
+        {
+          "test": "MovementTrackerUITests.MealFlowUITests testImplausibleNumbersCannotBeSaved",
+          "status": "passed",
+          "durationSeconds": 49.582
+        },
+        {
+          "test": "MovementTrackerUITests.MealFlowUITests testMealLoggedOnAPastDayCountsThatDayOnly",
+          "status": "passed",
+          "durationSeconds": 46.246
+        },
+        {
+          "test": "MovementTrackerUITests.MovementTrackerUITests testChineseLocalization",
+          "status": "passed",
+          "durationSeconds": 15.736
+        },
+        {
+          "test": "MovementTrackerUITests.MovementTrackerUITests testEachTabShowsOnlyItsOwnScreen",
+          "status": "passed",
+          "durationSeconds": 38.018
+        },
+        {
+          "test": "MovementTrackerUITests.MovementTrackerUITests testRegularWidthLandscape",
+          "status": "passed",
+          "durationSeconds": 37.93
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testChangingUnitsConvertsTheBodyValues",
+          "status": "failed",
+          "durationSeconds": 44.635
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testCoachSwitchAsksBeforeSendingData",
+          "status": "passed",
+          "durationSeconds": 23.262
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testDatabaseFailureOffersRetry",
+          "status": "passed",
+          "durationSeconds": 5.891
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testEditingTheGoalSetsANewActiveGoal",
+          "status": "passed",
+          "durationSeconds": 23.041
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testOnboardingLandsOnTodayWithPlannedTargets",
+          "status": "passed",
+          "durationSeconds": 40.475
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testPreferNotToSayAsksForTheEquation",
+          "status": "passed",
+          "durationSeconds": 22.78
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testPrivacyScreenStatesWhatLeavesThePhone",
+          "status": "passed",
+          "durationSeconds": 23.674
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testTrainingLevelIsEditableAndSaved",
+          "status": "passed",
+          "durationSeconds": 23.154
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testUnderSixteenIsRejectedAndUnderEighteenIsWarned",
+          "status": "passed",
+          "durationSeconds": 38.563
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testUnitsApplyEverywhereAndPrivacyScreenOpens",
+          "status": "passed",
+          "durationSeconds": 31.223
+        },
+        {
+          "test": "MovementTrackerUITests.TrainFlowUITests testDeniedCameraOffersSettings",
+          "status": "passed",
+          "durationSeconds": 26.246
+        },
+        {
+          "test": "MovementTrackerUITests.TrainFlowUITests testDiscardingAWorkout",
+          "status": "passed",
+          "durationSeconds": 38.877
+        },
+        {
+          "test": "MovementTrackerUITests.TrainFlowUITests testManualSetThroughToToday",
+          "status": "passed",
+          "durationSeconds": 49.621
+        },
+        {
+          "test": "MovementTrackerUITests.TrainFlowUITests testNextSetReturnsToTheCamera",
+          "status": "passed",
+          "durationSeconds": 41.803
+        },
+        {
+          "test": "MovementTrackerUITests.TrainFlowUITests testNoCameraReplaysAutomatically",
+          "status": "passed",
+          "durationSeconds": 25.298
+        },
+        {
+          "test": "MovementTrackerUITests.TrainFlowUITests testOnlyTheLatestCueIsShown",
+          "status": "passed",
+          "durationSeconds": 31.316
+        },
+        {
+          "test": "MovementTrackerUITests.TrainFlowUITests testReplayedSquatSetFromLiveSetToToday",
+          "status": "passed",
+          "durationSeconds": 74.387
+        },
+        {
+          "test": "MovementTrackerUITests.TrainFlowUITests testRestrictedCameraShowsItsState",
+          "status": "passed",
+          "durationSeconds": 24.501
+        }
+      ]
+    },
+    {
+      "name": "post-fix-1",
+      "device": "iPhone 18 Pro",
+      "os": "iOS 27.0 Simulator",
+      "sourceNote": "Targeted post-fix follow-up; see UI report for source and affected behavior.",
+      "localLog": "/tmp/mt-rotation-parent.log",
+      "logSHA256": "2183513eed42e8a61297a9a7c17a7b5b3f60729655bedf7ce4041efab9d1a7e5",
+      "counts": {
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cases": [
+        {
+          "test": "MovementTrackerUITests.MovementTrackerUITests testRegularWidthLandscape",
+          "status": "passed",
+          "durationSeconds": 40.417
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testChangingUnitsConvertsTheBodyValues",
+          "status": "passed",
+          "durationSeconds": 38.537
+        }
+      ]
+    },
+    {
+      "name": "post-fix-2",
+      "device": "iPhone 18 Pro",
+      "os": "iOS 27.0 Simulator",
+      "sourceNote": "Targeted post-fix follow-up; see UI report for source and affected behavior.",
+      "localLog": "/tmp/mt-onboarding-regression.log",
+      "logSHA256": "3f2580e5985496ef0ca47a964b83604a7e39c0347e7aaccaff8a842933eef9b2",
+      "counts": {
+        "passed": 13,
+        "failed": 0,
+        "skipped": 0
+      },
+      "cases": [
+        {
+          "test": "MovementTrackerUITests.AccessibilityUITests testOnboardingWorksAtTheLargestTextSize",
+          "status": "passed",
+          "durationSeconds": 40.362
+        },
+        {
+          "test": "MovementTrackerUITests.HealthUITests testWeightChangedInTheProfileEditorIsSent",
+          "status": "passed",
+          "durationSeconds": 41.846
+        },
+        {
+          "test": "MovementTrackerUITests.LocalizationUITests testOnboardingInChinese",
+          "status": "passed",
+          "durationSeconds": 8.634
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testChangingUnitsConvertsTheBodyValues",
+          "status": "passed",
+          "durationSeconds": 36.4
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testCoachSwitchAsksBeforeSendingData",
+          "status": "passed",
+          "durationSeconds": 22.922
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testDatabaseFailureOffersRetry",
+          "status": "passed",
+          "durationSeconds": 5.906
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testEditingTheGoalSetsANewActiveGoal",
+          "status": "passed",
+          "durationSeconds": 22.367
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testOnboardingLandsOnTodayWithPlannedTargets",
+          "status": "passed",
+          "durationSeconds": 40.05
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testPreferNotToSayAsksForTheEquation",
+          "status": "passed",
+          "durationSeconds": 22.723
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testPrivacyScreenStatesWhatLeavesThePhone",
+          "status": "passed",
+          "durationSeconds": 23.365
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testTrainingLevelIsEditableAndSaved",
+          "status": "passed",
+          "durationSeconds": 23.019
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testUnderSixteenIsRejectedAndUnderEighteenIsWarned",
+          "status": "passed",
+          "durationSeconds": 37.862
+        },
+        {
+          "test": "MovementTrackerUITests.ProfileFlowUITests testUnitsApplyEverywhereAndPrivacyScreenOpens",
+          "status": "passed",
+          "durationSeconds": 31.051
+        }
+      ]
+    }
+  ]
+}

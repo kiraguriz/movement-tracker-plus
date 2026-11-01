@@ -145,19 +145,23 @@ also a regression case for the engine.
 
 ## 4. Proxy deploy
 
+Completed for this project on 2026-11-01: the proxy is deployed, both secrets are configured, and real
+Muse/SSE/USDA checks passed. See [cloudflare-deployment.md](cloudflare-deployment.md). The checklist below
+is retained for a fresh account or redeployment; do not create replacement resources for the existing deployment.
+
 Full detail: [`proxy/README.md`](../proxy/README.md), section "Deploy (your steps)". Needs a Cloudflare account and
 Node 24 or newer. Type the two keys only at the prompts; do not paste them into a file, a chat or the shell.
 
 - [ ] From `proxy/`:
 
   ```sh
-  npm install
+  npm ci
   npx wrangler login
   npx wrangler kv namespace create movement-tracker-proxy
   ```
 
-  Paste the printed id into `proxy/wrangler.jsonc` as `kv_namespaces[0].id`, replacing
-  `REPLACE_WITH_KV_NAMESPACE_ID`. A KV id is not a secret.
+  For a fresh account, paste the printed id into `proxy/wrangler.jsonc` as `kv_namespaces[0].id`, replacing
+  the existing deployment's id. A KV id is not a secret.
 - [ ] Set the secrets. Each command asks for the value:
 
   ```sh
@@ -168,9 +172,9 @@ Node 24 or newer. Type the two keys only at the prompts; do not paste them into 
   If it offers to create the Worker first, answer yes. `MODEL_API_KEY` is the Meta Model API key;
   `USDA_API_KEY` is the free key from api.data.gov. Both live only as Worker secrets.
 - [ ] `npx wrangler deploy`. Expected: it prints `https://movement-tracker-proxy.<subdomain>.workers.dev`.
-- [ ] Put that address in `App/Support/CoachEndpoint.swift`:
-  `static let deployed: URL? = URL(string: "https://movement-tracker-proxy.<subdomain>.workers.dev")`. The address
-  is not a secret. Without it the app has no coach.
+- [ ] For a different deployment, set that public HTTPS address as `COACH_PROXY_URL` in both Debug and
+  Release app build settings. `Config/Info.plist` expands it into `CoachProxyURL`; no Swift source edit is
+  needed. This checkout already configures the current deployment. Keep credentials in Worker secrets.
 - [ ] From the repo root:
 
   ```sh

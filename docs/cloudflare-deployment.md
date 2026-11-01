@@ -29,6 +29,8 @@ Deployment version: `c36fe5a4-9186-4c4c-a893-fef051d5a34e`.
 | USDA search | HTTP 200; `banana` returned 25 normalized results |
 | App configuration | Release Simulator SDK build passed; embedded public URL matches the deployment |
 | Simulator live Coach | One user prompt against real Muse, using synthetic seeded data; visible answer and local-session tool chip |
+| Simulator live set review/debrief | Synthetic squat replay, no stub; Muse returned rep-specific advice and session metrics without a fallback indicator |
+| Simulator live meal photo | Generated illustration, no stub; Muse estimate → USDA matching → confirm/save → Eat showed two items, 176 kcal total |
 
 The install token used by the combined food/SSE check remained only in the checking process's memory.
 These checks establish current proxy/API connectivity, not real-person movement accuracy or physical HealthKit

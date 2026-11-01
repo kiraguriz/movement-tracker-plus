@@ -2,7 +2,7 @@
 
 What was built when, generated from `git log main` by `tools/build-log.sh`. Times are author times in Chicago time (CST/CDT); merge commits are left out.
 
-Source: `main` at `65f24d2`, 34 commits, 2026-10-29 to 2026-11-01.
+Source: `main` at `ae9d29d`, 40 commits, 2026-10-29 to 2026-11-01.
 
 ## 2026-10-29 (Thu)
 
@@ -46,3 +46,9 @@ Source: `main` at `65f24d2`, 34 commits, 2026-10-29 to 2026-11-01.
 - 04:58 CST `940e69e` Reject unmeasured evaluation clips and declare Vision hardware integration requirements
 - 05:00 CST `fcb102f` Quote the CI hardware diagnostic as a YAML block
 - 05:06 CST `65f24d2` Probe actual Vision body-pose availability instead of assuming Metal support
+- 05:16 CST `5c36ef6` Record completed local and cloud delivery validation
+- 12:33 CST `dea0d6c` Connect the app to the deployed Cloudflare proxy and verify live APIs
+- 12:45 CST `569bb57` Count performed exercises consistently and isolate UI tests from live services
+- 12:58 CST `5761da3` Align UI assertions with lazy forms and mass-safe photo nutrition
+- 13:34 CST `23395a2` Replace UI field text reliably and avoid the predictive keyboard bar
+- 14:31 CST `ae9d29d` Clear onboarding field focus when navigating between steps
