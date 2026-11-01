@@ -218,6 +218,7 @@ final class ProfileFlowUITests: AppUITestCase {
         XCTAssertTrue(next.waitForExistence(timeout: 10), "Continue not found")
         if !waitUntil({ next.isEnabled }) { dumpHierarchy(app, "continue-disabled") }
         XCTAssertTrue(next.isEnabled, "Continue stayed disabled")
+        XCTAssertTrue(waitUntil { next.isHittable }, "Continue is obscured")
         next.tap()
     }
 }

@@ -63,6 +63,7 @@ extension UnitSystem {
 
 struct AboutYouSections: View {
     @Bindable var draft: ProfileDraft
+    var birthYearFocus: FocusState<Bool>.Binding?
     /// Onboarding picks the unit system here; the editor leaves that to the Me tab.
     var showsUnits: Bool
 
@@ -85,7 +86,8 @@ struct AboutYouSections: View {
                 text: $draft.birthYearText,
                 allowsDecimals: false,
                 isInvalid: draft.ageCheck == .aboveMaximum,
-                identifier: AccessibilityID.birthYear
+                identifier: AccessibilityID.birthYear,
+                focus: birthYearFocus
             )
             if draft.ageCheck == .belowMinimum {
                 Label("You must be 16 or older", systemImage: "exclamationmark.triangle.fill")
@@ -123,6 +125,9 @@ struct AboutYouSections: View {
 
 struct BodySection: View {
     @Bindable var draft: ProfileDraft
+    var heightFocus: FocusState<Bool>.Binding?
+    var inchesFocus: FocusState<Bool>.Binding?
+    var weightFocus: FocusState<Bool>.Binding?
 
     private var units: UnitFormatter { UnitFormatter(system: draft.unitSystem) }
 
@@ -135,17 +140,20 @@ struct BodySection: View {
                     text: $draft.heightText,
                     unit: UnitFormatter.symbol(UnitLength.centimeters),
                     isInvalid: draft.isHeightInvalid,
-                    identifier: AccessibilityID.height
+                    identifier: AccessibilityID.height,
+                    focus: heightFocus
                 )
             case .imperial:
                 HStack(spacing: 8) {
                     Text("Height")
                     TextField("Feet", text: $draft.heightText, prompt: Text(verbatim: "–"))
+                        .modifier(OptionalInputFocus(focus: heightFocus))
                         .multilineTextAlignment(.trailing)
                         .keyboardType(.numberPad)
                         .accessibilityIdentifier(AccessibilityID.height)
                     Text(UnitFormatter.symbol(UnitLength.feet)).foregroundStyle(.secondary)
                     TextField("Inches", text: $draft.heightInchesText, prompt: Text(verbatim: "–"))
+                        .modifier(OptionalInputFocus(focus: inchesFocus))
                         .multilineTextAlignment(.trailing)
                         .keyboardType(.decimalPad)
                         .frame(maxWidth: 56)
@@ -164,7 +172,8 @@ struct BodySection: View {
                 text: $draft.weightText,
                 unit: units.massSymbol,
                 isInvalid: draft.isWeightInvalid,
-                identifier: AccessibilityID.weight
+                identifier: AccessibilityID.weight,
+                focus: weightFocus
             )
         }
     }

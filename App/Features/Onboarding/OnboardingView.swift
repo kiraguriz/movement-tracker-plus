@@ -12,6 +12,10 @@ struct OnboardingView: View {
     @State private var path: [Step] = []
     @State private var isSaving = false
     @State private var errorMessage: String?
+    @FocusState private var birthYearFocused: Bool
+    @FocusState private var heightFocused: Bool
+    @FocusState private var inchesFocused: Bool
+    @FocusState private var weightFocused: Bool
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -22,13 +26,13 @@ struct OnboardingView: View {
     var body: some View {
         NavigationStack(path: $path) {
             form("About you", canContinue: draft.isAboutValid, next: .body) {
-                AboutYouSections(draft: draft, showsUnits: true)
+                AboutYouSections(draft: draft, birthYearFocus: $birthYearFocused, showsUnits: true)
             }
             .navigationDestination(for: Step.self) { step in
                 switch step {
                 case .body:
                     form("Body", canContinue: draft.isBodyValid, next: .goal) {
-                        BodySection(draft: draft)
+                        BodySection(draft: draft, heightFocus: $heightFocused, inchesFocus: $inchesFocused, weightFocus: $weightFocused)
                     }
                 case .goal:
                     form("Goal", canContinue: true, next: .plan) {
@@ -38,6 +42,12 @@ struct OnboardingView: View {
                     planStep
                 }
             }
+        }
+        .onChange(of: path) {
+            birthYearFocused = false
+            heightFocused = false
+            inchesFocused = false
+            weightFocused = false
         }
         .errorAlert($errorMessage)
         .testIdentifier(AccessibilityID.onboarding)

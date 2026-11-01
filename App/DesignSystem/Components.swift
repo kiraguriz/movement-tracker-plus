@@ -120,6 +120,7 @@ struct NumberField: View {
     var allowsDecimals = true
     var isInvalid = false
     var identifier: String?
+    var focus: FocusState<Bool>.Binding?
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -151,7 +152,16 @@ struct NumberField: View {
             .accessibilityHidden(true)
     }
 
+    @ViewBuilder
     private var field: some View {
+        if let focus {
+            input.focused(focus)
+        } else {
+            input
+        }
+    }
+
+    private var input: some View {
         TextField(text: $text, prompt: Text(verbatim: "–")) {
             Text(title)
         }
@@ -180,5 +190,14 @@ struct NumberField: View {
         let name = String(localized: title)
         guard let unit else { return name }
         return name + " " + unit
+    }
+}
+
+/// Applies onboarding focus only when its owning flow supplies a binding.
+struct OptionalInputFocus: ViewModifier {
+    var focus: FocusState<Bool>.Binding?
+
+    @ViewBuilder func body(content: Content) -> some View {
+        if let focus { content.focused(focus) } else { content }
     }
 }
