@@ -17,9 +17,9 @@ struct WorkoutSummaryView: View {
                     .foregroundStyle(.secondary)
             }
             HStack(alignment: .top, spacing: 12) {
-                stat(summary.exerciseCount, "Exercises")
-                stat(summary.setCount, "Sets")
-                stat(summary.totalReps, "Reps")
+                stat(summary.exerciseCount, summary.exerciseCount == 1 ? "Exercise" : "Exercises")
+                stat(summary.setCount, summary.setCount == 1 ? "Set" : "Sets")
+                stat(summary.totalReps, summary.totalReps == 1 ? "Rep" : "Reps")
             }
             if summary.volume != nil || duration != nil {
                 HStack(spacing: 16) {

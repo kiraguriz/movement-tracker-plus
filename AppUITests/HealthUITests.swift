@@ -66,7 +66,7 @@ final class HealthUITests: TrainUITestCase {
     @MainActor
     func logMeal(_ name: String, kcal: String, in app: XCUIApplication) {
         openTab(2, in: app)
-        tap(ID.eatAdd, in: app)
+        openManualMeal(in: app)
         XCTAssertTrue(element(ID.mealEditor, in: app).waitForExistence(timeout: 10))
         enter(name, into: app.textFields[ID.mealName])
         enter(kcal, into: app.textFields[ID.mealKcal])

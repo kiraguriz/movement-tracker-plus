@@ -3,7 +3,9 @@
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
-swift test --package-path Packages/MovementKit
+# Match CI: avoid concurrent Vision framework initialization. Concurrency-specific tests still create
+# their own tasks; hardware failures remain failures rather than skips on a supported machine.
+swift test --package-path Packages/MovementKit --no-parallel
 python3 -m unittest discover -s tools/tests -v
 npm test --prefix proxy
 npm run build --prefix proxy

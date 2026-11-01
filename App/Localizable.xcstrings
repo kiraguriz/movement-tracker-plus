@@ -4933,6 +4933,18 @@
         }
       }
     },
+    "Set" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Set" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "组" } }
+      }
+    },
+    "Rep" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Rep" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "次" } }
+      }
+    },
     "Exercise" : {
       "localizations" : {
         "en" : {

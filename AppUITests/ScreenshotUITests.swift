@@ -91,7 +91,7 @@ final class ScreenshotUITests: AppUITestCase {
     @MainActor
     func testLaunchFailure() {
         let app = XCUIApplication()
-        app.launchArguments = ["-MTInMemoryDatabase", "-MTFailDatabase"]
+        app.launchArguments = ["-MTInMemoryDatabase", "-MTFailDatabase", "-MTCoachStub"]
         app.launch()
         XCTAssertTrue(element(ID.launchFailed, in: app).waitForExistence(timeout: 20))
         shoot("launch-failed")
@@ -108,7 +108,7 @@ final class ScreenshotUITests: AppUITestCase {
         shoot("today-xxxl")
         openTab(2, in: app)
         shoot("eat-xxxl")
-        tap(ID.eatAdd, in: app)
+        openManualMeal(in: app)
         XCTAssertTrue(element(ID.mealEditor, in: app).waitForExistence(timeout: 10))
         shoot("meal-editor-xxxl")
         tap("meal.cancel", in: app)
@@ -154,7 +154,7 @@ final class ScreenshotUITests: AppUITestCase {
         openTab(2, in: app)
         shoot("eat-\(suffix)")
         if extras {
-            tap(ID.eatAdd, in: app)
+            openManualMeal(in: app)
             XCTAssertTrue(element(ID.mealEditor, in: app).waitForExistence(timeout: 10))
             shoot("meal-editor-\(suffix)")
             tap("meal.cancel", in: app)

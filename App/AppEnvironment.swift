@@ -92,6 +92,7 @@ struct AppEnvironment: Sendable {
     /// canned transport; the stub code is not compiled into Release.
     private static func makeCoachClient(launch: LaunchOptions) -> (CoachClient, isStub: Bool)? {
         #if DEBUG
+        if launch.noCoach { return nil }
         if launch.coachStub {
             return (CoachStub.makeClient(failure: launch.coachStubFailure), true)
         }

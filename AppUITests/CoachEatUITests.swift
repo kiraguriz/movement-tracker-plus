@@ -251,7 +251,7 @@ final class CoachEatUITests: AppUITestCase {
 
     @MainActor
     func testCoachShowsOneUnavailableStateWithoutAProxy() {
-        let app = launchApp(seed: .profile)
+        let app = launchApp(seed: .profile, extraArguments: ["-MTNoCoach"])
         openCoach(app)
         XCTAssertTrue(element(CoachID.unavailable, in: app).waitForExistence(timeout: 10), "no unavailable state")
         XCTAssertFalse(element(CoachID.composer, in: app).exists)

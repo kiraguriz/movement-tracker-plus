@@ -26,7 +26,7 @@ final class LocalizationUITests: AppUITestCase {
         openTab(2, in: app)
         XCTAssertTrue(app.staticTexts["早餐"].waitForExistence(timeout: 10), "meal slot")
         XCTAssertTrue(element(ID.mealRow("燕麦粥配浆果"), in: app).exists, "sample meal name")
-        tap(ID.eatAdd, in: app)
+        openManualMeal(in: app)
         XCTAssertTrue(app.textFields[ID.mealKcal].waitForExistence(timeout: 10), "calories field")
         XCTAssertTrue(app.textFields[ID.mealKcal].label.hasPrefix("热量"), "calories field label: \(app.textFields[ID.mealKcal].label)")
         XCTAssertTrue(app.textFields[ID.mealProtein].label.hasPrefix("蛋白质"))

@@ -58,4 +58,13 @@ struct OfflineCueTests {
             #expect(strings.cueText(forKey: cue, locale: .en) != strings.cueText(forKey: cue, locale: .zhHans))
         }
     }
+
+    @Test func sessionFallbackUsesSingularAndPluralCounts() {
+        let strings = BuiltInOfflineStrings()
+        #expect(strings.text(.sessionHeadline(sets: 1, reps: 1), locale: .en) == "1 set, 1 rep")
+        #expect(strings.text(.sessionHeadline(sets: 2, reps: 10), locale: .en) == "2 sets, 10 reps")
+        #expect(strings.text(.sessionSummary(exercises: 1, sets: 1, reps: 1), locale: .en).hasPrefix("1 exercise, 1 set, 1 rep."))
+        #expect(strings.text(.sessionSummary(exercises: 2, sets: 2, reps: 10), locale: .en).hasPrefix("2 exercises, 2 sets, 10 reps."))
+        #expect(strings.text(.sessionHeadline(sets: 1, reps: 1), locale: .zhHans) == "1 组，共 1 次")
+    }
 }

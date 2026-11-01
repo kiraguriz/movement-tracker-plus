@@ -539,25 +539,29 @@ struct CitationTests {
         #expect(rig.transport.requests(path: coachPath).count == 2)
     }
 
-    @Test func aDebriefConcernCannotCiteASetOfAnExerciseThatHasNone() async throws {
+    @Test func aDebriefConcernCannotCiteAnOmittedEmptyExercise() async throws {
         let squat = SessionDebriefInput.ExerciseBlock(id: "squat.bodyweight", name: "Bodyweight Squat", sets: [])
-        let input = SessionDebriefInput(sessionID: "0195f000-0000-7000-8000-0000000000a1", localDay: Fixture.day, exercises: [squat])
-        func answer(sets: [Int]) -> Reply {
+        let pushup = SessionDebriefInput.ExerciseBlock(id: "pushup", name: "Push-up", sets: [.init(number: 1, reps: 10)])
+        let input = SessionDebriefInput(sessionID: "0195f000-0000-7000-8000-0000000000a1", localDay: Fixture.day, exercises: [squat, pushup])
+        #expect(input.exercises.map(\.id) == [pushup.id])
+        func answer(citingSquat: Bool) -> Reply {
             var debrief = Fixture.goodDebriefJSON.objectValue!
-            debrief["perExercise"] = [["exerciseID": "squat.bodyweight", "verdict": "first_time", "note": "n"]]
-            debrief["concerns"] = [["exerciseID": "squat.bodyweight", "setNumbers": .array(sets.map { .int($0) }), "detail": "d"]]
+            debrief["perExercise"] = [["exerciseID": "pushup", "verdict": "first_time", "note": "n"]]
+            debrief["concerns"] = citingSquat
+                ? [["exerciseID": "squat.bodyweight", "setNumbers": [1], "detail": "d"]]
+                : []
             debrief["nextSession"] = ["focus": "f", "suggestions": [], "restDaysSuggested": 1]
             return Wire.streamReply(text: JSONValue.object(debrief).canonicalString)
         }
-        let rig = ClientRig(sequence([answer(sets: [1]), answer(sets: [])]))
+        let rig = ClientRig(sequence([answer(citingSquat: true), answer(citingSquat: false)]))
         let result = try await rig.service().debriefSession(input, locale: .en)
         #expect(result.origin == .muse)
-        #expect(result.output.concerns.first?.setNumbers == [])
+        #expect(result.output.concerns.isEmpty)
         let sent = rig.transport.requests(path: coachPath)
         #expect(sent.count == 2)
         guard sent.count == 2 else { return }
         let correction = (sent[1].jsonBody?["input"]?.arrayValue?.last?["content"]?.arrayValue ?? []).compactMap { $0["text"]?.stringValue }.joined()
-        #expect(correction.contains("has no sets to cite"))
+        #expect(correction.contains("squat.bodyweight\" is not in the session"))
     }
 }
 

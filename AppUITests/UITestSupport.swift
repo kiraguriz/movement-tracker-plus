@@ -92,6 +92,10 @@ class AppUITestCase: XCTestCase {
         var arguments = ["-AppleLanguages", "(\(language))", "-AppleLocale", locale, "-MTInMemoryDatabase"]
         if seed != .none { arguments += ["-MTSeed", seed.rawValue] }
         if let startTab { arguments += ["-MTStartTab", startTab] }
+        // Never contact the deployed service unless a test deliberately supplies its own proxy URL.
+        if !extraArguments.contains("-MTCoachURL") && !extraArguments.contains("-MTNoCoach") {
+            arguments += ["-MTCoachStub"]
+        }
         app.launchArguments = arguments + extraArguments
         app.launch()
         if seed == .none {
@@ -145,6 +149,14 @@ class AppUITestCase: XCTestCase {
     }
 
     // MARK: Actions
+
+    @MainActor
+    func openManualMeal(in app: XCUIApplication) {
+        tap(ID.eatAdd, in: app)
+        let item = app.buttons.matching(NSPredicate(format: "label IN %@", ["Manual entry", "手动输入"])).firstMatch
+        XCTAssertTrue(item.waitForExistence(timeout: 10), "manual entry is not in the menu")
+        item.tap()
+    }
 
     @MainActor
     func openTab(_ index: Int, in app: XCUIApplication) {

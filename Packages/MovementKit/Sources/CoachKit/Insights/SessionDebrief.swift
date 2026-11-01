@@ -213,7 +213,7 @@ public struct SessionDebriefInput: Sendable, Equatable {
         self.localDay = localDay
         self.title = title
         self.durationMinutes = durationMinutes
-        self.exercises = exercises
+        self.exercises = exercises.filter { !$0.sets.isEmpty }
         self.level = level
         self.goal = goal
         self.unitSystem = unitSystem
@@ -225,7 +225,7 @@ public struct SessionDebriefInput: Sendable, Equatable {
         workout: Workout, previous: [ExerciseID: SetHistoryItem] = [:], names: [ExerciseID: String] = [:],
         level: ActivityLevel = .beginner, goal: GoalKind? = nil, unitSystem: UnitSystem = .metric
     ) {
-        let blocks = workout.exercises.sorted { $0.entry.position < $1.entry.position }.map { exercise -> ExerciseBlock in
+        let blocks = workout.performedExercises.sorted { $0.entry.position < $1.entry.position }.map { exercise -> ExerciseBlock in
             let id = exercise.entry.exerciseID
             let name = names[id] ?? BuiltInCatalog.exercises.first { $0.id == id }?.name ?? id.rawValue
             let sets = exercise.sets.sorted { $0.set.position < $1.set.position }.enumerated().map { SetBlock(set: $1, number: $0 + 1) }

@@ -318,6 +318,25 @@ struct WorkoutRepositoryTests {
 
     // MARK: History
 
+    @Test func completedHistoryExcludesEmptyExercisesButKeepsThemStored() async throws {
+        let store = try makeDatabase().workouts
+        var workout = try await play([.addExercise("bench.press"), .addExercise("squat.bodyweight")], on: store)
+        let set = try reducer.reduce(workout, .logSet(entryID: workout.exercises[1].id, .manual(reps: 10)))
+        try await store.apply(set.effects)
+        workout = set.workout
+        let draft = try #require(try await store.history(WorkoutHistoryQuery(statuses: [.draft])).first)
+        #expect(draft.exerciseCount == 2)
+        let finished = try reducer.reduce(workout, .finish(at: Fixture.at(600)))
+        try await store.apply(finished.effects)
+        let loaded = try #require(try await store.workout(id: workout.id))
+        #expect(loaded.exercises.count == 2)
+        #expect(loaded.performedExercises.map(\.entry.exerciseID) == ["squat.bodyweight"])
+        let summary = try #require(try await store.history(WorkoutHistoryQuery()).first)
+        #expect(summary.exerciseCount == 1 && summary.setCount == 1 && summary.totalReps == 10)
+        #expect(try await store.history(WorkoutHistoryQuery(exerciseID: "bench.press")).isEmpty)
+        #expect(try await store.history(WorkoutHistoryQuery(exerciseID: "squat.bodyweight")).map(\.id) == [workout.id])
+    }
+
     @Test func historyListsCompletedSessionsNewestFirstWithTotals() async throws {
         let store = try makeDatabase().workouts
         // Older: squat camera set (3 reps) + bench 8 × 60 kg.

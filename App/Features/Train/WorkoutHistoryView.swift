@@ -88,7 +88,7 @@ private struct WorkoutDetailView: View {
         List {
             if let workout {
                 Text(workout.session.startedAt, format: .dateTime.year().month().day().hour().minute())
-                ForEach(workout.exercises) { exercise in
+                ForEach(workout.session.status == .completed ? workout.performedExercises : workout.exercises) { exercise in
                     Section {
                         ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { offset, logged in
                             DisclosureGroup {

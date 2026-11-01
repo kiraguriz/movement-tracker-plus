@@ -526,6 +526,22 @@ struct DebriefServiceTests {
         }
     }
 
+    @Test func debriefOmitsEmptyExercisesFromInputAndOfflineSummary() throws {
+        var workout = Fixture.workout()
+        workout.exercises[1].sets = []
+        let input = SessionDebriefInput(workout: workout)
+        #expect(workout.exercises.count == 2)
+        #expect(input.exercises.map(\.id) == [workout.exercises[0].entry.exerciseID])
+        #expect(input.json["exercises"]?.arrayValue?.count == 1)
+        let debrief = SessionDebrief.offline(for: input, locale: .en, strings: BuiltInOfflineStrings())
+        #expect(debrief.summary.hasPrefix("1 exercise,"))
+        #expect(debrief.perExercise.map(\.exerciseID) == [workout.exercises[0].entry.exerciseID.rawValue])
+        let explicit = SessionDebriefInput(sessionID: input.sessionID, localDay: input.localDay, exercises: [
+            .init(id: "bench.press", name: "Bench Press", sets: []), input.exercises[0],
+        ])
+        #expect(explicit.exercises.count == 1)
+    }
+
     @Test func refusesASessionWithNothingInIt() async {
         let rig = ClientRig(sequence([Wire.streamReply(text: "{}")]))
         let empty = SessionDebriefInput(sessionID: "0195f000-0000-7000-8000-0000000000a1", localDay: Fixture.day, exercises: [])

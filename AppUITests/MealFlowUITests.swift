@@ -4,18 +4,20 @@ import XCTest
 final class MealFlowUITests: AppUITestCase {
     @MainActor
     func testAddEditAndDeleteAMealChangesTodaysTotals() {
-        let app = launchApp(seed: .profile)
+        let app = launchApp(seed: .profile, extraArguments: ["-MTCoachStub"])
         XCTAssertTrue(value(of: ID.todayKcal, in: app).hasPrefix("0"), "Today starts with nothing eaten")
 
         // Add
         openTab(2, in: app)
         XCTAssertTrue(element(ID.eatEmpty, in: app).waitForExistence(timeout: 10), "an empty day shows its empty state")
-        tap(ID.eatAdd, in: app)
+        openManualMeal(in: app)
         XCTAssertTrue(element(ID.mealEditor, in: app).waitForExistence(timeout: 10))
         XCTAssertFalse(app.buttons[ID.mealSave].isEnabled, "Save is enabled without a name")
         enter("Oats", into: app.textFields[ID.mealName])
         enter("80", into: app.textFields[ID.mealGrams])
         enter("300", into: app.textFields[ID.mealKcal])
+        // The keyboard can cover the next row on a compact iPhone; bring it into view before tapping.
+        app.swipeUp()
         enter("10", into: app.textFields[ID.mealProtein])
         attachScreenshot("meal-editor")
         tap(ID.mealSave, in: app)
@@ -52,7 +54,7 @@ final class MealFlowUITests: AppUITestCase {
     @MainActor
     func testDeletingFromTheEditorAsksForConfirmation() {
         let app = launchApp(seed: .profile, startTab: "eat")
-        tap(ID.eatAdd, in: app)
+        openManualMeal(in: app)
         enter("Oats", into: app.textFields[ID.mealName])
         enter("300", into: app.textFields[ID.mealKcal])
         tap(ID.mealSave, in: app)
@@ -88,7 +90,7 @@ final class MealFlowUITests: AppUITestCase {
     @MainActor
     func testAMealWithMissingValuesIsAllowed() {
         let app = launchApp(seed: .profile, startTab: "eat")
-        tap(ID.eatAdd, in: app)
+        openManualMeal(in: app)
         enter("Tea", into: app.textFields[ID.mealName])
         tap(ID.mealSave, in: app)
         XCTAssertTrue(element(ID.mealRow("Tea"), in: app).waitForExistence(timeout: 10), "a meal with only a name was not saved")
@@ -103,7 +105,7 @@ final class MealFlowUITests: AppUITestCase {
         yesterday.tap()
         XCTAssertTrue(element(ID.eatEmpty, in: app).waitForExistence(timeout: 10))
 
-        tap(ID.eatAdd, in: app)
+        openManualMeal(in: app)
         enter("Late snack", into: app.textFields[ID.mealName])
         enter("200", into: app.textFields[ID.mealKcal])
         tap(ID.mealSave, in: app)
@@ -121,7 +123,7 @@ final class MealFlowUITests: AppUITestCase {
     @MainActor
     func testImplausibleNumbersCannotBeSaved() {
         let app = launchApp(seed: .profile, startTab: "eat")
-        tap(ID.eatAdd, in: app)
+        openManualMeal(in: app)
         enter("Feast", into: app.textFields[ID.mealName])
         let save = app.buttons[ID.mealSave]
         XCTAssertTrue(waitUntil { save.isEnabled }, "a name alone is a valid meal")
@@ -144,7 +146,7 @@ final class MealFlowUITests: AppUITestCase {
     @MainActor
     func testDecimalCommaIsReadWhereTheRegionUsesIt() {
         let app = launchApp(seed: .profile, locale: "de_DE", startTab: "eat")
-        tap(ID.eatAdd, in: app)
+        openManualMeal(in: app)
         enter("Skyr", into: app.textFields[ID.mealName])
         enter("7,5", into: app.textFields[ID.mealProtein])
         let save = app.buttons[ID.mealSave]

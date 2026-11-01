@@ -82,9 +82,9 @@ public struct BuiltInOfflineStrings: OfflineStrings {
         case .averageScore(let score): "Average form score \(score) out of 100."
         case .fixWhy(let reps, let total): "Measured on this device in rep\(reps.count == 1 ? "" : "s") \(list(reps)) of \(total)."
         case .tempo: "3 s down, 1 s up"
-        case .sessionHeadline(let sets, let reps): "\(sets) sets, \(reps) reps"
+        case .sessionHeadline(let sets, let reps): "\(sets) set\(sets == 1 ? "" : "s"), \(reps) rep\(reps == 1 ? "" : "s")"
         case .sessionSummary(let exercises, let sets, let reps):
-            "\(exercises) exercise\(exercises == 1 ? "" : "s"), \(sets) sets, \(reps) reps. This summary was made on your device from the measured numbers."
+            "\(exercises) exercise\(exercises == 1 ? "" : "s"), \(sets) set\(sets == 1 ? "" : "s"), \(reps) rep\(reps == 1 ? "" : "s"). This summary was made on your device from the measured numbers."
         case .sessionHighlight(let exercise, let score): "\(exercise): average form score \(score)."
         case .sessionConcern(let cue): cue
         case .sessionFocusRepeat: "Repeat this session and keep the form steady."

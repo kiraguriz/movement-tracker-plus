@@ -55,7 +55,7 @@ final class AccessibilityUITests: AppUITestCase {
         XCTAssertTrue(yesterday.isHittable, "yesterday is not reachable")
         XCTAssertLessThan(yesterday.frame.maxX, app.windows.firstMatch.frame.maxX + 1)
 
-        tap(ID.eatAdd, in: app)
+        openManualMeal(in: app)
         XCTAssertTrue(element(ID.mealEditor, in: app).waitForExistence(timeout: 10))
         for id in [ID.mealName, ID.mealGrams, ID.mealKcal, ID.mealProtein] {
             let field = element(id, in: app)

@@ -194,7 +194,7 @@ final class ProfileFlowUITests: AppUITestCase {
     @MainActor
     func testDatabaseFailureOffersRetry() {
         let app = XCUIApplication()
-        app.launchArguments = ["-MTInMemoryDatabase", "-MTFailDatabase"]
+        app.launchArguments = ["-MTInMemoryDatabase", "-MTFailDatabase", "-MTCoachStub"]
         app.launch()
         XCTAssertTrue(element(ID.launchFailed, in: app).waitForExistence(timeout: 20))
         XCTAssertTrue(app.buttons[ID.launchRetry].exists)

@@ -191,7 +191,7 @@ public struct WorkoutRepository: WorkoutStore {
         guard !query.statuses.isEmpty, query.limit > 0 else { return [] }
         var sql: SQL = """
             SELECT s.*,
-                   COUNT(DISTINCT e.id) AS exercise_count,
+                   COUNT(DISTINCT CASE WHEN s.status != 'completed' OR st.id IS NOT NULL THEN e.id END) AS exercise_count,
                    COUNT(st.id) AS set_count,
                    COALESCE(SUM(st.reps), 0) AS total_reps,
                    SUM(st.reps * st.load_kg) AS volume_kg
@@ -204,7 +204,8 @@ public struct WorkoutRepository: WorkoutStore {
         if let through = query.through { sql += " AND s.local_day <= \(through.string)" }
         if let exerciseID = query.exerciseID {
             sql += """
-                 AND EXISTS (SELECT 1 FROM exercise_entry x WHERE x.session_id = s.id AND x.exercise_id = \(exerciseID.rawValue))
+                 AND EXISTS (SELECT 1 FROM exercise_entry x WHERE x.session_id = s.id AND x.exercise_id = \(exerciseID.rawValue)
+                     AND (s.status != 'completed' OR EXISTS (SELECT 1 FROM set_entry xs WHERE xs.entry_id = x.id)))
                 """
         }
         sql += """

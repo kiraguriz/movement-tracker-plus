@@ -262,6 +262,8 @@ public struct Workout: Equatable, Sendable, Identifiable {
 
     public var id: EntityID { session.id }
 
+    /// Exercises with logged work. Empty draft or plan entries remain in `exercises` for editing.
+    public var performedExercises: [WorkoutExercise] { exercises.filter { !$0.sets.isEmpty } }
     public var setCount: Int { exercises.reduce(0) { $0 + $1.sets.count } }
     public var totalReps: Int { exercises.reduce(0) { $0 + $1.sets.reduce(0) { $0 + ($1.set.reps ?? 0) } } }
 }
@@ -269,6 +271,7 @@ public struct Workout: Equatable, Sendable, Identifiable {
 /// One row of workout history.
 public struct WorkoutSummary: Equatable, Sendable, Identifiable {
     public var session: WorkoutSession
+    /// Completed sessions count only entries with logged sets; drafts retain all exercise entries.
     public var exerciseCount: Int
     public var setCount: Int
     public var totalReps: Int
@@ -290,7 +293,7 @@ public struct WorkoutHistoryQuery: Equatable, Sendable {
     public var statuses: Set<SessionStatus>
     public var from: LocalDay?
     public var through: LocalDay?
-    /// Only sessions that contain this exercise.
+    /// Only sessions containing this exercise; completed sessions must have a logged set for it.
     public var exerciseID: ExerciseID?
     public var limit: Int
 

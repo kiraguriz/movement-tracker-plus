@@ -75,7 +75,7 @@ struct SessionSummaryView: View {
     }
 
     private var exercises: [WorkoutExercise] {
-        model.workout.exercises.sorted { $0.entry.position < $1.entry.position }
+        model.workout.performedExercises.sorted { $0.entry.position < $1.entry.position }
     }
 
     private func exerciseBlock(_ workoutExercise: WorkoutExercise) -> some View {
