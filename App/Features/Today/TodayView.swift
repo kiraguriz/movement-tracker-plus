@@ -2,6 +2,7 @@ import Domain
 import SwiftUI
 
 struct TodayView: View {
+    @Environment(\.appEnvironment) private var environment
     @Environment(UserSession.self) private var session
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.scenePhase) private var scenePhase
@@ -38,6 +39,13 @@ struct TodayView: View {
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Today")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink { WorkoutHistoryView(environment: environment) } label: {
+                    Label("Workout history", systemImage: "clock.arrow.circlepath")
+                }
+            }
+        }
         .navigationSubtitle(Text(model.dayDate, format: .dateTime.weekday(.wide).month(.wide).day()))
         .task(id: model.day) { await model.run() }
         .onChange(of: scenePhase) { _, phase in

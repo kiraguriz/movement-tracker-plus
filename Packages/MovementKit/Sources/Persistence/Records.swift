@@ -297,11 +297,19 @@ struct ExerciseEntryRecord: Codable, FetchableRecord, PersistableRecord {
     var sessionID: String
     var exerciseID: String
     var position: Int
+    var plannedSets: Int?
+    var plannedReps: Int?
+    var plannedRestSeconds: Int?
+    var plannedNote: String?
 
     enum CodingKeys: String, CodingKey {
         case id, position
         case sessionID = "session_id"
         case exerciseID = "exercise_id"
+        case plannedSets = "planned_sets"
+        case plannedReps = "planned_reps"
+        case plannedRestSeconds = "planned_rest_seconds"
+        case plannedNote = "planned_note"
     }
 
     init(_ entry: ExerciseEntry) {
@@ -309,10 +317,21 @@ struct ExerciseEntryRecord: Codable, FetchableRecord, PersistableRecord {
         sessionID = entry.sessionID.rawValue
         exerciseID = entry.exerciseID.rawValue
         position = entry.position
+        plannedSets = entry.prescription?.sets
+        plannedReps = entry.prescription?.reps
+        plannedRestSeconds = entry.prescription?.restSeconds
+        plannedNote = entry.prescription?.note
     }
 
     func domain() -> ExerciseEntry {
-        ExerciseEntry(id: EntityID(id), sessionID: EntityID(sessionID), exerciseID: ExerciseID(exerciseID), position: position)
+        let prescription: ExercisePrescription?
+        if let plannedSets, let plannedReps, let plannedRestSeconds {
+            prescription = ExercisePrescription(sets: plannedSets, reps: plannedReps, restSeconds: plannedRestSeconds, note: plannedNote ?? "")
+        } else {
+            prescription = nil
+        }
+        return ExerciseEntry(id: EntityID(id), sessionID: EntityID(sessionID), exerciseID: ExerciseID(exerciseID),
+                             position: position, prescription: prescription)
     }
 }
 

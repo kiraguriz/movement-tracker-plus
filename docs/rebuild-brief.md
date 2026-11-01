@@ -412,7 +412,17 @@ behaviors are tested on macOS without a Simulator. Domain and MotionCore remain 
 - `health_export(entity, entity_id, sync_identifier, sync_version, hk_uuid?, status, attempts, last_error, updated_at)`
 - `setting(key, value json)`
 Ids are UUIDv7 strings. Times are UTC + IANA zone; `local_day` computed at write time and indexed.
-Draft sessions are written after every set event, so a crash loses nothing.
+Draft sessions are written after every persisted set event.
+Camera sets now checkpoint each processed counted rep using one stable set ID; finalizing/retrying updates
+that row. A checkpoint without an end time is shown as interrupted after relaunch. An in-flight database
+write can still be interrupted before it commits. Migration `v3-workout-prescriptions` retains planned
+sets, reps, rest and notes separately from actual logged work. History and exercise-specific daily rep/load
+trends are available from Today and Train; progress uses only that exercise's sets.
+
+Health export intent is now committed in the same transaction as each eligible business write. Foreground
+drains recover committed intents after a crash, compare sync versions atomically, rotate bounded scans
+past denied/exhausted rows, and retry removals even with exports switched off. Enabling does not backfill
+records that were created while export was disabled.
 
 ## 9. Health (HealthKit)
 

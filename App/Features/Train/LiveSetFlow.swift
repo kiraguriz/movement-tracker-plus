@@ -19,7 +19,7 @@ struct LiveSetFlow: View {
         self.request = request
         self.train = train
         self.environment = environment
-        _model = State(initialValue: LiveSetModel(environment: environment, exercise: request.exercise, spec: request.spec))
+        _model = State(initialValue: Self.makeModel(request: request, train: train, environment: environment))
     }
 
     var body: some View {
@@ -68,7 +68,7 @@ struct LiveSetFlow: View {
                 return
             }
             do {
-                let logged = try await train.logCameraSet(result, request: request)
+                let logged = try await train.logCameraSet(result, request: request, setID: model.checkpointID)
                 review = SetReviewModel(environment: environment, subject: subject(for: logged, result: result))
                 if result.recordingFailure != nil {
                     errorMessage = String(localized: "The pose recording could not be saved.")
@@ -80,8 +80,14 @@ struct LiveSetFlow: View {
     }
 
     private func nextSet() {
-        model = LiveSetModel(environment: environment, exercise: request.exercise, spec: request.spec)
+        model = Self.makeModel(request: request, train: train, environment: environment)
         review = nil
+    }
+
+    private static func makeModel(request: LiveSetRequest, train: TrainModel, environment: AppEnvironment) -> LiveSetModel {
+        LiveSetModel(environment: environment, exercise: request.exercise, spec: request.spec) { input, setID in
+            try await train.checkpointCameraSet(input, request: request, setID: setID)
+        }
     }
 
     private func subject(for logged: LoggedSet, result: LiveSetResult) -> SetReviewSubject {

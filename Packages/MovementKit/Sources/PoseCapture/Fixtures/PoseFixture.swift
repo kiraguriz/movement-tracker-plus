@@ -333,6 +333,21 @@ public actor PoseRecorder {
         header.labels = labels
     }
 
+    /// A recording that spans multiple cameras has no single camera provenance. Mark it conservatively
+    /// before attempting a switch; even a failed/partly applied switch cannot yield a mislabeled fixture.
+    public func noteCameraChange() throws {
+        guard !isFinished else { return }
+        header.cameraPosition = .unknown
+        if !header.labels.tags.contains("mixed-camera") { header.labels.tags.append("mixed-camera") }
+        try flush()
+        try handle?.close()
+        handle = nil
+        let data = try Data(contentsOf: url)
+        try PoseFixtureFile.replaceHeader(in: data, with: header).write(to: url, options: .atomic)
+        handle = try FileHandle(forWritingTo: url)
+        try handle?.seekToEnd()
+    }
+
     public func append(_ frame: PoseFrame) throws {
         guard !isFinished, handle != nil else { throw PoseFixtureError.finished }
         pending.append(try PoseFixtureFile.encodeLine(frame))

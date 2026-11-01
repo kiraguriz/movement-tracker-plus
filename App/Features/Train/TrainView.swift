@@ -1,3 +1,4 @@
+import AppLogic
 import Domain
 import SwiftUI
 
@@ -16,6 +17,8 @@ private struct TrainScreen: View {
     @Environment(UserSession.self) private var session
     @State private var model: TrainModel
     @State private var isConfirmingDiscard = false
+    @State private var skippedRest: EntityID?
+    @State private var editingSet: LoggedSet?
 
     private let environment: AppEnvironment
     private let refresh: Int
@@ -48,6 +51,7 @@ private struct TrainScreen: View {
             ManualSetSheet(
                 exercise: model.exercise(for: entry.exerciseID),
                 previous: model.exerciseEntries.first { $0.entry.id == entry.id }?.sets.last,
+                prescribedReps: entry.prescription?.reps,
                 units: session.units
             ) { reps, load in
                 model.logManualSet(entryID: entry.id, reps: reps, load: load)
@@ -55,6 +59,13 @@ private struct TrainScreen: View {
         }
         .fullScreenCover(item: $model.liveSet, onDismiss: model.liveSetDismissed) { request in
             LiveSetFlow(request: request, train: model, environment: environment)
+        }
+        .sheet(item: $editingSet) { logged in
+            if let entry = model.exerciseEntries.first(where: { $0.entry.id == logged.set.entryID })?.entry {
+                ManualSetSheet(exercise: model.exercise(for: entry.exerciseID), previous: logged, units: session.units) { reps, load in
+                    model.editSet(logged.set, reps: reps, load: load)
+                }
+            }
         }
         .sheet(item: $model.summary) { context in
             SessionSummaryView(context: context, train: model, environment: environment, session: session)
@@ -94,6 +105,21 @@ private struct TrainScreen: View {
 
     private var workoutList: some View {
         List {
+            if let workout = model.workout, let rest = RestPeriod(workout: workout), skippedRest != rest.id {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    let seconds = rest.remaining(at: context.date)
+                    if seconds > 0 {
+                        HStack {
+                            Label("Rest", systemImage: "timer")
+                            Spacer()
+                            Text(Duration.seconds(seconds), format: .time(pattern: .minuteSecond))
+                                .monospacedDigit()
+                            Button("Skip") { skippedRest = rest.id }
+                                .frame(minHeight: 44)
+                        }
+                    }
+                }
+            }
             ForEach(model.exerciseEntries) { workoutExercise in
                 exerciseSection(workoutExercise)
             }
@@ -114,8 +140,19 @@ private struct TrainScreen: View {
         let exercise = model.exercise(for: entry.exerciseID)
         let sets = workoutExercise.sets.sorted { $0.set.position < $1.set.position }
         return Section {
+            if let target = entry.prescription {
+                HStack {
+                    Text("\(sets.count)/\(target.sets) sets")
+                    Spacer()
+                    Text("\(target.reps) reps")
+                    Text("\(target.restSeconds) s")
+                }
+                .monospacedDigit()
+                if !target.note.isEmpty { Text(target.note) }
+            }
             ForEach(Array(sets.enumerated()), id: \.element.id) { offset, logged in
                 SetRow(number: offset + 1, logged: logged, units: session.units)
+                    .contextMenu { Button("Edit", systemImage: "pencil") { editingSet = logged } }
                     .accessibilityIdentifier(AccessibilityID.setRow(entry.exerciseID, offset + 1))
             }
             .onDelete { offsets in
@@ -154,6 +191,14 @@ private struct TrainScreen: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            NavigationLink {
+                WorkoutHistoryView(environment: environment)
+            } label: {
+                Label("Workout history", systemImage: "clock.arrow.circlepath")
+            }
+            .accessibilityLabel("Workout history")
+        }
         if model.workout != nil {
             ToolbarItem(placement: .topBarLeading) {
                 Menu {
@@ -193,6 +238,7 @@ struct SetRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(primary(set))
                 if set.tracking == .camera {
+                    if set.endedAt == nil { Text("Interrupted set").font(.caption).foregroundStyle(.secondary) }
                     Text(secondary(set))
                         .font(.caption)
                         .foregroundStyle(.secondary)

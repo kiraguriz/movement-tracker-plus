@@ -39,18 +39,39 @@ public struct WorkoutSession: Equatable, Sendable, Identifiable {
     public var timeZone: TimeZone { TimeZone(identifier: timeZoneID) ?? .gmt }
 }
 
+/// Targets are a prescription, never completed work. Only logged sets contribute to totals.
+public struct ExercisePrescription: Codable, Equatable, Sendable {
+    public var sets: Int
+    public var reps: Int
+    public var restSeconds: Int
+    public var note: String
+
+    public init(sets: Int, reps: Int, restSeconds: Int, note: String = "") {
+        self.sets = sets
+        self.reps = reps
+        self.restSeconds = restSeconds
+        self.note = note
+    }
+
+    public var isValid: Bool {
+        (1...20).contains(sets) && (1...999).contains(reps) && (0...3600).contains(restSeconds) && note.count <= 2000
+    }
+}
+
 public struct ExerciseEntry: Equatable, Sendable, Identifiable {
     public var id: EntityID
     public var sessionID: EntityID
     public var exerciseID: ExerciseID
     /// Ordering key within the session. Unique, increasing, and not necessarily dense after deletions.
     public var position: Int
+    public var prescription: ExercisePrescription?
 
-    public init(id: EntityID, sessionID: EntityID, exerciseID: ExerciseID, position: Int) {
+    public init(id: EntityID, sessionID: EntityID, exerciseID: ExerciseID, position: Int, prescription: ExercisePrescription? = nil) {
         self.id = id
         self.sessionID = sessionID
         self.exerciseID = exerciseID
         self.position = position
+        self.prescription = prescription
     }
 }
 

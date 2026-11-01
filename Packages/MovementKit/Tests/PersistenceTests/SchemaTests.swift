@@ -6,7 +6,7 @@ import Testing
 
 @Suite("Schema and migrations")
 struct SchemaTests {
-    static let expectedMigrations: Set<String> = ["v1", "v2-nutrition-quantity"]
+    static let expectedMigrations: Set<String> = ["v1", "v2-nutrition-quantity", "v3-workout-prescriptions"]
     static let expectedTables: Set<String> = [
         "profile", "goal", "body_measurement", "exercise", "exercise_spec", "workout_session", "exercise_entry",
         "set_entry", "rep_record", "pose_capture", "food", "meal_entry", "coach_insight", "chat_thread",

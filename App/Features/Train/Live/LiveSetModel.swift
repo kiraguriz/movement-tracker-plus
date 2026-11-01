@@ -57,6 +57,7 @@ final class LiveSetModel: Identifiable {
     let id = UUID()
     let exercise: Exercise
     let spec: ExerciseSpec
+    let checkpointID: EntityID
 
     private(set) var stage = Stage.preparing
     private(set) var source = Source.camera
@@ -81,6 +82,7 @@ final class LiveSetModel: Identifiable {
     let signal = LiveSignal()
 
     @ObservationIgnored private let environment: AppEnvironment
+    @ObservationIgnored private let onCheckpoint: @MainActor (SetInput, EntityID) async throws -> Void
     @ObservationIgnored private weak var island: CameraIslandView?
     @ObservationIgnored private var camera: CameraPipeline?
     @ObservationIgnored private var session: MotionSession?
@@ -107,10 +109,13 @@ final class LiveSetModel: Identifiable {
     @ObservationIgnored private var delivered = 0
     @ObservationIgnored private var deliveryStart: ContinuousClock.Instant?
 
-    init(environment: AppEnvironment, exercise: Exercise, spec: ExerciseSpec) {
+    init(environment: AppEnvironment, exercise: Exercise, spec: ExerciseSpec,
+         onCheckpoint: @escaping @MainActor (SetInput, EntityID) async throws -> Void) {
         self.environment = environment
         self.exercise = exercise
         self.spec = spec
+        checkpointID = environment.newID()
+        self.onCheckpoint = onCheckpoint
         showsHUD = environment.launch.debugHUD
     }
 
@@ -179,7 +184,8 @@ final class LiveSetModel: Identifiable {
             #endif
             return
         }
-        cameraPosition = cameras.front ? .front : .back
+        let preferred = try? await environment.settings.get(SettingKey.preferredCamera)
+        cameraPosition = (preferred == "back" && cameras.back) || !cameras.front ? .back : .front
         canSwitchCamera = cameras.front && cameras.back
 
         switch CameraAuthorization.current {
@@ -260,7 +266,7 @@ final class LiveSetModel: Identifiable {
         stage = .running
 
         eventTask = Task { [weak self] in
-            for await event in session.events { self?.handle(event) }
+            for await event in session.events { await self?.handle(event) }
         }
         let store = frameStore
         let latest = latestFrame
@@ -349,7 +355,7 @@ final class LiveSetModel: Identifiable {
         pumpTask?.cancel()
     }
 
-    private func handle(_ event: MotionEvent) {
+    private func handle(_ event: MotionEvent) async {
         switch event {
         case .framing(let state):
             framing = state
@@ -366,9 +372,11 @@ final class LiveSetModel: Identifiable {
                 bottomFrames[reps] = frame
             }
             holdReplayIfWanted()
+            await checkpoint()
         case .partialRep:
             partials += 1
             isEngineIdle = false
+            await checkpoint()
         case .cue(let key):
             show(cue: LiveText.cue(key))
         case .signal(let value):
@@ -376,6 +384,18 @@ final class LiveSetModel: Identifiable {
         case .idle:
             isEngineIdle = true
         }
+    }
+
+    /// Persist a stable set after each counted rep. An interrupted set has no end time; it remains
+    /// visible in the recovered draft and can be kept or deleted through normal workout controls.
+    private func checkpoint() async {
+        guard !counted.isEmpty else { return }
+        let input = SetInput.camera(
+            reps: counted.enumerated().map { MotionMapping.measurement($0.element, number: $0.offset + 1) },
+            partialReps: partials, startedAt: startedAt
+        )
+        do { try await onCheckpoint(input, checkpointID) }
+        catch { notice = error.localizedDescription }
     }
 
     private func show(cue text: String) {
@@ -410,8 +430,10 @@ final class LiveSetModel: Identifiable {
         guard let camera, canSwitchCamera else { return }
         let next: CameraPosition = cameraPosition == .front ? .back : .front
         do {
+            try await recorder?.noteCameraChange()
             try await camera.switchCamera(to: next)
             cameraPosition = next
+            try await environment.settings.set(SettingKey.preferredCamera, to: next == .back ? "back" : "front")
         } catch {
             notice = error.localizedDescription
         }
@@ -467,14 +489,9 @@ final class LiveSetModel: Identifiable {
         try PoseCaptureFiles.archive.export(recording)
     }
 
-    /// Stops everything and drops the recording. Used when the screen goes away without a result.
+    /// Dismissing a live screen keeps the checkpoint and any opted-in recording, too.
     func stop() async {
-        await halt()
-        if let recorder {
-            _ = try? await recorder.finish()
-            try? FileManager.default.removeItem(at: recorder.url)
-        }
-        isRecording = false
+        _ = await endSet()
     }
 
     private func halt() async {

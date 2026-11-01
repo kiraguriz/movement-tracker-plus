@@ -68,6 +68,12 @@ public struct AppDatabase: Sendable {
             try db.execute(sql: "ALTER TABLE meal_entry ADD COLUMN amount_unit TEXT NOT NULL DEFAULT 'g' CHECK (amount_unit IN ('g', 'ml'))")
             try db.execute(sql: "ALTER TABLE meal_entry ADD COLUMN per100_amount TEXT CHECK (per100_amount IS NULL OR json_valid(per100_amount))")
         }
+        migrator.registerMigration("v3-workout-prescriptions") { db in
+            try db.execute(sql: "ALTER TABLE exercise_entry ADD COLUMN planned_sets INTEGER CHECK (planned_sets BETWEEN 1 AND 20)")
+            try db.execute(sql: "ALTER TABLE exercise_entry ADD COLUMN planned_reps INTEGER CHECK (planned_reps BETWEEN 1 AND 999)")
+            try db.execute(sql: "ALTER TABLE exercise_entry ADD COLUMN planned_rest_seconds INTEGER CHECK (planned_rest_seconds BETWEEN 0 AND 3600)")
+            try db.execute(sql: "ALTER TABLE exercise_entry ADD COLUMN planned_note TEXT")
+        }
         return migrator
     }
 

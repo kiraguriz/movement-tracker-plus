@@ -26,6 +26,22 @@ private func header(labels: PoseLabels = PoseLabels()) -> PoseFixtureHeader {
 
 @Suite("Pose fixtures")
 struct PoseFixtureTests {
+    @Test func aCameraSwitchPersistsConservativeProvenanceBeforeMoreFramesArrive() async throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".jsonl")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let recorder = try PoseRecorder(url: url, header: header(), flushEveryFrames: 1)
+        try await recorder.append(sampleFrames()[0])
+        try await recorder.noteCameraChange()
+        let during = try PoseFixtureFile.read(from: url)
+        #expect(during.header.cameraPosition == .unknown)
+        #expect(during.header.labels.tags == ["mixed-camera"])
+        try await recorder.append(sampleFrames()[1])
+        try await recorder.noteCameraChange()
+        try await recorder.finish()
+        let final = try PoseFixtureFile.read(from: url)
+        #expect(final.frames.count == 2 && final.header.labels.tags == ["mixed-camera"])
+        #expect(final.header.cameraPosition == .unknown && final.header.labels.reps == nil)
+    }
     @Test func roundTripKeepsHeaderLabelsAndFrames() throws {
         let labels = PoseLabels(reps: 10, partials: 2, notes: "room 2, low light", tags: ["room-2", "front"])
         let original = PoseFixture(header: header(labels: labels), frames: sampleFrames())

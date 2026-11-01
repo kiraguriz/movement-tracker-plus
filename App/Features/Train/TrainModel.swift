@@ -136,6 +136,14 @@ final class TrainModel {
         perform { try await self.apply(.deleteSet(setID: setID)) }
     }
 
+    func editSet(_ set: SetEntry, reps: Int, load: Mass?) {
+        var edit = SetEdit(set)
+        edit.reps = reps
+        edit.load = load
+        let value = edit
+        perform { try await self.apply(.editSet(setID: set.id, value)) }
+    }
+
     func discard() {
         perform {
             guard self.workout != nil else { return }
@@ -147,11 +155,9 @@ final class TrainModel {
 
     /// Opens the summary of the finished workout. Nothing is written until the user saves it there.
     func prepareSummary() {
-        do {
-            let transition = try reduce(.finish(at: environment.now()))
-            summary = SessionSummaryContext(workout: transition.workout, effects: transition.effects)
-        } catch {
-            errorMessage = Self.message(for: error)
+        perform {
+            let transition = try self.reduce(.finish(at: self.environment.now()))
+            self.summary = SessionSummaryContext(workout: transition.workout, effects: transition.effects)
         }
     }
 
@@ -184,11 +190,15 @@ final class TrainModel {
     }
 
     /// Logs a counted set in the draft and associates its already archived recording, if one was made.
-    func logCameraSet(_ result: LiveSetResult, request: LiveSetRequest) async throws -> LoggedSet {
+    func checkpointCameraSet(_ input: SetInput, request: LiveSetRequest, setID: EntityID) async throws {
+        try await enqueue { _ = try await self.apply(.recordCameraSet(entryID: request.entryID, setID: setID, input)) }
+    }
+
+    func logCameraSet(_ result: LiveSetResult, request: LiveSetRequest, setID: EntityID) async throws -> LoggedSet {
         let input = MotionMapping.setInput(from: result.summary, startedAt: result.startedAt, endedAt: result.endedAt)
         let logged = try await enqueue {
-            let transition = try await self.apply(.logSet(entryID: request.entryID, input))
-            guard let set = transition.workout.exercises.first(where: { $0.entry.id == request.entryID })?.sets.last else {
+            let transition = try await self.apply(.recordCameraSet(entryID: request.entryID, setID: setID, input))
+            guard let set = transition.workout.exercises.first(where: { $0.entry.id == request.entryID })?.sets.first(where: { $0.id == setID }) else {
                 throw WorkoutError.unknownSet(request.entryID)
             }
             return set

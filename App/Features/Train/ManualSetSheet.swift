@@ -12,11 +12,11 @@ struct ManualSetSheet: View {
     @State private var repsText: String
     @State private var loadText: String
 
-    init(exercise: Exercise, previous: LoggedSet?, units: UnitFormatter, onSave: @escaping (Int, Mass?) -> Void) {
+    init(exercise: Exercise, previous: LoggedSet?, prescribedReps: Int? = nil, units: UnitFormatter, onSave: @escaping (Int, Mass?) -> Void) {
         self.exercise = exercise
         self.units = units
         self.onSave = onSave
-        _repsText = State(initialValue: previous?.set.reps.map(String.init) ?? "")
+        _repsText = State(initialValue: prescribedReps.map(String.init) ?? previous?.set.reps.map(String.init) ?? "")
         _loadText = State(initialValue: NumberInput.text(previous?.set.load.map(units.massValue), maxFractionDigits: 1))
     }
 
