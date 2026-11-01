@@ -102,6 +102,9 @@ struct ClientRetryTests {
         (503, "service_paused", 5, CoachError.servicePaused(retryAfter: 5)),
         (503, "service_paused", 300, CoachError.servicePaused(retryAfter: 300)),
         (429, "daily_budget_exceeded", 5, CoachError.budgetExhausted(retryAfter: 5)),
+        (429, "global_budget_exceeded", 5, CoachError.budgetExhausted(retryAfter: 5)),
+        (429, "global_attempt_limit", 5, CoachError.budgetExhausted(retryAfter: 5)),
+        (429, "global_install_limit", 5, CoachError.budgetExhausted(retryAfter: 5)),
         (429, "daily_budget_exceeded", 40_000, CoachError.budgetExhausted(retryAfter: 40_000)),
     ])
     func doesNotWaitOutALongRetryAfterOrTheBudgetOrTheKillSwitch(status: Int, code: String, retryAfter: Int, expected: CoachError) async {

@@ -383,7 +383,7 @@ public actor CoachClient {
         switch status {
         case 429, 503:
             // The daily budget and the kill switch are not worth waiting out inside a request.
-            if code == "daily_budget_exceeded" || code == "service_paused" { return nil }
+            if Self.isDailyBudget(code) || code == "service_paused" { return nil }
             guard let retryAfter else { return backoff }
             if retryAfter > retry.maxRetryAfter.seconds { return nil }
             return max(.seconds(retryAfter), backoff)
@@ -398,10 +398,15 @@ public actor CoachClient {
         case 400: return .badRequest(code: problem.code ?? "bad_request", message: message)
         case 401: return .unauthorized
         case 413: return .payloadTooLarge(message)
-        case 429: return problem.code == "daily_budget_exceeded" ? .budgetExhausted(retryAfter: retryAfter) : .rateLimited(retryAfter: retryAfter)
+        case 429: return isDailyBudget(problem.code) ? .budgetExhausted(retryAfter: retryAfter) : .rateLimited(retryAfter: retryAfter)
         case 503: return problem.code == "service_paused" ? .servicePaused(retryAfter: retryAfter) : .unavailable(retryAfter: retryAfter)
         default: return .upstream(status: status, code: problem.code ?? "unknown", message: message)
         }
+    }
+
+    private static func isDailyBudget(_ code: String?) -> Bool {
+        guard let code else { return false }
+        return ["daily_budget_exceeded", "global_budget_exceeded", "global_attempt_limit", "global_install_limit"].contains(code)
     }
 
     private func ensureToken() async throws -> String {

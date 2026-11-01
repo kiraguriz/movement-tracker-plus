@@ -32,7 +32,7 @@ public struct SystemJitter: JitterSource {
 ///
 /// Retried: 429 and 503 (waiting at least `Retry-After`) and network failures. Never retried: 400, 413, 502, 504
 /// (Meta's non-streaming time limit; the same request would time out again), 401 (handled by one re-install), a 429
-/// or 503 whose `Retry-After` is longer than `maxRetryAfter` or whose code is `daily_budget_exceeded` or
+/// or 503 whose `Retry-After` is longer than `maxRetryAfter` or whose code is a daily token/global budget limit or
 /// `service_paused`, and anything after a stream has started delivering text.
 public struct RetryPolicy: Sendable, Equatable {
     /// Total tries including the first.
