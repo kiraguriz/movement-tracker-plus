@@ -8,6 +8,14 @@ export interface KVLike {
 
 export interface Env {
   PROXY_KV: KVLike;
+  BUDGET_LEDGER?: {
+    idFromName(name: string): unknown;
+    get(id: unknown): { fetch(request: Request): Promise<Response> };
+  };
+  REQUIRE_DURABLE_BUDGETS?: string;
+  GLOBAL_DAILY_REQUESTS?: string;
+  GLOBAL_DAILY_INSTALLS?: string;
+  GLOBAL_DAILY_ATTEMPTS?: string;
   KILL_SWITCH?: string;
   MUSE_BASE_URL?: string;
   // Secrets: never committed, never logged.

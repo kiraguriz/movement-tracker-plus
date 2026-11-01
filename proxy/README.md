@@ -89,7 +89,8 @@ The policy table lives in `src/policy.ts`; `test/coach.test.ts` pins every numbe
 | 401 | `missing_token`, `invalid_token` | Call `POST /v1/install` again and replace the stored token. Tokens last 120 days. |
 | 400 | `invalid_feature`, `unsupported_field`, `model_not_allowed`, `effort_not_allowed`, `stream_not_allowed`, ... | Client bug; fix the request. |
 | 413 | `payload_too_large` | Over the feature (or voice) cap. |
-| 429 | `daily_budget_exceeded`, `install_rate_limited`, `upstream_rate_limited` | Wait for `Retry-After` seconds. |
+| 429 | `daily_budget_exceeded`, `global_budget_exceeded`, `global_attempt_limit`, `global_install_limit`, `install_rate_limited`, `upstream_rate_limited` | Wait for `Retry-After` seconds. |
+| 503 | `budget_unavailable` | Durable ledger is missing/unreachable; no upstream call was made. |
 | 502 / 503 / 504 | `upstream_error`, `upstream_unavailable`, `upstream_timeout`, `upstream_unauthorized`, `service_paused` | Retry later; 503 carries `Retry-After`. |
 
 Redirects from upstream are never followed (the server key must not be replayed to another origin), and
@@ -103,8 +104,9 @@ upstream 400 surfaces its sanitized message as `upstream_bad_request`, and 401/4
 ## Privacy and logging
 
 The only log line per request is `{ route, status, ms, feature? }`. Request and response bodies, install
-tokens, keys, IPs and query strings are never logged. KV holds SHA-256 hashes of install tokens and of IPs
-(install rate limit), plus counters. Meta's `*-contributor` models (data used to improve Meta products) are
+tokens, keys, IPs and query strings are never logged. KV holds SHA-256 hashes of install tokens. The
+Durable Object holds counters keyed by truncated token/network hashes and random reservation IDs.
+Meta's `*-contributor` models (data used to improve Meta products) are
 not in the allowlist.
 
 ## Deploy (your steps)
@@ -112,7 +114,7 @@ not in the allowlist.
 Run from `proxy/`. You need a Cloudflare account; no key is ever committed.
 
 ```sh
-npm install
+npm ci
 npx wrangler login
 npx wrangler kv namespace create movement-tracker-proxy
 # Paste the printed id into wrangler.jsonc, kv_namespaces[0].id (replace REPLACE_WITH_KV_NAMESPACE_ID).
@@ -120,6 +122,21 @@ npx wrangler secret put MODEL_API_KEY     # the Meta Model API key (starts with 
 npx wrangler secret put USDA_API_KEY      # free key from https://api.data.gov/signup/
 npx wrangler deploy
 ```
+
+Deployment also provisions the `BudgetLedger` SQLite Durable Object using the migration in
+`wrangler.jsonc`. Its `REQUIRE_DURABLE_BUDGETS=1` setting rejects requests before an upstream call if
+the binding is missing or unavailable. Do not disable it on a public deployment.
+
+Configure the app with the public URL only, for both Debug and Release:
+
+```sh
+xcodebuild -project MovementTracker.xcodeproj -scheme MovementTracker \
+  -destination 'generic/platform=iOS' COACH_PROXY_URL=https://your-worker.workers.dev build
+```
+
+`Config/Info.plist` expands this setting into `CoachProxyURL`. The app rejects non-HTTPS URLs,
+embedded credentials and query tokens. With no URL it uses on-device coach fallbacks and manual
+nutrition entry. Debug's existing `-coachURL http://localhost:8787` override remains available.
 
 If `secret put` asks to create the Worker first, answer yes. Then check it from the repo root:
 
@@ -167,30 +184,25 @@ Tests use an in-memory KV with a fake clock, an in-memory cache and an injected 
 network. Source is erasable TypeScript with explicit `.ts` import extensions; `tsconfig.json` is for
 editors only (`noEmit`).
 
-## Known limits
+## Durable limits and operational boundaries
 
-- **Counters are exact per isolate, best effort across isolates.** KV has no atomic increment, is
-  eventually consistent and rejects a second write to the same key within a second, so on its own a
-  burst of parallel requests would all read the same count and all pass (measured: 40 of 40 installs and
-  60 of 60 requests against limits of 5 and 20). Each isolate therefore keeps its own count per key and
-  uses the larger of that and the KV value, which holds a burst handled by one isolate to the limit
-  (verified under `wrangler dev`). A burst spread over several isolates or locations can still exceed a
-  limit until KV catches up. A Durable Object per token would make it exact; that is the upgrade if
-  abuse shows up.
-- **Installs are free and anonymous**, so an attacker who rotates networks gets 5 tokens per hour per
-  network, each with full budgets. Per-token budgets bound a normal client, not a determined one; the
-  kill switch and Meta's usage dashboard are the backstop until App Attest (post-hackathon).
-- **KV free plan allows 1,000 writes per day** (and 1 write per second per key). Every coach and voice
-  request writes one budget counter, and every install writes two keys. Use the Workers Paid plan
-  ($5/month) for anything beyond a demo. A rejected same-key write loosens a limit slightly, and a budget
-  refund after an upstream failure is best effort for the same reason.
+- **Authoritative counters use one named SQLite Durable Object.** Each reservation atomically checks
+  the feature/token budget and the global budget; all Worker isolates share it. Refunds are idempotent.
+  Expired counter/receipt rows are pruned on subsequent traffic. KV is no longer written per paid call.
+- **Global defaults per UTC day:** `GLOBAL_DAILY_REQUESTS=500` accepted upstream reservations,
+  `GLOBAL_DAILY_INSTALLS=200` installations and `GLOBAL_DAILY_ATTEMPTS=2000` upstream attempts.
+  Refundable upstream failures restore the first limit, but never the attempt limit. Limits can be lowered
+  through Worker vars. They are request caps; actual provider charges still depend on token usage.
+- **Installs remain anonymous.** Five per network/hour plus the global install cap bound token issuance;
+  App Attest remains a later feature. The shared ledger is intentionally one coordinator for demo scale.
+- **Local compatibility:** tests can omit the binding to exercise the old best-effort KV fallback. The
+  deployed config requires the durable binding and never silently falls back.
 - **Cache API:** Cloudflare documents working cache operations for Workers on custom domains; on
   `*.workers.dev` it is not confirmed. If it does not cache there, search still works but every query calls
   USDA (1,000 requests per hour per key; USDA blocks the key for an hour when exceeded).
 - **Token revocation** (deleting `tok:<sha256>` from KV) takes up to 5 minutes to reach warm isolates.
-- **No global spend cap** besides the kill switch. Budgets are per install token, and installs are limited
-  per IP. Watch Meta's usage dashboard; Meta rate limits are per team, shared by every install.
-- Worker CPU limit on the free plan is 10 ms per request; parsing a 3 MB body takes about 2 ms.
+- Provider/team quotas, paid-account usage and real latency require live credentials and deployment.
+  Local tests and dry-run builds do not establish those results.
 
 ## Sources used (read 2026-10-29)
 

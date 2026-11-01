@@ -23,3 +23,7 @@ node_modules/
 # Agent tooling
 .claude/worktrees/
 .claude/settings.local.json
+
+# Python check artifacts
+__pycache__/
+*.pyc

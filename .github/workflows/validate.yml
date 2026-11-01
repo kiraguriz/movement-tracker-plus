@@ -1,0 +1,50 @@
+name: Validate
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proxy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '26'
+          cache: npm
+          cache-dependency-path: proxy/package-lock.json
+      - run: npm ci --prefix proxy
+      - run: npm test --prefix proxy
+      - run: npm run build --prefix proxy
+      - run: python3 -m unittest discover -s tools/tests -v
+      - run: git diff --check
+  native:
+    # macOS 27 / Xcode 27 is required by the package and app deployment targets.
+    runs-on: xcode-27
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - run: xcodebuild -version && swift --version
+      - run: swift test --package-path Packages/MovementKit
+      - name: Compile Debug and Release without starting a simulator
+        run: |
+          for config in Debug Release; do
+            xcodebuild -project MovementTracker.xcodeproj -scheme MovementTracker \
+              -configuration "$config" -destination 'generic/platform=iOS Simulator' \
+              -derivedDataPath "$RUNNER_TEMP/MovementBuild" -jobs 4 CODE_SIGNING_ALLOWED=NO build
+          done
+      - name: Compile device SDK without signing
+        run: |
+          xcodebuild -project MovementTracker.xcodeproj -scheme MovementTracker \
+            -configuration Release -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/MovementBuild" -jobs 4 CODE_SIGNING_ALLOWED=NO build

@@ -220,6 +220,21 @@ What Muse sees, and read the list.
 
 ## 6. Apple Health
 
+Additional recovery checks after the 2026-11-01 changes:
+
+- [ ] With Health on, save a meal and immediately terminate/relaunch. The business row and export intent
+  are committed together; foreground drain retries the same sync identifier/version.
+- [ ] Delete an exported meal while Health is temporarily unavailable, then switch exports off. On the
+  next foreground drain with deletion access, its samples are removed and no live meals are exported.
+- [ ] Interrupt a camera set after a counted rep has checkpointed. Relaunch: the draft contains one
+  interrupted set with its saved reps. Finish/retry must not duplicate it. Calibration starts fresh for
+  a subsequent set; the app does not resume a camera pipeline from a crash.
+- [ ] Switch cameras while recording. Its exported header is `cameraPosition: unknown` and has the
+  `mixed-camera` tag, so it cannot be labeled as a single-camera real fixture. The next set starts with
+  the preferred camera and can yield a valid single-camera fixture.
+- [ ] Confirm a coach plan. The draft retains each known exercise's targets and notes but no completed
+  sets. Log sets, check the rest countdown across background/relaunch, and inspect history/progress.
+
 Needs the HealthKit capability from section 1. Health is off until you turn on the Apple Health switch in Me.
 Only what you save while it is on is sent; turning it on does not send older data. The app writes Workouts and
 Active Energy (an estimate from MET values, marked as one), Dietary Energy, Protein, Carbohydrates, Total Fat, and

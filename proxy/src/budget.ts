@@ -1,4 +1,5 @@
 import { HttpError } from "./http.ts";
+import { ledgerCall } from "./ledger.ts";
 import type { Ctx } from "./types.ts";
 
 const DAY_MS = 86_400_000;
@@ -62,6 +63,8 @@ async function storeCount(ctx: Ctx, key: string, n: number, ttlSeconds: number):
 
 // Adds one to the counter and returns the new value.
 export async function bumpCounter(ctx: Ctx, key: string, ttlSeconds: number): Promise<number> {
+  const durable = await ledgerCall(ctx, { op: "install", key, ttl: ttlSeconds });
+  if (durable) return Number(durable.count);
   const stored = parseCount(await ctx.env.PROXY_KV.get(key));
   const now = ctx.deps.now();
   const next = Math.max(stored, localCount(ctx, key, now)) + 1;
@@ -73,16 +76,20 @@ export async function bumpCounter(ctx: Ctx, key: string, ttlSeconds: number): Pr
 export interface Reservation {
   key: string;
   ttlSeconds: number;
+  ledgerID?: string;
 }
 
 // Counts one request against the token's daily budget for `scope` (a coach feature, "voice" or "food").
 // The reservation is taken before the upstream call so parallel requests cannot all pass the check.
 export async function reserveBudget(ctx: Ctx, scope: string, limit: number): Promise<Reservation> {
   const key = `bud:${ctx.tokenId}:${scope}:${utcDay(ctx.deps.now())}`;
+  const ttlSeconds = secondsToUtcMidnight(ctx.deps.now()) + 3600;
+  const id = Array.from(ctx.deps.randomBytes(16), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  const durable = await ledgerCall(ctx, { op: "reserve", key, ttl: ttlSeconds, limit, id });
+  if (durable) return { key, ttlSeconds, ledgerID: id };
   const stored = parseCount(await ctx.env.PROXY_KV.get(key));
   const now = ctx.deps.now();
   const untilMidnight = secondsToUtcMidnight(now);
-  const ttlSeconds = untilMidnight + 3600;
   const used = Math.max(stored, localCount(ctx, key, now));
   if (used >= limit) {
     throw new HttpError(
@@ -101,6 +108,10 @@ export async function reserveBudget(ctx: Ctx, scope: string, limit: number): Pro
 // our outage. Callers must not refund requests upstream rejected as invalid: a refunded rejection is a
 // free upstream call, and a loop of them would eat the shared team rate limit.
 export async function refundBudget(ctx: Ctx, reservation: Reservation): Promise<void> {
+  if (reservation.ledgerID) {
+    try { await ledgerCall(ctx, { op: "refund", id: reservation.ledgerID }); } catch { /* Conservative: keep the debit. */ }
+    return;
+  }
   try {
     const stored = parseCount(await ctx.env.PROXY_KV.get(reservation.key));
     const now = ctx.deps.now();

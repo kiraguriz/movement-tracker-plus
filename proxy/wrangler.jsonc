@@ -2,11 +2,15 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "movement-tracker-proxy",
   "main": "src/index.ts",
-  // Must not be newer than the workerd bundled with the pinned wrangler (workerd 1.20261012.1), or
+  // Must not be newer than the workerd bundled with the pinned wrangler (workerd 1.20261023.1), or
   // `wrangler dev` refuses to start. Raise it together with the wrangler pin.
   "compatibility_date": "2026-10-12",
+  "durable_objects": {
+    "bindings": [{ "name": "BUDGET_LEDGER", "class_name": "BudgetLedger" }]
+  },
+  "migrations": [{ "tag": "v1-budget-ledger", "new_sqlite_classes": ["BudgetLedger"] }],
 
-  // One KV namespace holds install tokens, rate-limit counters and daily budgets.
+  // KV holds hashed install tokens. The SQLite Durable Object holds authoritative usage counters.
   // Create it once, then paste the printed id below:
   //   npx wrangler kv namespace create PROXY_KV
   // The placeholder id is enough for `npm run build` (dry run) and `wrangler dev` (local KV).
@@ -21,6 +25,10 @@
   // `npx wrangler secret put <NAME>` (deployed) or in proxy/.dev.vars (local, gitignored).
   "vars": {
     "KILL_SWITCH": "0",
+    "REQUIRE_DURABLE_BUDGETS": "1",
+    "GLOBAL_DAILY_REQUESTS": "500",
+    "GLOBAL_DAILY_INSTALLS": "200",
+    "GLOBAL_DAILY_ATTEMPTS": "2000",
     "MUSE_BASE_URL": "https://api.meta.ai/v1"
   }
 }
