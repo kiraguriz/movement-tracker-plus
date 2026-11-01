@@ -59,6 +59,8 @@ final class AccessibilityUITests: AppUITestCase {
         XCTAssertTrue(element(ID.mealEditor, in: app).waitForExistence(timeout: 10))
         for id in [ID.mealName, ID.mealGrams, ID.mealKcal, ID.mealProtein] {
             let field = element(id, in: app)
+            // Form rows are created lazily and can begin below the viewport at accessibility sizes.
+            for _ in 0..<4 where !field.exists { app.swipeUp() }
             XCTAssertTrue(field.waitForExistence(timeout: 10), "\(id) is missing")
             XCTAssertGreaterThanOrEqual(field.frame.height, 44, "\(id) is shorter than 44 pt")
         }

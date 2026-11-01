@@ -401,8 +401,14 @@ final class CoachEatUITests: AppUITestCase {
         for name in ["Scrambled eggs", "Whole wheat toast", "Orange juice"] {
             XCTAssertTrue(element(ID.mealRow(name), in: app).waitForExistence(timeout: 10), "\(name) is not on Eat")
         }
-        // 100 g eggs (149) + 60 g toast (188) + 200 ml juice at 45 per 100 ml (90): 427 kcal.
-        XCTAssertTrue(waitUntil { self.value(of: ID.eatKcal, in: app).hasPrefix("427") }, "Eat: \(self.value(of: ID.eatKcal, in: app))")
+        // The photo estimates 200 g of juice, but the stub only has a per-mL result. Without a density,
+        // it remains unmatched and its nutrition stays unknown: 100 g eggs (149) + 60 g toast (188).
+        let juice = element(ID.mealRow("Orange juice"), in: app)
+        XCTAssertTrue(waitUntil { self.value(of: ID.eatKcal, in: app).contains("337") }, "Eat: \(self.value(of: ID.eatKcal, in: app))")
+        juice.tap()
+        XCTAssertEqual(app.textFields[ID.mealGrams].value as? String, "200")
+        let kcal = (app.textFields[ID.mealKcal].value as? String) ?? ""
+        XCTAssertTrue(kcal.isEmpty || kcal == "–", "juice kcal should remain unknown: \(kcal)")
     }
 
     @MainActor
