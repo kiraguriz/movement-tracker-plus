@@ -113,6 +113,10 @@ not in the allowlist.
 
 Run from `proxy/`. You need a Cloudflare account; no key is ever committed.
 
+The project Worker is deployed at `https://movement-tracker-proxy.haitiandzhu.workers.dev`.
+`wrangler.jsonc` contains its provisioned KV namespace, and both app build configurations contain the
+public URL as `COACH_PROXY_URL`. Secrets are configured separately through the hidden Wrangler prompts.
+
 ```sh
 npm ci
 npx wrangler login
@@ -166,12 +170,10 @@ upstream: `npx wrangler dev --var MUSE_BASE_URL:http://127.0.0.1:8799/v1`.
 
 ## Dependency pin
 
-`wrangler` is pinned to 4.151.0, the newest release at least 14 days old when this was set (2026-10-29),
-and `package-lock.json` was generated with `npm install --before=2026-10-15` so every transitive package
-is at least that old too. `compatibility_date` in `wrangler.jsonc` must stay at or below what the pinned
-workerd supports (2026-10-19 for workerd 1.20261012.1), or `wrangler dev` refuses to start. `npm audit`
-reports undici 7.29.1, pinned exactly by miniflare, in dev tooling only; the deployed Worker bundles no
-npm code. The fix ships with wrangler 4.153 or later; move the pin once that is old enough.
+`wrangler` is pinned to 4.156.0 with the lockfile committed. Its bundled workerd is 1.20261023.1;
+`compatibility_date` remains 2026-10-12. The 2026-11-01 update resolved the earlier dev-tooling
+undici advisories, and the last `npm audit` reported zero vulnerabilities. The deployed Worker bundles
+no third-party npm runtime code.
 
 ## Tests and build
 
