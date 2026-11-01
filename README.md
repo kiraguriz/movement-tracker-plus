@@ -24,6 +24,11 @@ bodyweight squat and push-up, both filmed from the side.
    With partial Health access, the allowed types are written and the rest stay queued for a later grant. The app
    requests write access only; it does not request steps or body-weight read access.
 
+Training drafts checkpoint each processed counted rep, and an interrupted set survives relaunch. Confirmed
+coach plans retain sets/reps/rest and notes without counting targets as completed work. Today and Train open
+workout history, per-set measurements and exercise-specific progress; saved sets can be corrected or deleted.
+Meal entries retain grams or millilitres and their corrected nutrient basis when edited or reused.
+
 ## How it uses Muse
 
 Muse never counts reps. Reps, partial reps, depth, tempo, velocity loss and form scores are measured on the
@@ -40,7 +45,7 @@ and a review that cites a rep that does not exist is rejected. On-device numbers
 - **Proxy.** The app never talks to Meta directly. It calls a Cloudflare Worker (`proxy/`) that holds the Muse and
   USDA keys as Worker secrets, forwards to the Meta Responses API, allows only `muse-spark-1.3` and
   `muse-spark-1.2`, limits reasoning effort, output tokens and body size per feature, forces `store: false`,
-  and enforces a daily request budget per install and a kill switch.
+  and uses a SQLite Durable Object for atomic per-install and global request budgets, plus a kill switch.
 - **Strict schemas.** Set review, debrief and meal photo are requested with `strict: true` JSON schemas and
   decoded with Codable. A bad answer is retried once with the error. If Muse still cannot answer (bad output,
   no network, daily budget spent, service paused), the set review and debrief fall back to an on-device review
@@ -68,6 +73,8 @@ flowchart LR
     ev --> pc
   end
   ui --> mc & pc & ck & dom
+  ui --> al["AppLogic<br/>meal editor, workout application, history"]
+  al --> dom
   env --> per & ck & hb & dom
   ck -- "HTTPS, install token" --> w["Cloudflare Worker<br/>proxy/"]
   w -- "server-held keys" --> muse["Meta Model API (Muse)"]
@@ -84,8 +91,11 @@ flowchart LR
   (`squat.bodyweight`, `pushup`).
 - The app target holds the screens and `AppEnvironment`, which builds every store from one database and passes
   them to the screens as protocols through a SwiftUI environment value. `Persistence` is imported there and
-  nowhere else in the app. `AppEnvironment` also wraps the workout, nutrition, body-measurement and profile stores
-  so that a successful save is queued for Apple Health (`App/Health/`); a failed Health write never fails a save.
+  nowhere else in the app. `Persistence` commits Health sync intent with eligible business writes;
+  `App/Health/` wrappers wake the worker, and foreground drains recover after interruptions. Health write
+  failures leave durable retry work and do not fail the original save.
+- `AppLogic` holds the actual meal editor, localized number parser, confirmed plan application, absolute-date
+  rest periods and workout history/progress logic, exercised by portable tests against real repositories.
 - `motion-eval` is the accuracy tool described below.
 
 ## Privacy
@@ -119,8 +129,14 @@ xcodebuild -project MovementTracker.xcodeproj -scheme MovementTracker -destinati
 npm test --prefix proxy
 ```
 
-The proxy deploy steps are in `proxy/README.md`. Until the Worker is deployed and its address is set in
-`App/Support/CoachEndpoint.swift`, the app has no coach: the Coach sheet says it is unavailable, the set review
+Run `npm ci --prefix proxy` once for the approved proxy dev tool. `tools/check.sh` runs the complete local
+delivery checks, including Debug/Release and unsigned device SDK builds, without booting a Simulator.
+GitHub Actions runs the native and proxy checks on every push/PR. See `docs/completion-status.md` for the
+last verified results and outstanding device/service acceptance.
+
+The proxy deploy steps are in `proxy/README.md`. Set its public HTTPS address with the `COACH_PROXY_URL`
+Xcode build setting; credentials stay in Worker secrets. Until that is configured, the app has no online coach:
+the Coach sheet says it is unavailable, the set review
 shows only the on-device numbers, and Eat offers manual entry only.
 
 ## Run in the Simulator with the replay fixtures

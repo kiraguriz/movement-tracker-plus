@@ -2,7 +2,7 @@
 
 What was built when, generated from `git log main` by `tools/build-log.sh`. Times are author times in Chicago time (CST/CDT); merge commits are left out.
 
-Source: `main` at `93d979e`, 23 commits, 2026-10-29 to 2026-11-01.
+Source: `main` at `4df9c0c`, 29 commits, 2026-10-29 to 2026-11-01.
 
 ## 2026-10-29 (Thu)
 
@@ -35,3 +35,9 @@ Source: `main` at `93d979e`, 23 commits, 2026-10-29 to 2026-11-01.
 
 - 02:35 CST `1635d0e` Preserve pose recordings and validate evaluation imports
 - 02:43 CST `93d979e` Honor partial Health access and keep incomplete exports queued
+- 02:44 CST `e986ab8` Refresh accuracy provenance and build history
+- 03:54 CST `2482144` Preserve food quantity units and test the portable meal editor
+- 04:11 CST `3aa42d3` Commit Health export intents with business writes and recover them after interruptions
+- 04:23 CST `164db88` Recover counted sets and retain workout prescriptions, history and progress
+- 04:24 CST `4b1a0d2` Enforce durable proxy budgets and add reproducible delivery checks
+- 04:27 CST `4df9c0c` Handle global proxy limits without retrying exhausted daily budgets

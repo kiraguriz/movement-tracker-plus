@@ -136,7 +136,7 @@ xcodebuild -project MovementTracker.xcodeproj -scheme MovementTracker \
 
 `Config/Info.plist` expands this setting into `CoachProxyURL`. The app rejects non-HTTPS URLs,
 embedded credentials and query tokens. With no URL it uses on-device coach fallbacks and manual
-nutrition entry. Debug's existing `-coachURL http://localhost:8787` override remains available.
+nutrition entry. Debug's existing `-MTCoachURL http://localhost:8787` override remains available.
 
 If `secret put` asks to create the Worker first, answer yes. Then check it from the repo root:
 
