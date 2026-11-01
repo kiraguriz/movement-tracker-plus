@@ -110,3 +110,33 @@ The app database was in memory, so this pass does not validate process-terminati
 Device Hub's clipboard paste produced stale content in an unsaved field. It was cleared and never saved;
 the verified test name and numbers were then entered with individual hardware-key events. Verify the final
 form before Save rather than treating a paste command as proof of input.
+
+## Camera runtime — initial front-camera observation
+
+After the Health cleanup, the app's Apple Health export switch was turned off for the temporary seeded
+profile. The real camera permission sheet appeared, Device Hub screen sharing was stopped, and the user
+allowed camera access. A `devicectl device capture screenshot` then captured the live camera/HUD without
+reopening continuous screen sharing. Camera images remain in a private temporary directory outside git.
+
+Initial snapshot (Nov 1, about 4:43 PM CST):
+
+| Reading | Observed |
+| --- | --- |
+| Source | Front Camera, mirrored; live preview visible; recording indicator on |
+| Delivery | 30.0 fps, target 30 |
+| Vision | p50 14.5 ms, p95 15.8 ms, max 18.3 ms |
+| Frames / failures | 2,953 processed, 0 Vision failures |
+| Drops | 18 cumulative; a later snapshot is needed to assess whether this grows |
+| Format | 1280×720 binned |
+| Cropping features | Center Stage off, stabilization off |
+| Rotation / pressure | Capture 0°, preview 0°, overlay 0 quarter turns; nominal pressure |
+| Person / reps | 0% / 0, with Step into view shown; no fully framed subject yet |
+
+This confirms actual camera capture, an initial latency reading and the no-person gate. It does not yet
+establish framed-human latency, skeleton alignment, stillness stability, rep accuracy or back-camera acceptance.
+
+The permission-sheet screenshot also exposed a Debug HUD label bug: before camera statistics existed, it
+said `replay` regardless of the selected source. `LiveDebugHUD` now selects `camera` or `replay` from
+`model.source`; the normal camera statistics branch is unchanged. Debug Simulator compilation and a signed
+physical-device build passed. The current live acceptance session still uses the prior installed binary;
+installing the HUD-only update is deferred until that active capture finishes.

@@ -33,8 +33,13 @@ struct LiveDebugHUD: View {
     private var lines: [String] {
         let rate = model.deliveryRate
         guard let stats = model.cameraStats else {
+            let source: String
+            switch model.source {
+            case .camera: source = "camera"
+            case .replay: source = "replay"
+            }
             return [
-                "replay  frames \(rate.frames)",
+                "\(source)  frames \(rate.frames)",
                 String(format: "delivered %.1f fps", rate.fps),
             ]
         }
