@@ -80,7 +80,7 @@ struct VisionPoseEstimatorTests {
         #expect(abs(box.height - 80.0 / 300) < 0.04, "\(orientation)")
     }
 
-    @Test(.enabled(if: VisionHardware.supportsBodyPose, "Requires a Vision body-pose compute device"))
+    @Test(VisionHardware.bodyPose)
     func noPersonGivesNil() async throws {
         let estimator = VisionPoseEstimator()
         let image = try makeImage(width: 640, height: 480)
@@ -88,7 +88,7 @@ struct VisionPoseEstimatorTests {
         #expect(try await estimator.estimate(pixelBuffer: pixelBuffer(of: image), time: 1) == nil)
     }
 
-    @Test(.enabled(if: VisionHardware.supportsBodyPose, "Requires a Vision body-pose compute device"))
+    @Test(VisionHardware.bodyPose)
     func measureReturnsAnEmptyFrameWithTimingAndTheOrientedAspect() async throws {
         let estimator = VisionPoseEstimator()
         let image = try makeImage(width: 640, height: 480)
@@ -103,7 +103,7 @@ struct VisionPoseEstimatorTests {
         }
     }
 
-    @Test(.enabled(if: VisionHardware.supportsBodyPose, "Requires a Vision body-pose compute device"))
+    @Test(VisionHardware.bodyPose)
     func pixelBufferPathReportsTheOrientedAspectToo() async throws {
         let estimator = VisionPoseEstimator()
         let buffer = try pixelBuffer(of: makeImage(width: 1280, height: 720))
@@ -111,7 +111,7 @@ struct VisionPoseEstimatorTests {
         #expect(abs(estimate.frame.imageAspect - 720.0 / 1280) < 1e-12)
     }
 
-    @Test(.enabled(if: VisionHardware.supportsBodyPose, "Requires a Vision body-pose compute device"))
+    @Test(VisionHardware.bodyPose)
     func blockingBridgeWorksFromAPlainQueue() async throws {
         let estimator = VisionPoseEstimator()
         let buffer = UncheckedSendable(try pixelBuffer(of: makeImage(width: 640, height: 480)))
@@ -129,7 +129,7 @@ struct VisionPoseEstimatorTests {
         #expect(value.frame.t == 7)
     }
 
-    @Test(.enabled(if: VisionHardware.supportsBodyPose, "Requires a Vision body-pose compute device"))
+    @Test(VisionHardware.bodyPose)
     func repeatedCallsAcrossInputTypesKeepWorking() async throws {
         // Vision can fail once right after the input type changes; the estimator retries, so alternating
         // between pixel buffers and images never surfaces an error.

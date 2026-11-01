@@ -384,7 +384,7 @@ struct MotionEvalRunTests {
         #expect(recordings.lowerBound < synthetic.lowerBound)
     }
 
-    @Test(.enabled(if: VisionHardware.supportsBodyPose, "Requires a Vision body-pose compute device"))
+    @Test(VisionHardware.bodyPose)
     func videosAreRunThroughVisionAndReportLatency() async throws {
         let directory = try TemporaryDirectory()
         let url = directory.file("squat.bodyweight_0.mov")      // nobody in the picture: an idle clip
