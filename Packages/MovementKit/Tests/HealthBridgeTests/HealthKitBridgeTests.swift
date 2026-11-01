@@ -104,7 +104,7 @@ struct HealthKitConversionTests {
     @Test func theModuleAsksForExactlyTheTypesItUses() {
         #expect(HealthKitBridge.shareTypes.count == HealthObjectKind.allCases.count)
         #expect(HealthKitBridge.shareTypes.contains(HKWorkoutType.workoutType()))
-        #expect(HealthKitBridge.readTypes == [HKQuantityType(.bodyMass), HKQuantityType(.stepCount)])
+        #expect(HealthKitBridge.readTypes.isEmpty, "the app does not consume Health reads yet")
         let identifiers = Set(HealthKitBridge.shareTypes.map(\.identifier))
         #expect(identifiers == [
             HKWorkoutType.workoutType().identifier,

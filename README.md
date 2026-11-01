@@ -21,6 +21,8 @@ bodyweight squat and push-up, both filmed from the side.
    and save.
 6. Today shows the day's nutrition, your latest workout and a weight trend. With the Apple Health switch in Me on,
    finished workouts, meals and weight are written to Health, and deleting them in the app removes them there.
+   With partial Health access, the allowed types are written and the rest stay queued for a later grant. The app
+   requests write access only; it does not request steps or body-weight read access.
 
 ## How it uses Muse
 

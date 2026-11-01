@@ -413,7 +413,12 @@ Draft sessions are written after every set event, so a crash loses nothing.
   MET-based energy marked as an estimate); dietary energy + macros per meal entry (optionally grouped
   in a food `HKCorrelation`). Every sample carries `HKMetadataKeySyncIdentifier` = our id and
   `HKMetadataKeySyncVersion` = revision, so re-saves update instead of duplicating.
-- MVP reads: latest body mass, today's steps (statistics query).
+- The body-mass and steps read adapters exist, but no current app feature consumes them. Authorization requests
+  are write-only; add each read scope when a feature actually uses it.
+- Partial write access exports the allowed types and leaves the entity outstanding without counting a failed
+  attempt. A later foreground drain retries stable sync identifiers/versions after access is granted. Workout
+  and estimated energy may be authorized separately; energy alone never becomes the session's workout UUID.
+  Authorization is checked per type using [Apple's sharing status API](https://developer.apple.com/documentation/healthkit/hkhealthstore/authorizationstatus(for:)).
 - Later: `HKWorkoutSession` on iPhone (iOS 26+) with a Live Activity; anchored queries + background
   delivery for body mass; Apple Watch heart rate.
 - HealthKit needs a real device and the HealthKit capability on the signing team.

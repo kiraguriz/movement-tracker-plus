@@ -32,7 +32,10 @@ public struct HealthWriteReceipt: Equatable, Sendable {
 public protocol HealthWriting: Sendable {
     /// Deletes the plan's `removals`, then saves every object. An object whose sync identifier is already in Health
     /// replaces it; the plan's version is the one the export row carries.
-    /// Throws `HealthAccessError` when Health cannot be reached. Nothing is saved unless every type is authorized.
+    /// Writes the authorized types even when others are denied. Throws `HealthAccessError.notAuthorized` if
+    /// any requested type remains unwritten, so the row stays pending without using a retry attempt. A later
+    /// drain retries the same identifiers and version; partially written objects are replaced, never duplicated.
+    /// Other `HealthAccessError`s indicate that Health cannot be reached.
     func write(_ plan: HealthWritePlan) async throws -> HealthWriteReceipt
 
     /// Deletes objects by sync identifier. Absent objects are not an error, and neither are types that are not

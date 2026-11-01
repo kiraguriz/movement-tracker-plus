@@ -56,11 +56,14 @@ public final class HealthKitBridge: HealthWriting, HealthReading, HealthAuthoriz
 
     public func write(_ plan: HealthWritePlan) async throws -> HealthWriteReceipt {
         guard HKHealthStore.isHealthDataAvailable() else { throw HealthAccessError.unavailable }
-        for kind in plan.writtenKinds where store.authorizationStatus(for: Self.sampleType(for: kind)) != .sharingAuthorized {
-            throw HealthAccessError.notAuthorized
-        }
+        let allowed = Set(plan.writtenKinds.filter {
+            store.authorizationStatus(for: Self.sampleType(for: $0)) == .sharingAuthorized
+        })
+        let requestedKinds = Set(plan.writtenKinds)
+        let removals = plan.removals
+        let plan = plan.allowing(allowed)
         do {
-            try await delete(plan.removals)
+            try await delete(removals)
             var uuids: [HealthObjectKind: String] = [:]
             if let workout = plan.workout {
                 uuids.merge(try await save(workout)) { _, new in new }
@@ -73,6 +76,9 @@ public final class HealthKitBridge: HealthWriting, HealthReading, HealthAuthoriz
                     uuids[sample.element.kind] = samples[sample.offset].uuid.uuidString
                 }
             }
+            // The allowed portion is saved, but the entity is not complete. Keep it pending until the user
+            // grants the remaining types, and let other queued entities proceed meanwhile.
+            guard allowed == requestedKinds else { throw HealthAccessError.notAuthorized }
             return HealthWriteReceipt(uuids: uuids)
         } catch {
             throw Self.mapped(error)
@@ -196,9 +202,10 @@ public final class HealthKitBridge: HealthWriting, HealthReading, HealthAuthoriz
         Set(HealthObjectKind.allCases.map(sampleType(for:)))
     }
 
-    /// Exactly what the module reads.
+    /// The app currently exports only. Do not request unused body-mass or steps read access; the reading
+    /// methods below remain available for a future feature that explicitly adds those permissions.
     static var readTypes: Set<HKObjectType> {
-        [HKQuantityType(.bodyMass), HKQuantityType(.stepCount)]
+        []
     }
 
     static func sampleType(for kind: HealthObjectKind) -> HKSampleType {

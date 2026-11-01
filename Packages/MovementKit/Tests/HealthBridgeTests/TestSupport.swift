@@ -147,12 +147,14 @@ actor FakeHealthWriter: HealthWriting {
     private var holdingRemovals = false
     private var heldRemovals: [CheckedContinuation<Void, Never>] = []
     private var omitsReceipts = false
+    private var allowedKinds = Set(HealthObjectKind.allCases)
     /// Removals that arrived, including those still held.
     private(set) var startedRemovals = 0
 
     func failNext(_ errors: any Error...) { failures.append(contentsOf: errors) }
     func holdWrites() { holding = true }
     func omitReceipts() { omitsReceipts = true }
+    func allowOnly(_ kinds: Set<HealthObjectKind>) { allowedKinds = kinds }
 
     func releaseWrites() {
         holding = false
@@ -174,8 +176,11 @@ actor FakeHealthWriter: HealthWriting {
         startedWrites += 1
         if holding { await withCheckedContinuation { held.append($0) } }
         if !failures.isEmpty { throw failures.removeFirst() }
+        let requested = Set(plan.writtenKinds)
+        let removals = plan.removals.filter { allowedKinds.contains($0.kind) }
+        let plan = plan.allowing(allowedKinds)
         plans.append(plan)
-        apply(removals: plan.removals)
+        apply(removals: removals)
 
         var drafts = plan.samples
         var uuids: [HealthObjectKind: String] = [:]
@@ -187,6 +192,7 @@ actor FakeHealthWriter: HealthWriting {
             store(draft.kind, draft.syncIdentifier, draft.syncVersion, draft.value, &uuids)
         }
         log.append("write:\(plan.entityID)")
+        guard requested.isSubset(of: allowedKinds) else { throw HealthAccessError.notAuthorized }
         return HealthWriteReceipt(uuids: omitsReceipts ? [:] : uuids)
     }
 
@@ -195,7 +201,7 @@ actor FakeHealthWriter: HealthWriting {
         if holdingRemovals { await withCheckedContinuation { heldRemovals.append($0) } }
         if !failures.isEmpty { throw failures.removeFirst() }
         removalCalls.append(objects)
-        apply(removals: objects)
+        apply(removals: objects.filter { allowedKinds.contains($0.kind) })
         log.append("remove:\(objects.map(\.syncIdentifier).joined(separator: ","))")
     }
 

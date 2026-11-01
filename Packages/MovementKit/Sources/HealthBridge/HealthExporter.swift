@@ -8,8 +8,8 @@ public struct HealthExportPolicy: Equatable, Sendable {
     /// The wait after the first failure; it doubles with every further one, up to `maxDelay`.
     public var baseDelay: TimeInterval
     public var maxDelay: TimeInterval
-    /// How many outstanding rows a drain looks at. The store returns the oldest first, so rows that gave up would
-    /// hide newer ones; the scan doubles up to `maxScanLimit` while it finds nothing due.
+    /// The initial outstanding-row scan size. The store returns the oldest first, so rows waiting for access
+    /// or retries would hide newer ones; the scan doubles up to `maxScanLimit` while the page is full.
     public var scanLimit: Int
     public var maxScanLimit: Int
 
@@ -52,7 +52,8 @@ public struct HealthDrainReport: Equatable, Sendable {
     public var synced = 0
     /// Tried and failed; the row is retried after its backoff.
     public var failed = 0
-    /// Not tried because Health could not be reached; the row is unchanged.
+    /// Not completed because Health could not be reached or some types were denied; the row is unchanged.
+    /// A partial write may have saved the types that are authorized.
     public var deferred = 0
     /// Saved again while being written; the row stays pending for the next drain.
     public var superseded = 0
@@ -264,7 +265,7 @@ public actor HealthExporter {
                 case .exhausted: exhausted += 1
                 }
             }
-            if !due.isEmpty || page.count < limit || limit >= policy.maxScanLimit {
+            if page.count < limit || limit >= policy.maxScanLimit {
                 report.backingOff = backingOff
                 report.exhausted = exhausted
                 return due

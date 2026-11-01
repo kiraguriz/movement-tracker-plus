@@ -225,9 +225,17 @@ Only what you save while it is on is sent; turning it on does not send older dat
 Active Energy (an estimate from MET values, marked as one), Dietary Energy, Protein, Carbohydrates, Total Fat, and
 Weight. Every sample carries a sync identifier and version so a re-save replaces instead of duplicating.
 
-- [ ] Authorization. In Me, turn on Apple Health. Expected: the Health sheet lists the types above to write, plus
-  Weight and Steps to read (the app does not use the reads yet). Allow all; the switch stays on. If you allow
-  only some types, nothing is written: note it as a finding.
+- [ ] Authorization. In Me, turn on Apple Health. Expected: the Health sheet lists the types above to write and
+  does not request Weight or Steps read access. Allow all; the switch stays on. Upgrading does not revoke
+  any read access the user granted an older build; that can be removed in Health settings.
+- [ ] Partial workout access. Allow Workouts but deny Active Energy, then finish a workout. Expected: one
+  workout, no energy sample. Grant Active Energy in Health and return to the app: the queued export completes,
+  with one workout and one estimated energy sample. Also test the reverse: energy allowed, workouts denied;
+  only the energy sample is written until workout access is granted.
+- [ ] Partial meal access. Allow Dietary Energy but deny the macros, then save a meal. Expected: its calories
+  appear and the meal stays queued without consuming failure attempts. Edit the meal, grant the macros, and
+  return to the app: the latest calories and macros appear once each. An allowed weight entry must still sync
+  even while older meals are waiting for macro access.
 - [ ] Denied. On a second install or after resetting, deny the sheet. Expected: an alert, and the switch stays off.
 - [ ] Workout. Finish a workout of at least one set. In Health: Browse, Activity, Workouts. Expected: one
   Traditional Strength Training workout with the right start time and duration, source Movement Tracker+. Active Energy has

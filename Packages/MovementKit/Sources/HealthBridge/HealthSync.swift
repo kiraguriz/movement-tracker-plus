@@ -173,6 +173,24 @@ public struct HealthWritePlan: Equatable, Sendable {
 
     public var isEmpty: Bool { workout == nil && samples.isEmpty }
 
+    /// Keeps only the sample types the user allowed. Energy can be saved on its own when workout access is
+    /// off; workout access can also be used without permission to write its estimated energy.
+    /// Take removals from the original plan: an excluded sample is not a request to delete it.
+    func allowing(_ kinds: Set<HealthObjectKind>) -> HealthWritePlan {
+        var plan = self
+        plan.samples = samples.filter { kinds.contains($0.kind) }
+        if var workout {
+            workout.samples = workout.samples.filter { kinds.contains($0.kind) }
+            if kinds.contains(.workout) {
+                plan.workout = workout
+            } else {
+                plan.workout = nil
+                plan.samples.insert(contentsOf: workout.samples, at: 0)
+            }
+        }
+        return plan
+    }
+
     /// Objects the entity can produce that this version leaves out. A save replaces only what it writes, so these
     /// are deleted; otherwise a meal edited to have no protein value would keep its old protein sample in Health.
     public var removals: [HealthObjectRef] {
