@@ -65,10 +65,10 @@ public final class VideoFilePoseSource: Sendable {
 
     public let url: URL
     public let options: Options
-    private let estimator: VisionPoseEstimator
+    private let estimator: any PoseEstimating
     private let stats = Mutex(Stats())
 
-    public init(url: URL, estimator: VisionPoseEstimator = VisionPoseEstimator(), options: Options = Options()) {
+    public init(url: URL, estimator: any PoseEstimating = VisionPoseEstimator(), options: Options = Options()) {
         self.url = url
         self.estimator = estimator
         self.options = options

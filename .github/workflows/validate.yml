@@ -37,12 +37,14 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - run: xcodebuild -version && swift --version
+      - name: Report Vision hardware availability
+        run: swift -e 'import Metal; print("Metal compute device:", MTLCreateSystemDefaultDevice() == nil ? "unavailable; eight body-pose integration tests will be explicitly skipped" : "available")'
       - name: Build portable tests
         timeout-minutes: 8
         run: swift build --package-path Packages/MovementKit --build-tests --jobs 3
       - name: Run all portable tests
-        # The hosted VM stalled when parallel tests entered Vision/CoreImage together. Keep all
-        # tests, but run cases serially on this small runner; concurrency tests still create their own tasks.
+        # Avoid concurrent framework initialization on this small VM. Tests requiring unavailable
+        # body-pose compute hardware report explicit skips; concurrency tests still create their own tasks.
         timeout-minutes: 8
         run: swift test --package-path Packages/MovementKit --skip-build --no-parallel
       - name: Compile Debug and Release without starting a simulator

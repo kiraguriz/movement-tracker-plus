@@ -117,6 +117,7 @@ enum EvalRunner {
 
     static func evaluateFixture(at url: URL, specOverride: String?) throws -> EvalRow {
         let fixture = try PoseFixtureFile.read(from: url)
+        guard !fixture.frames.isEmpty else { throw EvalFailureReason("fixture contains no pose frames") }
         let name = url.lastPathComponent
         let parsed = EvalFileName.parse(name)
         let spec = try resolveSpec(override: specOverride, headerID: fixture.header.exerciseSpecID, fileName: parsed)
@@ -129,13 +130,18 @@ enum EvalRunner {
         )
     }
 
-    static func evaluateVideo(at url: URL, specOverride: String?, maxFrameRate: Double?) async throws -> (row: EvalRow, latencies: [Double]) {
+    static func evaluateVideo(at url: URL, specOverride: String?, maxFrameRate: Double?,
+                              estimator: any PoseEstimating = VisionPoseEstimator()) async throws -> (row: EvalRow, latencies: [Double]) {
         let name = url.lastPathComponent
         let parsed = EvalFileName.parse(name)
         let spec = try resolveSpec(override: specOverride, headerID: nil, fileName: parsed)
         var pipeline = try MotionPipeline(spec: spec)
-        let source = VideoFilePoseSource(url: url, options: .init(maxFrameRate: maxFrameRate))
+        let source = VideoFilePoseSource(url: url, estimator: estimator, options: .init(maxFrameRate: maxFrameRate))
         for try await frame in source.frames() { _ = pipeline.process(frame) }
+        guard source.framesDelivered > 0 else { throw EvalFailureReason("video produced no pose frames") }
+        guard source.visionFailures == 0 else {
+            throw EvalFailureReason("Vision failed on \(source.visionFailures) of \(source.framesDelivered) video frames; this clip cannot be scored")
+        }
         _ = pipeline.finish()
         return (
             row(name: name, spec: spec, expectedReps: parsed.reps, expectedPartials: parsed.partials, summary: pipeline.summary),
@@ -152,7 +158,8 @@ enum EvalRunner {
     }
 
     /// Evaluates every input in order. Failures are collected, never thrown.
-    static func evaluate(urls: [URL], specOverride: String?, maxFrameRate: Double?) async -> EvalOutcome {
+    static func evaluate(urls: [URL], specOverride: String?, maxFrameRate: Double?,
+                         videoEstimator: (any PoseEstimating)? = nil) async -> EvalOutcome {
         var outcome = EvalOutcome()
         for url in urls {
             let name = url.lastPathComponent
@@ -164,7 +171,8 @@ enum EvalRunner {
                 case .fixture:
                     outcome.rows.append(try evaluateFixture(at: url, specOverride: specOverride))
                 case .video:
-                    let result = try await evaluateVideo(at: url, specOverride: specOverride, maxFrameRate: maxFrameRate)
+                    let result = try await evaluateVideo(at: url, specOverride: specOverride, maxFrameRate: maxFrameRate,
+                        estimator: videoEstimator ?? VisionPoseEstimator())
                     outcome.rows.append(result.row)
                     outcome.videoLatencies.append(contentsOf: result.latencies)
                 }

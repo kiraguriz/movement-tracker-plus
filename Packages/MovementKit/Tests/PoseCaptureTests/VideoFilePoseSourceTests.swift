@@ -14,7 +14,8 @@ struct VideoFilePoseSourceTests {
         return frames
     }
 
-    @Test func deliversEveryFrameWithItsPresentationTime() async throws {
+    @Test(.enabled(if: VisionHardware.supportsBodyPose, "Requires a Vision body-pose compute device"))
+    func deliversEveryFrameWithItsPresentationTime() async throws {
         let directory = try TemporaryDirectory()
         let url = directory.file("plain.mov")
         try await TestMovie.write(to: url, width: 320, height: 240, frameCount: 30, fps: 30)
@@ -112,7 +113,8 @@ struct VideoFilePoseSourceTests {
         await #expect(throws: (any Error).self) { _ = try await collect(VideoFilePoseSource(url: url)) }
     }
 
-    @Test func statisticsResetWhenReadingAgain() async throws {
+    @Test(.enabled(if: VisionHardware.supportsBodyPose, "Requires a Vision body-pose compute device"))
+    func statisticsResetWhenReadingAgain() async throws {
         let directory = try TemporaryDirectory()
         let url = directory.file("twice.mov")
         try await TestMovie.write(to: url, frameCount: 12)

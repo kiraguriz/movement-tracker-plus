@@ -28,6 +28,12 @@ public enum PoseEstimatorError: Error, Equatable, Sendable {
     case timedOut
 }
 
+/// The video reader can be checked with deterministic estimators without a camera or GPU.
+public protocol PoseEstimating: Sendable {
+    func measure(pixelBuffer: CVPixelBuffer, orientation: CGImagePropertyOrientation,
+                 mirrored: Bool, time: TimeInterval) async throws -> PoseEstimate
+}
+
 /// Turns images into `PoseFrame`s with Vision's 2D body pose (the Swift `DetectHumanBodyPoseRequest`,
 /// revision 2, 19 joints). Stateless and `Sendable`: share one instance.
 ///
@@ -37,7 +43,7 @@ public enum PoseEstimatorError: Error, Equatable, Sendable {
 /// The Swift Vision API is `async` only; the old `VNDetectHumanBodyPoseRequest` is a different model
 /// (revision 1) with different joint positions. `measure` is the async entry point; `measureBlocking`
 /// bridges it for a capture queue, where the pixel buffer must not outlive the delegate callback.
-public final class VisionPoseEstimator: Sendable {
+public final class VisionPoseEstimator: PoseEstimating {
     public struct Options: Equatable, Sendable {
         /// Joints with confidence at or below this are treated as not found.
         public var dropConfidenceAtOrBelow: Double = 0

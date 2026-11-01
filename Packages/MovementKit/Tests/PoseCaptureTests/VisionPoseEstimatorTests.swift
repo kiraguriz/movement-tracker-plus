@@ -80,14 +80,16 @@ struct VisionPoseEstimatorTests {
         #expect(abs(box.height - 80.0 / 300) < 0.04, "\(orientation)")
     }
 
-    @Test func noPersonGivesNil() async throws {
+    @Test(.enabled(if: VisionHardware.supportsBodyPose, "Requires a Vision body-pose compute device"))
+    func noPersonGivesNil() async throws {
         let estimator = VisionPoseEstimator()
         let image = try makeImage(width: 640, height: 480)
         #expect(try await estimator.estimate(image: image) == nil)
         #expect(try await estimator.estimate(pixelBuffer: pixelBuffer(of: image), time: 1) == nil)
     }
 
-    @Test func measureReturnsAnEmptyFrameWithTimingAndTheOrientedAspect() async throws {
+    @Test(.enabled(if: VisionHardware.supportsBodyPose, "Requires a Vision body-pose compute device"))
+    func measureReturnsAnEmptyFrameWithTimingAndTheOrientedAspect() async throws {
         let estimator = VisionPoseEstimator()
         let image = try makeImage(width: 640, height: 480)
         for (orientation, aspect) in [(CGImagePropertyOrientation.up, 640.0 / 480), (.right, 480.0 / 640), (.leftMirrored, 480.0 / 640)] {
@@ -101,14 +103,16 @@ struct VisionPoseEstimatorTests {
         }
     }
 
-    @Test func pixelBufferPathReportsTheOrientedAspectToo() async throws {
+    @Test(.enabled(if: VisionHardware.supportsBodyPose, "Requires a Vision body-pose compute device"))
+    func pixelBufferPathReportsTheOrientedAspectToo() async throws {
         let estimator = VisionPoseEstimator()
         let buffer = try pixelBuffer(of: makeImage(width: 1280, height: 720))
         let estimate = try await estimator.measure(pixelBuffer: buffer, orientation: .right, mirrored: false, time: 0)
         #expect(abs(estimate.frame.imageAspect - 720.0 / 1280) < 1e-12)
     }
 
-    @Test func blockingBridgeWorksFromAPlainQueue() async throws {
+    @Test(.enabled(if: VisionHardware.supportsBodyPose, "Requires a Vision body-pose compute device"))
+    func blockingBridgeWorksFromAPlainQueue() async throws {
         let estimator = VisionPoseEstimator()
         let buffer = UncheckedSendable(try pixelBuffer(of: makeImage(width: 640, height: 480)))
         // The default timeout is the camera's. This test is about the hand-off from a plain queue, not about
@@ -125,7 +129,8 @@ struct VisionPoseEstimatorTests {
         #expect(value.frame.t == 7)
     }
 
-    @Test func repeatedCallsAcrossInputTypesKeepWorking() async throws {
+    @Test(.enabled(if: VisionHardware.supportsBodyPose, "Requires a Vision body-pose compute device"))
+    func repeatedCallsAcrossInputTypesKeepWorking() async throws {
         // Vision can fail once right after the input type changes; the estimator retries, so alternating
         // between pixel buffers and images never surfaces an error.
         let estimator = VisionPoseEstimator()
