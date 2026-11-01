@@ -1,6 +1,7 @@
 import Domain
 import MotionCore
 import Observation
+import PoseCapture
 import SwiftUI
 
 /// What the Live Set cover needs to start a set.
@@ -182,7 +183,7 @@ final class TrainModel {
         liveSet = liveSetRequest(for: entry)
     }
 
-    /// Logs a counted set in the draft and keeps its pose recording, if one was made.
+    /// Logs a counted set in the draft and associates its already archived recording, if one was made.
     func logCameraSet(_ result: LiveSetResult, request: LiveSetRequest) async throws -> LoggedSet {
         let input = MotionMapping.setInput(from: result.summary, startedAt: result.startedAt, endedAt: result.endedAt)
         let logged = try await enqueue {
@@ -266,14 +267,12 @@ final class TrainModel {
 }
 
 extension PoseCaptureFiles {
-    /// Moves a finished recording under the set's name and records it in the database.
+    /// Associates the private original without moving or deleting it. A failed workout write can be retried,
+    /// and its recording is still available even if the user never logs the set.
     static func keep(_ recording: PoseRecording, forSet setID: EntityID, specVersion: Int, in store: any WorkoutStore) async throws {
-        let name = "\(setID.rawValue).jsonl"
-        let destination = directory.appending(path: name, directoryHint: .notDirectory)
-        try? FileManager.default.removeItem(at: destination)
-        try FileManager.default.moveItem(at: recording.url, to: destination)
         try await store.savePoseCapture(PoseCaptureFile(
-            setID: setID, fileName: name, frames: recording.frames, fps: recording.fps, specVersion: specVersion
+            setID: setID, fileName: recording.url.lastPathComponent, frames: recording.frames,
+            fps: recording.fps, specVersion: specVersion
         ))
     }
 }

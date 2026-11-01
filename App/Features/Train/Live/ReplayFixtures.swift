@@ -36,9 +36,12 @@ enum ReplayFixtures {
 
 /// Where opt-in pose recordings of camera sets are kept.
 enum PoseCaptureFiles {
-    static var directory: URL {
-        URL.applicationSupportDirectory
-            .appending(path: "MovementTracker", directoryHint: .isDirectory)
-            .appending(path: "PoseCaptures", directoryHint: .isDirectory)
+    nonisolated static var archive: PoseRecordingArchive {
+        PoseRecordingArchive(
+            directory: URL.applicationSupportDirectory
+                .appending(path: "MovementTracker", directoryHint: .isDirectory)
+                .appending(path: "PoseCaptures", directoryHint: .isDirectory),
+            exportDirectory: URL.documentsDirectory.appending(path: "PoseCaptures", directoryHint: .isDirectory)
+        )
     }
 }

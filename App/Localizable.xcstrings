@@ -3621,6 +3621,22 @@
         }
       }
     },
+    "Save pose recordings" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save pose recordings"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存姿态录制"
+          }
+        }
+      }
+    },
     "Save workout" : {
       "localizations" : {
         "en" : {

@@ -97,6 +97,9 @@ flowchart LR
   meal with one. Photo metadata is removed before sending.
 - **Food search** sends what you type to USDA FoodData Central through the proxy, with Coach on or off.
 - **Never leaves the phone:** camera video, your name.
+- **Pose recordings.** Opt in with Me > Save pose recordings. End set keeps skeleton coordinates, including
+  idle and missed-rep clips, with an export copy in Files > On My iPhone > Movement Tracker+ > PoseCaptures.
+  No video is recorded or uploaded. Fill in the true rep counts when importing a capture for evaluation.
 - **No keys in the app.** The Muse and USDA keys exist only as Cloudflare Worker secrets. The app holds an
   anonymous install token in the Keychain. The Worker logs route, status and duration only, never bodies, tokens
   or IPs, and does not allow Meta's `*-contributor` models, whose data Meta uses to improve its products.
@@ -109,6 +112,7 @@ Requires Xcode 27.1 and Node 24 or newer (proxy tests only).
 
 ```sh
 swift test --package-path Packages/MovementKit
+python3 -B -m unittest discover -s tools/tests -v
 xcodebuild -project MovementTracker.xcodeproj -scheme MovementTracker -destination 'generic/platform=iOS Simulator' build
 npm test --prefix proxy
 ```
@@ -172,8 +176,8 @@ tools/accuracy.sh        # rebuilds docs/accuracy.md and the table above
 ```
 
 `motion-eval` also reads real recordings (`.jsonl` from the app's recorder) and videos (`.mov`, `.mp4`). Real
-sets recorded on an iPhone go in `fixtures/real/` through `tools/import-fixture.sh`, which replaces the app's
-own rep count with the one you counted. The procedure is in `docs/device-checklist.md`.
+sets recorded on an iPhone go in `fixtures/real/` through `tools/import-fixture.sh`, which labels the recording
+with the counts you gave. The procedure is in `docs/device-checklist.md`.
 
 ## Real device checks
 

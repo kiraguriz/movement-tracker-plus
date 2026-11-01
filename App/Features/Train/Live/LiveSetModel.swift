@@ -17,13 +17,6 @@ struct LiveSetResult {
     let recordingFailure: String?
 }
 
-/// A finished pose recording, still under its temporary name.
-struct PoseRecording {
-    let url: URL
-    let frames: Int
-    let fps: Double
-}
-
 /// The live depth signal, 0 at the top and 1 at the bottom of the calibrated range. It lives apart from the
 /// model so that only the gauge re-renders on every frame.
 @Observable
@@ -106,6 +99,7 @@ final class LiveSetModel: Identifiable {
     @ObservationIgnored private var wantsRecording = false
     @ObservationIgnored private var startedAt: Date?
     @ObservationIgnored private var finalSummary: SetSummary?
+    @ObservationIgnored private var finalResult: LiveSetResult?
     @ObservationIgnored private var recordingFailure: String?
     @ObservationIgnored private var counted: [RepRecord] = []
     @ObservationIgnored private var bottomFrames: [Int: PoseFrame] = [:]
@@ -316,14 +310,14 @@ final class LiveSetModel: Identifiable {
 
     private func makeRecorder() -> PoseRecorder? {
         guard wantsRecording else { return nil }
-        let url = PoseCaptureFiles.directory.appending(path: "pending-\(UUID().uuidString).jsonl", directoryHint: .notDirectory)
         let header = PoseFixtureHeader(
             exerciseSpecID: spec.id,
             cameraPosition: source == .camera ? cameraPosition : .unknown,
-            deviceModel: UIDevice.current.model
+            deviceModel: UIDevice.current.model,
+            labels: PoseLabels(tags: source == .camera ? [] : ["replay"])
         )
         do {
-            let recorder = try PoseRecorder(url: url, header: header)
+            let recorder = try PoseCaptureFiles.archive.start(header: header)
             isRecording = true
             return recorder
         } catch {
@@ -436,8 +430,10 @@ final class LiveSetModel: Identifiable {
 
     // MARK: Ending
 
-    /// Stops the camera and the engine and returns what was counted, or nil when no rep was.
+    /// Stops counting and keeps the capture even when no rep was counted. Retrying a workout save reuses
+    /// this result and its recording rather than losing the capture or making another copy.
     func endSet() async -> LiveSetResult? {
+        if let finalResult { return finalResult }
         await halt()
         let summary = finalSummary ?? SetSummary()
         let finishedAt = environment.now()
@@ -445,21 +441,16 @@ final class LiveSetModel: Identifiable {
         var recording: PoseRecording?
         if let recorder {
             do {
-                let header = try await recorder.finish(labels: PoseLabels(
-                    reps: summary.reps, partials: summary.partials, tags: source == .camera ? [] : ["replay"]
-                ))
-                recording = PoseRecording(url: recorder.url, frames: header.frameCount ?? 0, fps: header.fps ?? 30)
+                recording = try await PoseCaptureFiles.archive.finish(recorder)
+                if let recording { try await Self.export(recording) }
             } catch {
                 recordingFailure = recordingFailure ?? error.localizedDescription
             }
         }
         self.recorder = nil
         isRecording = false
-        guard summary.reps > 0 else {
-            if let recording { try? FileManager.default.removeItem(at: recording.url) }
-            return nil
-        }
-        return LiveSetResult(
+        guard summary.reps > 0 || recording != nil || recordingFailure != nil else { return nil }
+        let result = LiveSetResult(
             summary: summary,
             startedAt: startedAt ?? finishedAt,
             endedAt: finishedAt,
@@ -467,6 +458,13 @@ final class LiveSetModel: Identifiable {
             recording: recording,
             recordingFailure: recordingFailure
         )
+        finalResult = result
+        return result
+    }
+
+    @concurrent
+    private static func export(_ recording: PoseRecording) async throws {
+        try PoseCaptureFiles.archive.export(recording)
     }
 
     /// Stops everything and drops the recording. Used when the screen goes away without a result.

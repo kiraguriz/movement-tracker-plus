@@ -306,7 +306,7 @@ if real_videos:
 
 out.append("### What counts as a real set")
 out.append("")
-out.append("`motion-eval` reads the expected counts from the fixture header (`labels.reps`, `labels.partials`) first and from the file name second (`<exercise>_<reps>[_<partials>]`, for example `squat.bodyweight_10_1_front.jsonl`). The iPhone app writes the engine's own count into `labels.reps` when it saves a recording. That is not ground truth, so `tools/accuracy.sh` takes a file only after `tools/import-fixture.sh` has set the counts a person gave and added the `verified` tag. Files tagged `synthetic` or `replay`, or without a front or back camera position, are never counted as real.")
+out.append("`motion-eval` reads the expected counts from the fixture header (`labels.reps`, `labels.partials`) first and from the file name second (`<exercise>_<reps>[_<partials>]`, for example `squat.bodyweight_10_1_front.jsonl`). New iPhone recordings leave truth labels empty; older builds wrote the engine's own count, which is not ground truth. `tools/accuracy.sh` takes a file only after `tools/import-fixture.sh` has set the counts a person gave and added the `verified` tag. Files tagged `synthetic` or `replay`, or without a front or back camera position, are never counted as real.")
 out.append("")
 
 # Synthetic benchmark

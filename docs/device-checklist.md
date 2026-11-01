@@ -66,22 +66,23 @@ rooms, front and back camera. Real sets are what turn the accuracy table from sy
 
 How recording works in this build:
 
-- Recording is on only when the app is launched with `-MTRecordPoses` from Xcode. A setting for it exists in the
-  database but no screen sets it, so a launch from the Home Screen does not record. A red record icon (VoiceOver
-  label "Recording poses") shows in the live set while it is on.
-- A recording is kept only for a set that counted at least one rep and was logged. A set with zero counted
-  reps is deleted, so the app cannot record an idle clip; the idle-clip step below uses a video instead.
-- The file is `Library/Application Support/MovementTracker/PoseCaptures/<set id>.jsonl` in the app container.
-  It is not visible in the Files app. Files named `pending-*.jsonl` are left over from a set that did not finish saving (a crash, for example);
-  ignore them.
+- In Me, turn on **Save pose recordings**. It is off by default and persists across launches, including from
+  the Home Screen. `-MTRecordPoses` still forces it on in Debug builds. The setting applies to the next live set.
+  A red record icon (VoiceOver label "Recording poses") shows in the live set while it is on.
+- **End set** keeps any recording with frames, including zero counted reps, partial-only sets and missed reps.
+  Zero-rep recordings do not add an empty workout set. Discarding a live set drops its unfinished recording.
+- An export copy is in **Files > On My iPhone > Movement Tracker+ > PoseCaptures**, named `<capture id>.jsonl`.
+  Share or copy it to the Mac from Files. An app-owned original stays in
+  `Library/Application Support/MovementTracker/PoseCaptures/`; changing or deleting an export does not change
+  that original. Files named `pending-*.jsonl` there are interrupted recordings, not completed captures.
 - Skeleton coordinates only, no video. The first line is a JSON header with `exerciseSpecID`, `cameraPosition`,
   `created`, the frame count and labels.
-- The app writes its own counted reps and partials into the header labels. That is the number under test, not the
-  truth. You replace it in the labelling step below.
+- Rep and partial labels are left empty. Give the true counts in the labelling step below. Older recordings
+  may contain the algorithm's own counts; those must also be replaced by your independent count.
 
 Steps:
 
-- [ ] Edit Scheme, Run, Arguments, add `-MTRecordPoses`. Run on the phone.
+- [ ] In Me, turn on Save pose recordings. Run a live set on the phone.
 - [ ] Keep a log. For every set write down: time, exercise, camera, person, room, the reps you counted yourself,
   and the dips you did on purpose that should not count (partial reps). Count out loud or on paper; do not read
   the true count off the screen.
@@ -96,8 +97,10 @@ Steps:
 | Room 1 and room 2 | both | |
 | Front camera and back camera | both | |
 
-- [ ] Copy the folder to the Mac (the syntax was checked against `devicectl --help`; it has not been run against
-  a phone):
+- [ ] After End set, open Files > On My iPhone > Movement Tracker+ > PoseCaptures. Copy the recordings to the Mac.
+  Files visibility and sharing still need a real-device check. The `devicectl` fallback below also retrieves
+  older captures and private originals (the syntax was checked against `devicectl --help`; it has not been run
+  against a phone):
 
   ```sh
   xcrun devicectl list devices
@@ -113,17 +116,19 @@ Steps:
 - [ ] Label and import each file with the truth from your log:
 
   ```sh
-  tools/import-fixture.sh ~/Desktop/pose-captures/<set id>.jsonl --reps 10 --partials 1 --tag person-a --tag room-1
+  tools/import-fixture.sh ~/Desktop/pose-captures/<capture id>.jsonl --reps 10 --partials 1 --tag person-a --tag room-1
   ```
 
   Expected: it prints the full path of the new file, `<repo>/fixtures/real/squat.bodyweight_10_1_front_person-a_room-1_<8 hex digits>.jsonl`
-  (the camera comes from the recording). It replaces the app's counts with yours, adds the `verified` tag, keeps the frames byte for byte and refuses to
+  (the camera comes from the recording). It fills in your counts, adds the `verified` tag, keeps the frames byte for byte and refuses to
   overwrite. Tags: `person-a`, `person-b`, `room-1`, `room-2`; the accuracy report counts these. `--partials`
-  defaults to 0.
-- [ ] Idle and noise clips, as videos. With the Camera app record about 30 s of standing still in frame, and a
-  clip of walking into and out of frame. Copy them to `fixtures/real/` named
-  `squat.bodyweight_0_idle-front.mov` (the exercise, then the true reps, 0). They run through Vision on the Mac,
-  not through the on-device pipeline, and are listed as "Real videos". Git ignores videos in that folder.
+  defaults to 0. Unfinished captures, empty captures, inconsistent frame counts and malformed frames are
+  refused before they can be marked verified.
+- [ ] Idle and noise clips. In a live set, stand still for about 30 s, then End set. Repeat with walking into and
+  out of frame. Export and label each with `--reps 0 --tag idle`, plus the person and room tags. Keep the true
+  count at zero even if the app reports false reps. These JSONL clips exercise the same on-device pose stream
+  as workout sets. Camera videos remain an alternative: name them `squat.bodyweight_0_idle-front.mov` and put
+  them in `fixtures/real/`. Videos run through Vision on the Mac and are listed separately as "Real videos".
 - [ ] Regenerate the table:
 
   ```sh

@@ -4,8 +4,8 @@
 #
 #   tools/import-fixture.sh <recorded>.jsonl --reps 10 [--partials 1] [--tag person-a] [--tag room-1] [--notes "text"]
 #
-# Why this exists: when the app saves a recording it writes its own count into the header's labels, which is
-# the number being tested. A person has to replace it with what they actually counted. This script does that,
+# Why this exists: a new recording has no truth labels. Older builds wrote the algorithm's own count there,
+# which is the number being tested. A person must supply what they actually counted. This script does that,
 # adds the `verified` tag that tools/accuracy.sh requires, and names the copy so that `motion-eval` can read
 # the counts from the file name too:
 #
@@ -57,6 +57,7 @@ IMPORT_SOURCE="$source_file" IMPORT_REPS="$reps" IMPORT_PARTIALS="$partials" IMP
 IMPORT_DEST="$dest" IMPORT_TAGS="$(printf '%s\n' ${tags[@]+"${tags[@]}"})" python3 - <<'PY'
 import hashlib
 import json
+import math
 import os
 import pathlib
 import re
@@ -93,14 +94,48 @@ except ValueError:
     fail("%s: the first line is not a JSON header" % source)
 if not isinstance(header, dict) or header.get("format") != "movement-tracker.pose":
     fail("%s is not a movement-tracker.pose recording" % source)
+if type(header.get("version")) is not int or header["version"] != 1:
+    fail("%s has an unsupported fixture version" % source.name)
 
-labels = header.get("labels") or {}
-existing = [t for t in labels.get("tags") or [] if t != "verified"]
+labels = header.get("labels", {})
+if not isinstance(labels, dict):
+    fail("%s has invalid labels" % source.name)
+existing_tags = labels.get("tags", [])
+if not isinstance(existing_tags, list) or not all(isinstance(tag, str) for tag in existing_tags):
+    fail("%s has invalid label tags" % source.name)
+existing = [t for t in existing_tags if t != "verified"]
 if "synthetic" in existing or header.get("deviceModel") == "synthetic" or "replay" in existing:
     fail("%s is generated or replayed data, not a camera recording" % source.name)
 camera = header.get("cameraPosition")
 if camera not in ("front", "back"):
     fail("%s has cameraPosition '%s'; only front or back camera recordings count as real" % (source.name, camera))
+
+# A provisional or damaged recording must not become an apparently perfect zero-rep clip. Unlike the replay
+# reader, import does not tolerate an interrupted last line: only finished, complete captures are verified.
+frames = [line for line in rest.splitlines() if line.strip()]
+count = header.get("frameCount")
+if type(count) is not int or count <= 0 or count != len(frames):
+    fail("%s has an unfinished or inconsistent frame count" % source.name)
+
+
+def finite_number(value):
+    return type(value) in (int, float) and math.isfinite(value)
+
+
+for index, line in enumerate(rest.splitlines(), 2):
+    if not line.strip():
+        continue
+    try:
+        frame = json.loads(line)
+    except ValueError:
+        fail("%s: invalid frame on line %d" % (source.name, index))
+    if (not isinstance(frame, dict) or not finite_number(frame.get("t"))
+            or not finite_number(frame.get("imageAspect")) or frame["imageAspect"] <= 0
+            or not isinstance(frame.get("joints"), dict)):
+        fail("%s: invalid frame on line %d" % (source.name, index))
+    for point in frame["joints"].values():
+        if not isinstance(point, list) or len(point) != 3 or not all(finite_number(v) for v in point):
+            fail("%s: invalid joint in frame on line %d" % (source.name, index))
 
 merged = list(existing)
 for tag in tags + ["verified"]:

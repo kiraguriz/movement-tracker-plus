@@ -6,6 +6,7 @@ import SwiftUI
 final class MeModel {
     private(set) var latestWeight: BodyMeasurement?
     private(set) var voiceCues = SettingKey.voiceCues.defaultValue
+    private(set) var recordPoses = SettingKey.recordPoses.defaultValue
     private(set) var coachEnabled = SettingKey.aiOptIn.defaultValue
     private(set) var healthEnabled = SettingKey.appleHealth.defaultValue
     /// False on a device without Health data, which hides the row. Every iPhone has it, so the row starts shown.
@@ -23,10 +24,11 @@ final class MeModel {
     func run() async {
         async let weightUpdates: Void = watchWeight()
         async let voiceUpdates: Void = watchVoiceCues()
+        async let recordingUpdates: Void = watchRecordPoses()
         async let coachUpdates: Void = watchCoach()
         async let healthUpdates: Void = watchHealth()
         async let healthAvailability: Void = checkHealthAvailability()
-        _ = await (weightUpdates, voiceUpdates, coachUpdates, healthUpdates, healthAvailability)
+        _ = await (weightUpdates, voiceUpdates, recordingUpdates, coachUpdates, healthUpdates, healthAvailability)
     }
 
     private func watchWeight() async {
@@ -50,6 +52,13 @@ final class MeModel {
         )
     }
 
+    private func watchRecordPoses() async {
+        await environment.settings.observe(SettingKey.recordPoses).forEachValue(
+            onFailure: { errorMessage = $0.localizedDescription },
+            { recordPoses = $0 }
+        )
+    }
+
     private func watchHealth() async {
         await environment.settings.observe(SettingKey.appleHealth).forEachValue(
             onFailure: { errorMessage = $0.localizedDescription },
@@ -68,6 +77,14 @@ final class MeModel {
         voiceCues = isOn
         Task {
             if await !store(SettingKey.voiceCues, isOn) { voiceCues = previous }
+        }
+    }
+
+    func setRecordPoses(_ isOn: Bool) {
+        let previous = recordPoses
+        recordPoses = isOn
+        Task {
+            if await !store(SettingKey.recordPoses, isOn) { recordPoses = previous }
         }
     }
 

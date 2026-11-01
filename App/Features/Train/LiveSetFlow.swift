@@ -1,4 +1,5 @@
 import Domain
+import MotionCore
 import SwiftUI
 
 /// The content of the Live Set cover: the live camera, then the review of the set that was counted. "Next set"
@@ -55,7 +56,14 @@ struct LiveSetFlow: View {
         Task {
             defer { isEnding = false }
             guard let result = await model.endSet() else {
-                // Nothing was counted, so there is nothing to log or review.
+                close()
+                return
+            }
+            guard result.summary.reps > 0 else {
+                // The idle/partial/missed-rep capture is already archived. It is a fixture, not a workout set.
+                if result.recordingFailure != nil {
+                    train.errorMessage = String(localized: "The pose recording could not be saved.")
+                }
                 close()
                 return
             }

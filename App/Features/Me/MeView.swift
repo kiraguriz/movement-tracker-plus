@@ -67,6 +67,11 @@ struct MeView: View {
                     }
                 }
             }
+            Section {
+                Toggle("Save pose recordings", isOn: Binding(get: { model.recordPoses }, set: model.setRecordPoses))
+                    .frame(minHeight: 44)
+                    .accessibilityIdentifier(AccessibilityID.recordPosesToggle)
+            }
         }
         .navigationTitle("Me")
         .toolbar {

@@ -329,11 +329,12 @@ public actor PoseRecorder {
     }
 
     public func setLabels(_ labels: PoseLabels) {
+        guard !isFinished else { return }
         header.labels = labels
     }
 
     public func append(_ frame: PoseFrame) throws {
-        guard !isFinished else { throw PoseFixtureError.finished }
+        guard !isFinished, handle != nil else { throw PoseFixtureError.finished }
         pending.append(try PoseFixtureFile.encodeLine(frame))
         pending.append(UInt8(ascii: "\n"))
         frameCount += 1
@@ -353,12 +354,11 @@ public actor PoseRecorder {
     /// Returns the final header. Calling it again returns the same header.
     @discardableResult
     public func finish(labels: PoseLabels? = nil) throws -> PoseFixtureHeader {
-        if let labels { header.labels = labels }
         guard !isFinished else { return header }
+        if let labels { header.labels = labels }
         try flush()
         try handle?.close()
         handle = nil
-        isFinished = true
 
         header.frameCount = frameCount
         if let firstTime, let lastTime {
@@ -369,6 +369,7 @@ public actor PoseRecorder {
         }
         let data = try Data(contentsOf: url)
         try PoseFixtureFile.replaceHeader(in: data, with: header).write(to: url, options: .atomic)
+        isFinished = true
         return header
     }
 }

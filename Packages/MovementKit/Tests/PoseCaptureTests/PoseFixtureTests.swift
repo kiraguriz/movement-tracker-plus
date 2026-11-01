@@ -226,6 +226,33 @@ struct PoseFixtureTests {
         await #expect(throws: PoseFixtureError.finished) { try await recorder.append(sampleFrames(count: 1)[0]) }
     }
 
+    @Test func finishDoesNotChangeLabelsAfterTheFileIsFinalized() async throws {
+        let directory = try TemporaryDirectory()
+        let recorder = try PoseRecorder(url: directory.file("final.jsonl"), header: header())
+        let first = try await recorder.finish(labels: PoseLabels(reps: 0))
+        await recorder.setLabels(PoseLabels(reps: 100))
+        #expect(try await recorder.finish(labels: PoseLabels(reps: 99)) == first)
+        #expect(try PoseFixtureFile.readHeader(from: recorder.url) == first)
+    }
+
+    @Test func failedFinalHeaderWriteCanBeRetriedAndDoesNotAcceptMoreFrames() async throws {
+        let directory = try TemporaryDirectory()
+        let url = directory.file("retry.jsonl")
+        let recorder = try PoseRecorder(url: url, header: header(), flushEveryFrames: 1)
+        try await recorder.append(sampleFrames(count: 1)[0])
+        let provisional = try Data(contentsOf: url)
+        try FileManager.default.removeItem(at: url)
+        await #expect(throws: (any Error).self) { try await recorder.finish() }
+        #expect(await !recorder.isFinished)
+        await #expect(throws: PoseFixtureError.finished) { try await recorder.append(sampleFrames(count: 1)[0]) }
+
+        try provisional.write(to: url)
+        let finished = try await recorder.finish()
+        #expect(await recorder.isFinished)
+        #expect(finished.frameCount == 1)
+        #expect(try PoseFixtureFile.readHeader(from: url) == finished)
+    }
+
     @Test func aRecorderDroppedWithoutFinishStillKeepsItsFrames() async throws {
         let directory = try TemporaryDirectory()
         let url = directory.file("dropped.jsonl")
