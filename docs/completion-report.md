@@ -1,6 +1,6 @@
 # 仓库功能与交付检查 — 2026-11-01
 
-结论：核心功能、数据可靠性和交付工具已补齐；后续按用户授权完成了 Cloudflare 部署、Worker 密钥配置，以及真实 Muse/USDA 连通性和模拟器主要流程验证。真实 iPhone 计数准确率、HealthKit 实际写入和签名安装仍待验收，不能称为“已经完成全部真实环境验收”。后端阶段未启动模拟器，后续 UI debug 已由用户授权并通过 subagent 执行。
+结论：核心功能、数据可靠性和交付工具已补齐；后续按用户授权完成了 Cloudflare 部署、Worker 密钥配置，以及真实 Muse/USDA 连通性和模拟器主要流程验证。真实 iPhone 的签名、安装和启动现已通过，真实计数准确率和 HealthKit 实际写入仍待验收，不能称为“已经完成全部真实环境验收”。后端阶段未启动模拟器，后续 UI debug 已由用户授权并通过 subagent 执行。
 
 范围来自原 Claude 会话“学校项目代码分析与重构”、当前仓库和用户继续完善后端/功能并 commit/push 的授权。后续愿望清单不等于 MVP 缺陷：Watch、云同步、App Attest、3D/SAM、学习型动作识别仍按 `rebuild-brief.md` §12 管理。
 
@@ -83,7 +83,7 @@ UI 截图测试已单独实际执行 **25/25**：浅色/大字体/横屏 19 项�
 | 项目 | 当前证据与边界 | 接续步骤 |
 | --- | --- | --- |
 | 在线 Muse/USDA | 已完成 Cloudflare 登录、KV/DO 部署及两把 Worker secret 配置；真实普通/流式 Muse、USDA 和一轮真实 Coach UI 调用通过 | 后续密钥轮换与运行步骤见 `docs/cloudflare-deployment.md`；不再是当前阻塞项 |
-| 签名安装和 HealthKit | 未选择用户开发团队并连接一台签名可用的真实 iPhone；未执行真实 Health 授权/读写验收 | 按 `docs/device-checklist.md` 配置团队、capability、安装；验收部分授权、编辑、删除及重启补偿 |
+| 签名安装和 HealthKit | iPhone 17 Pro Max（iOS 27.2）的签名、安装和启动通过；签名和 profile 均含 HealthKit entitlement；真实 Health 授权和写入待验收 | 见 [实机证据](physical-device-acceptance.md)；继续验收部分授权、编辑、删除及重启补偿 |
 | 真人计数和性能 | 没有真人标注片段或真实相机延迟数据。生成数据成绩不能说明真人精度 | 录制不同人员、环境、前后镜头和 idle/partial；人工标注后导入，重新生成 accuracy；测真实设备帧延迟和温度/耗电 |
 | UI/交互验收 | 模拟器验证覆盖 82 个不同用例的通过记录；修复空动作统计、英文单复数、Onboarding 残留键盘，以及测试输入/预期问题，完整运行与复测分开记录 | 仍需真实设备布局、完整 VoiceOver/Dynamic Type、真实照片/相机权限及用户环境错误变体验收；范围见 UI 报告 |
 | 对外提交 | 本轮没有录制真人演示，也没有代用户提交参赛材料或发布应用 | 用已有 demo/checklist 完成真实演示后由用户决定提交 |

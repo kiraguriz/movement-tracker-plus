@@ -370,6 +370,7 @@
 				COACH_PROXY_URL = "https://movement-tracker-proxy.haitiandzhu.workers.dev";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WL6JGN2HMU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
@@ -407,6 +408,7 @@
 				COACH_PROXY_URL = "https://movement-tracker-proxy.haitiandzhu.workers.dev";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WL6JGN2HMU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;

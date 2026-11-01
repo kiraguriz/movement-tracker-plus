@@ -17,8 +17,11 @@ outside the app/repository, preserve unrelated edits, and commit/push validated 
 
 Required checks: affected package tests, full `swift test`, import-tool tests, proxy tests, Debug/Release builds, and an unsigned device-SDK compile where available. Report the actual proof layer for each result.
 
+Physical signing, installation and launch now passed on the user's iPhone 17 Pro Max (iOS 27.2), including
+HealthKit in both the signed entitlements and the provisioning profile. See
+[physical-device-acceptance.md](physical-device-acceptance.md) for the saved team configuration and evidence.
 External acceptance remains separate: real human pose recordings and Vision latency, actual HealthKit writes,
-signed device installation and full device/accessibility acceptance. Cloudflare deployment and both secrets
+and full device/accessibility acceptance. Cloudflare deployment and both secrets
 are now configured; real Muse non-streaming/SSE, USDA and one simulator live Coach call passed.
 
 Deployment: [cloudflare-deployment.md](cloudflare-deployment.md). UI observations and scoped test evidence:
@@ -45,8 +48,9 @@ test mode as CI after one concurrent Vision initialization failure; the subseque
 [Validate run 41338272179](https://github.com/kiraguriz/movement-tracker-plus/actions/runs/41338272179)
 at `569bb57` succeeded in both native and proxy jobs. The native job's raw log confirms all seven modules
 (1,184 declared tests), eight explicit Vision hardware skips, and all three builds. The local full run
-enabled those eight integration cases. Device inventory found only the two booted simulators connected;
-the project has no selected signing team, so physical installation and HealthKit acceptance remain open.
+enabled those eight integration cases. At that earlier checkpoint only the two booted simulators were connected
+and the project had no selected signing team. The subsequent physical signing/install result above supersedes
+that environment snapshot; actual HealthKit writes remain open.
 
 Previous backend baseline: implementation `940e69e`; test capability probe/workflow `65f24d2`. GitHub verification:
 [Validate run 41300391099](https://github.com/kiraguriz/movement-tracker-plus/actions/runs/41300391099) — **success**, both jobs completed.
