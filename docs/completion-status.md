@@ -20,8 +20,11 @@ Required checks: affected package tests, full `swift test`, import-tool tests, p
 Physical signing, installation and launch now passed on the user's iPhone 17 Pro Max (iOS 27.2), including
 HealthKit in both the signed entitlements and the provisioning profile. See
 [physical-device-acceptance.md](physical-device-acceptance.md) for the saved team configuration and evidence.
-External acceptance remains separate: real human pose recordings and Vision latency, actual HealthKit writes,
-and full device/accessibility acceptance. Cloudflare deployment and both secrets
+Actual Health nutrition writes, editing/deduplication and app-driven deletion also passed: each of the four
+nutrient types had one updated sample, then No Data after cleanup. The real OS sample showed sync version
+advancing from 1 to 2 with a stable identifier. No stub was used.
+External acceptance remains separate: real human pose recordings and Vision latency, additional HealthKit
+workout/body-mass/permission/recovery cases, and full device/accessibility acceptance. Cloudflare deployment and both secrets
 are now configured; real Muse non-streaming/SSE, USDA and one simulator live Coach call passed.
 
 Deployment: [cloudflare-deployment.md](cloudflare-deployment.md). UI observations and scoped test evidence:

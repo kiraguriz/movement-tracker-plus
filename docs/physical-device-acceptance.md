@@ -61,8 +61,8 @@ screen sharing is active cannot establish that the app's normal camera path fail
 - Camera permission, live preview, skeleton alignment and framing gate.
 - Independently counted reps, partials and an idle clip, with separate front/back recordings.
 - Actual Vision p50/p95, frame rate, dropped frames, Center Stage and stabilization readings.
-- HealthKit system authorization and actual write/edit/deduplication/delete evidence. The entitlement alone
-  does not prove these behaviors.
+- Additional HealthKit coverage: workout/estimated energy, body mass, partial or revoked permission and
+  process-termination recovery. The nutrition save/edit/deduplication/delete pass below succeeded.
 - The full real-data target in brief §6.8 (10 squat sets, 10 push-up sets, two people, two rooms) remains open.
 
 The test steps and thresholds are in [device-checklist.md](device-checklist.md).
@@ -72,6 +72,41 @@ The test steps and thresholds are in [device-checklist.md](device-checklist.md).
 The user explicitly authorized a disposable test meal named `MT Health Acceptance`: 100 g, 200 kcal,
 10 g protein, 20 g carbohydrate and 8 g fat; edit it to 50 g and clean up the test record afterward.
 Only the four nutrition write permissions are needed for this pass. Existing health history and body-mass
-data are outside this test. At this checkpoint the Apple Health switch is still off, the system authorization
-step awaits user completion, and no test samples have been written. Permission, write, edit/deduplication and
-cleanup must each be verified separately before this test can be marked passed.
+data are outside this test. The user completed the system permission step; the app's Apple Health switch was
+then visibly on. The exact test meal was entered and saved through Device Hub, and the Eat screen showed
+the expected 100 g / 200 kcal / 10 g / 20 g / 8 g values. Health's own samples, editing/deduplication and cleanup
+remain separate checks; the app row alone does not prove an OS write.
+
+Health > profile > Apps > Movement Tracker+ > Data from Movement Tracker+ listed exactly the four nutrition
+types. Dietary Energy's source-filtered All Recorded Data screen showed one 200 kcal entry on Nov 1 at
+4:23 PM, confirming an actual OS write. No body-mass or workout category appeared in this source's data list.
+The energy sample's Details screen confirmed the source name, sync version `1` and a meal-specific sync
+identifier. Editing only the amount to 50 g automatically changed the app form to 100 kcal / 5 g protein /
+10 g carbohydrate / 4 g fat; after saving, the Eat screen showed those exact values and one meal row.
+After returning to the source-filtered Health list, it contained one 100 kcal entry, not the original 200 kcal
+plus a new entry. Opening that entry showed sync version `2`, the same meal sync identifier and original
+sample time, with a new Date Added timestamp. The open Details view had cached the old object until navigation
+back to the list, so the fresh list and reopened details are the edit/deduplication evidence.
+
+The four source-filtered All Recorded Data lists were checked individually after the edit:
+
+| Type | Value | Number of records |
+| --- | --- | --- |
+| Dietary Energy | 100 kcal | 1 |
+| Protein | 5 g | 1 |
+| Carbohydrates | 10 g | 1 |
+| Total Fat | 4 g | 1 |
+
+These are synthetic acceptance values, not the user's diet. The test meal was then deleted through the app's
+own confirmation flow. Eat returned to No meals with zero totals. Each of the four source-filtered Health
+lists was opened again and showed **No Data**, verifying that all four test samples were removed. The source
+overview still listed the historical nutrient categories; that list alone is not evidence of residual samples.
+
+**Nutrition result: passed** — real system authorization, actual writes, proportional editing, one sample per
+type after editing, stable sync identifier/version advancement, and app-driven removal. No Health stub or
+replay was used, and no personal Health history or body-mass values are retained in repository evidence.
+The app database was in memory, so this pass does not validate process-termination recovery.
+
+Device Hub's clipboard paste produced stale content in an unsaved field. It was cleared and never saved;
+the verified test name and numbers were then entered with individual hardware-key events. Verify the final
+form before Save rather than treating a paste command as proof of input.
