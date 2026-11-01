@@ -17,6 +17,9 @@ Simulator, generated poses and Health stubs are not physical-device evidence.
 - `devicectl device install app` installed `io.github.kiraguriz.MovementTracker` successfully.
 - The user trusted their own Apple Development identity and unlocked the device. A subsequent launch succeeded;
   Device Hub's physical-device screenshot showed the app's Train screen.
+- The signing/configuration commit `cb00e1e` was pushed to `origin/main`.
+  [GitHub Validate 41354912120](https://github.com/kiraguriz/movement-tracker-plus/actions/runs/41354912120)
+  completed successfully. CI does not replace the physical-device runtime checks below.
 
 Local build and install logs are under `/tmp/mt-physical-*`, `/tmp/mt-signing-device-build.log` and
 `/tmp/mt-device-install.*`. Device identifiers, provisioning profiles and account credentials are not copied
@@ -37,8 +40,16 @@ approval of any external sharing.
 
 [Apple documents direct physical-device interaction in Device Hub](https://developer.apple.com/documentation/xcode/device-hub).
 Initial automation clicks did not navigate the app; a subsequent `devicectl` lock-state check confirmed
-`passcodeRequired: true`. Input verification must resume after the user unlocks the device. This is not
+`passcodeRequired: true`. Input verification resumed after the user unlocked the device. This is not
 evidence that Device Hub lacks physical-device control, nor an observed app defect.
+
+After unlocking, Device Hub still failed to deliver input. Its host log identified a separate environment
+failure: `CoreDeviceError 15004` from the HID remote call, caused by `XPCError 1001` (invalidated connection).
+Stopping/restarting screen sharing alone did not clear the cached service. Quitting Device Hub while keeping
+simulators running, relaunching it and choosing View Screen created a new Universal HID service connection.
+The log then listed connected touchscreen/button descriptors; remote navigation and adding Bodyweight Squat
+were observed. The user also confirmed that a Mac mouse click could enter the workout flow. Remote screen
+updates lag the input, so subsequent actions must wait for the visible result rather than repeat the click.
 
 Apple's [interaction guide](https://developer.apple.com/documentation/xcode/interacting-with-your-app-in-device-hub)
 also documents a camera/microphone conflict during physical-device interaction. Camera acceptance must account
@@ -55,3 +66,12 @@ screen sharing is active cannot establish that the app's normal camera path fail
 - The full real-data target in brief §6.8 (10 squat sets, 10 push-up sets, two people, two rooms) remains open.
 
 The test steps and thresholds are in [device-checklist.md](device-checklist.md).
+
+## Health test authorization
+
+The user explicitly authorized a disposable test meal named `MT Health Acceptance`: 100 g, 200 kcal,
+10 g protein, 20 g carbohydrate and 8 g fat; edit it to 50 g and clean up the test record afterward.
+Only the four nutrition write permissions are needed for this pass. Existing health history and body-mass
+data are outside this test. At this checkpoint the Apple Health switch is still off, the system authorization
+step awaits user completion, and no test samples have been written. Permission, write, edit/deduplication and
+cleanup must each be verified separately before this test can be marked passed.

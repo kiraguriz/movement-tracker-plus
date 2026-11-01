@@ -22,6 +22,12 @@ Nothing here needs a key typed anywhere except at the `wrangler secret put` prom
 - [ ] Finish onboarding. Open Train, Start workout, Add exercise, Squat, Live set, and allow the camera.
   Expected: live preview with a skeleton overlay.
 
+If using Device Hub with a physical iPhone, stop screen sharing before evaluating the camera. Apple's
+[interaction guide](https://developer.apple.com/documentation/xcode/interacting-with-your-app-in-device-hub)
+documents camera/microphone access conflicts while controlling a physical device. Use the phone directly
+for the camera pass; a capture failure during sharing is not proof of failure without sharing. See the
+current [physical acceptance report](physical-device-acceptance.md) for signing and control-connection evidence.
+
 ## 2. Day-0 Vision gate
 
 Brief §6.8. The numbers come from the debug HUD, which exists only in Debug builds.
@@ -138,7 +144,11 @@ Steps:
   Expected: `docs/accuracy.md` and the table in `README.md` now have a "Real sets recorded on iPhone" row, and the
   coverage table moves toward the targets above. Files it cannot count are listed under "Skipped" with the
   reason (not verified, not a camera recording, tagged synthetic or replay).
-- [ ] Commit `fixtures/real/*.jsonl`, `docs/accuracy.md` and `README.md`.
+- [ ] Review sharing consent before committing real captures. Human skeleton recordings stay private by default;
+  use `--dest <private-directory>` when importing and pass that directory as `REAL_FIXTURES` to
+  `tools/accuracy.sh` (with `ACCURACY_MD=<private-report>` and `ACCURACY_README=""` to keep the evaluation local).
+  Commit real JSONL recordings only with the recorded person's explicit approval for this repository's audience.
+  Aggregate accuracy results may be recorded separately, with the dataset coverage stated honestly.
 
 Do not change a label to make a number look better. A set the engine miscounted is the result. Keep it: it is
 also a regression case for the engine.
