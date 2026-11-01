@@ -381,6 +381,13 @@ specs for taught exercises (§7.4); SAM 3.1 replay clips.
 
 ## 8. Data model (GRDB, migration v1)
 
+Migration v2 (`v2-nutrition-quantity`, 2026-11-01) adds `amount_unit` (`g` or `ml`) to foods and meals,
+and an optional `per100_amount` nutritional basis to meals. Existing v1 rows remain grams because the old
+database did not retain a liquid's original unit. Saved portions now rescale their own corrected numbers;
+zero amounts retain an explicit basis. Debug and Release both preserve data instead of auto-erasing changed schemas.
+The portable `AppLogic` target owns the actual meal editor and number parser used by the app, so these feature
+behaviors are tested on macOS without a Simulator. Domain and MotionCore remain Foundation-only.
+
 - `profile(id, display_name, birth_year, sex, height_cm, unit_system, activity_level, created_at, updated_at)`
 - `goal(id, kind, start_day, end_day?, target_weight_kg?, weekly_rate_kg, kcal, protein_g, carbs_g, fat_g,
   workouts_per_week, planner_version, is_active, created_at)` — partial unique index on active.

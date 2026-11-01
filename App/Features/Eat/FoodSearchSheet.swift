@@ -1,3 +1,4 @@
+import AppLogic
 import CoachKit
 import Domain
 import SwiftUI
@@ -250,7 +251,7 @@ private struct RecentMealRow: View {
                 Text(meal.label)
                     .multilineTextAlignment(.leading)
                 if meal.grams.grams > 0 {
-                    Text(UnitFormatter.grams(meal.grams.grams))
+                    Text(UnitFormatter.foodAmount(meal.amount, unit: meal.amountUnit))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }

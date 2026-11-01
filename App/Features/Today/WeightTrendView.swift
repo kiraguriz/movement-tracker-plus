@@ -1,3 +1,4 @@
+import AppLogic
 import Charts
 import Domain
 import SwiftUI

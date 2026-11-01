@@ -6,6 +6,7 @@ import Testing
 
 @Suite("Schema and migrations")
 struct SchemaTests {
+    static let expectedMigrations: Set<String> = ["v1", "v2-nutrition-quantity"]
     static let expectedTables: Set<String> = [
         "profile", "goal", "body_measurement", "exercise", "exercise_spec", "workout_session", "exercise_entry",
         "set_entry", "rep_record", "pose_capture", "food", "meal_entry", "coach_insight", "chat_thread",
@@ -21,10 +22,10 @@ struct SchemaTests {
 
     // MARK: Migration
 
-    @Test func migratesAnEmptyDatabaseToV1() throws {
+    @Test func migratesAnEmptyDatabaseToTheCurrentVersion() throws {
         let database = try makeDatabase()
         let applied = try database.writer.read { db in try AppDatabase.makeMigrator().appliedIdentifiers(db) }
-        #expect(applied == ["v1"])
+        #expect(applied == Self.expectedMigrations)
         #expect(try database.writer.read { db in try tables(db) } == Self.expectedTables)
     }
 
@@ -57,13 +58,8 @@ struct SchemaTests {
         #expect(try database.writer.read { db in try Int.fetchOne(db, sql: "PRAGMA foreign_keys") } == 1)
     }
 
-    @Test func eraseOnSchemaChangeIsDebugOnly() {
-        let erases = AppDatabase.makeMigrator().eraseDatabaseOnSchemaChange
-        #if DEBUG
-        #expect(erases)
-        #else
-        #expect(!erases)
-        #endif
+    @Test func dataIsNeverErasedAutomatically() {
+        #expect(!AppDatabase.makeMigrator().eraseDatabaseOnSchemaChange)
     }
 
     @Test func reopeningAFileKeepsDataAndAppliesNoMigrationTwice() async throws {
@@ -76,7 +72,7 @@ struct SchemaTests {
             let second = try AppDatabase.open(at: url)
             #expect(try await second.settings.get(.aiOptIn))
             let applied = try await second.writer.read { db in try AppDatabase.makeMigrator().appliedIdentifiers(db) }
-            #expect(applied == ["v1"])
+            #expect(applied == Self.expectedMigrations)
         }
     }
 
@@ -108,7 +104,7 @@ struct SchemaTests {
         }
     }
 
-    @Test func aLaterMigrationKeepsExistingDataEvenWhereEraseOnSchemaChangeIsOn() async throws {
+    @Test func aLaterMigrationKeepsExistingData() async throws {
         try await withTemporaryDirectory { directory in
             let url = directory.appendingPathComponent("app.sqlite")
             do {
@@ -132,12 +128,36 @@ struct SchemaTests {
                 )
             }
             #expect(title == "Kept" && pinned == 0)
-            #expect(applied == ["v1", "v2-test"])
+            #expect(applied == Self.expectedMigrations.union(["v2-test"]))
             #expect(try await pool.read { db in try String.fetchOne(db, sql: "SELECT value FROM setting WHERE key = 'ai.optIn'") } == "true")
         }
     }
 
     // MARK: Structure
+
+    @Test func upgradingAnActualV1FilePreservesMealsAndAddsQuantityDefaults() async throws {
+        try await withTemporaryDirectory { directory in
+            let url = directory.appendingPathComponent("v1.sqlite")
+            do {
+                let old = try DatabaseQueue(path: url.path, configuration: AppDatabase.makeConfiguration())
+                var v1 = DatabaseMigrator()
+                v1.registerMigration("v1") { try SchemaV1.create($0) }
+                try v1.migrate(old)
+                try await old.write { db in
+                    try db.execute(sql: """
+                        INSERT INTO meal_entry (id, local_day, slot, label, grams, kcal, protein_g, source, logged_at, tz)
+                        VALUES ('kept', '2026-11-01', 'lunch', 'Original', 200, 400, 20, 'manual', '2026-11-01 12:00:00.000', 'UTC')
+                        """)
+                    try db.execute(sql: "INSERT INTO setting (key, value) VALUES ('ai.optIn', 'true')")
+                }
+            }
+            let current = try AppDatabase.open(at: url)
+            let meal = try #require(try await current.nutrition.meal(id: "kept"))
+            #expect(meal.label == "Original" && meal.nutrients.energy?.kilocalories == 400)
+            #expect(meal.amountUnit == .grams && meal.portionBasis?.energy?.kilocalories == 200)
+            #expect(try await current.settings.get(.aiOptIn))
+        }
+    }
 
     @Test func everyTableIsStrict() throws {
         let database = try makeDatabase()

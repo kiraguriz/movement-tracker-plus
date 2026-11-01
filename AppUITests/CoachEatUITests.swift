@@ -312,11 +312,10 @@ final class CoachEatUITests: AppUITestCase {
         XCTAssertTrue(milk.label.contains("100 mL"), "the result does not say per 100 mL: \(milk.label)")
         milk.tap()
 
-        // A liquid starts at 100 ml, shows ml, and says how it is saved.
+        // A liquid starts at 100 ml and keeps its volume unit when saved.
         XCTAssertTrue(element(ID.mealEditor, in: app).waitForExistence(timeout: 10), "the confirm sheet did not open")
         XCTAssertEqual(element(ID.mealGrams, in: app).value as? String, "100")
         XCTAssertTrue(app.staticTexts["mL"].exists, "the amount is not in ml")
-        XCTAssertTrue(app.staticTexts["Per 100 ml. Saved as 1 g per ml."].exists, "no note about ml saved as grams")
         // 240 ml at 61 / 3.2 / 4.8 / 3.3 per 100 ml, away from a rounding tie.
         replaceText("240", into: app.textFields[ID.mealGrams])
         XCTAssertTrue(

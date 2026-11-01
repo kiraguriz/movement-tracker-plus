@@ -1,8 +1,7 @@
+import AppLogic
 import CoachKit
 import Domain
 import SwiftUI
-
-extension MealDraft: Identifiable {}
 
 // MARK: - Model
 
@@ -74,7 +73,7 @@ final class MealItemsModel {
         }
         do {
             let page = try await coach.searchFood(query: query)
-            guard let match = Self.bestMatch(in: page) else {
+            guard let match = page.bestMatch(for: draft.amountUnit) else {
                 draft.lookup = .notFound
                 return
             }
@@ -83,14 +82,6 @@ final class MealItemsModel {
         } catch {
             draft.lookup = .failed
         }
-    }
-
-    /// A generic food with calories beats a branded one: Muse names a food, not a product.
-    static func bestMatch(in page: FoodSearchPage) -> FoodSearchItem? {
-        let results = page.results
-        return results.first { $0.dataType != "Branded" && $0.per100g.kcal != nil }
-            ?? results.first { $0.per100g.kcal != nil }
-            ?? results.first
     }
 
     // MARK: Save
@@ -255,10 +246,6 @@ private struct MealItemSection: View {
                 }
                 .frame(minHeight: 44)
                 .accessibilityIdentifier(AccessibilityID.mealItemRemove(index))
-            }
-        } footer: {
-            if draft.amountUnit == .milliliters {
-                Text("Per 100 ml. Saved as 1 g per ml.")
             }
         }
         .onChange(of: draft.gramsText) { draft.amountChanged() }

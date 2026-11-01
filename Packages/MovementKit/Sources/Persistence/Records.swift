@@ -469,6 +469,7 @@ struct FoodRecord: Codable, FetchableRecord, PersistableRecord {
     var externalID: String?
     var name: String
     var brand: String?
+    var amountUnit: FoodAmountUnit
     var kcal100g: Double?
     var protein100g: Double?
     var carbs100g: Double?
@@ -479,6 +480,7 @@ struct FoodRecord: Codable, FetchableRecord, PersistableRecord {
     enum CodingKeys: String, CodingKey {
         case id, source, name, brand, servings
         case externalID = "external_id"
+        case amountUnit = "amount_unit"
         case kcal100g = "kcal_100g"
         case protein100g = "protein_100g"
         case carbs100g = "carbs_100g"
@@ -492,6 +494,7 @@ struct FoodRecord: Codable, FetchableRecord, PersistableRecord {
         externalID = food.externalID
         name = food.name
         brand = food.brand
+        amountUnit = food.amountUnit
         kcal100g = food.per100g.energy?.kilocalories
         protein100g = food.per100g.protein?.grams
         carbs100g = food.per100g.carbohydrate?.grams
@@ -503,6 +506,7 @@ struct FoodRecord: Codable, FetchableRecord, PersistableRecord {
     func domain() throws -> Food {
         Food(
             id: EntityID(id), source: source, externalID: externalID, name: name, brand: brand,
+            amountUnit: amountUnit,
             per100g: Nutrients(
                 energy: kcal100g.map { Energy(kilocalories: $0) },
                 protein: protein100g.map { Mass(grams: $0) },
@@ -523,6 +527,8 @@ struct MealEntryRecord: Codable, FetchableRecord, PersistableRecord {
     var foodID: String?
     var label: String
     var grams: Double
+    var amountUnit: FoodAmountUnit
+    var per100Amount: String?
     var kcal: Double?
     var proteinG: Double?
     var carbsG: Double?
@@ -537,6 +543,8 @@ struct MealEntryRecord: Codable, FetchableRecord, PersistableRecord {
         case id, slot, label, grams, kcal, source, tz
         case localDay = "local_day"
         case foodID = "food_id"
+        case amountUnit = "amount_unit"
+        case per100Amount = "per100_amount"
         case proteinG = "protein_g"
         case carbsG = "carbs_g"
         case fatG = "fat_g"
@@ -545,13 +553,15 @@ struct MealEntryRecord: Codable, FetchableRecord, PersistableRecord {
         case hkUUID = "hk_uuid"
     }
 
-    init(_ meal: MealEntry, foodID: String?) {
+    init(_ meal: MealEntry, foodID: String?) throws {
         id = meal.id.rawValue
         localDay = meal.localDay.string
         slot = meal.slot
         self.foodID = foodID
         label = meal.label
         grams = meal.grams.grams
+        amountUnit = meal.amountUnit
+        per100Amount = try meal.per100Amount.map(JSONColumn.encode)
         kcal = meal.nutrients.energy?.kilocalories
         proteinG = meal.nutrients.protein?.grams
         carbsG = meal.nutrients.carbohydrate?.grams
@@ -567,6 +577,8 @@ struct MealEntryRecord: Codable, FetchableRecord, PersistableRecord {
         MealEntry(
             id: EntityID(id), localDay: try day(localDay, table: "meal_entry"), slot: slot,
             foodID: foodID.map { EntityID($0) }, label: label, grams: Mass(grams: grams),
+            amountUnit: amountUnit,
+            per100Amount: try per100Amount.map { try JSONColumn.decode(Nutrients.self, from: $0) },
             nutrients: Nutrients(
                 energy: kcal.map { Energy(kilocalories: $0) },
                 protein: proteinG.map { Mass(grams: $0) },

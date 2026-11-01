@@ -59,12 +59,14 @@ public struct AppDatabase: Sendable {
 
     static func makeMigrator() -> DatabaseMigrator {
         var migrator = DatabaseMigrator()
-        #if DEBUG
-        // During development a changed migration rebuilds the file instead of failing. Never in release.
-        migrator.eraseDatabaseOnSchemaChange = true
-        #endif
+        // Real training data is also collected with Debug builds. Never erase it automatically.
         migrator.registerMigration("v1") { db in
             try SchemaV1.create(db)
+        }
+        migrator.registerMigration("v2-nutrition-quantity") { db in
+            try db.execute(sql: "ALTER TABLE food ADD COLUMN amount_unit TEXT NOT NULL DEFAULT 'g' CHECK (amount_unit IN ('g', 'ml'))")
+            try db.execute(sql: "ALTER TABLE meal_entry ADD COLUMN amount_unit TEXT NOT NULL DEFAULT 'g' CHECK (amount_unit IN ('g', 'ml'))")
+            try db.execute(sql: "ALTER TABLE meal_entry ADD COLUMN per100_amount TEXT CHECK (per100_amount IS NULL OR json_valid(per100_amount))")
         }
         return migrator
     }

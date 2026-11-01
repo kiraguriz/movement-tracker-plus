@@ -13,6 +13,7 @@ let package = Package(
         .library(name: "Persistence", targets: ["Persistence"]),
         .library(name: "CoachKit", targets: ["CoachKit"]),
         .library(name: "HealthBridge", targets: ["HealthBridge"]),
+        .library(name: "AppLogic", targets: ["AppLogic"]),
         .executable(name: "motion-eval", targets: ["MotionEval"]),
     ],
     dependencies: [
@@ -25,6 +26,7 @@ let package = Package(
         .target(name: "Persistence", dependencies: ["Domain", .product(name: "GRDB", package: "GRDB.swift")]),
         .target(name: "CoachKit", dependencies: ["Domain"]),
         .target(name: "HealthBridge", dependencies: ["Domain"]),
+        .target(name: "AppLogic", dependencies: ["Domain"]),
         .executableTarget(name: "MotionEval", dependencies: ["MotionCore", "PoseCapture"]),
 
         .testTarget(name: "MotionCoreTests", dependencies: ["MotionCore"]),
@@ -33,5 +35,6 @@ let package = Package(
         .testTarget(name: "PersistenceTests", dependencies: ["Persistence"]),
         .testTarget(name: "CoachKitTests", dependencies: ["CoachKit"]),
         .testTarget(name: "HealthBridgeTests", dependencies: ["HealthBridge", "Domain", "Persistence"]),
+        .testTarget(name: "AppLogicTests", dependencies: ["AppLogic", "Persistence"]),
     ]
 )

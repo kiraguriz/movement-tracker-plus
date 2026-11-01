@@ -1,3 +1,4 @@
+import AppLogic
 import Domain
 import SwiftUI
 
@@ -225,7 +226,7 @@ private struct MealRow: View {
                     .font(.body)
                 HStack(spacing: 10) {
                     if meal.grams.grams > 0 {
-                        Text(UnitFormatter.grams(meal.grams.grams))
+                        Text(UnitFormatter.foodAmount(meal.amount, unit: meal.amountUnit))
                     }
                     ForEach(Macro.allCases) { macro in
                         HStack(spacing: 3) {
@@ -252,7 +253,7 @@ private struct MealRow: View {
 
     private var spokenSummary: String {
         var parts: [String] = []
-        if meal.grams.grams > 0 { parts.append(UnitFormatter.grams(meal.grams.grams)) }
+        if meal.amount > 0 { parts.append(UnitFormatter.foodAmount(meal.amount, unit: meal.amountUnit)) }
         if let energy = meal.nutrients.energy { parts.append(UnitFormatter.energy(energy.kilocalories)) }
         for macro in Macro.allCases {
             if let grams = macro.grams(in: meal.nutrients) {

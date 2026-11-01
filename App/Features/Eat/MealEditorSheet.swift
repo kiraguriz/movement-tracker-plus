@@ -1,3 +1,4 @@
+import AppLogic
 import Domain
 import SwiftUI
 
@@ -42,6 +43,11 @@ struct MealEditorSheet: View {
                     }
                     .frame(minHeight: 44)
                     .accessibilityIdentifier(AccessibilityID.mealSlot)
+                    Picker("Units", selection: $draft.amountUnit) {
+                        Text(UnitFormatter.symbol(UnitMass.grams)).tag(FoodAmountUnit.grams)
+                        Text(UnitFormatter.symbol(UnitVolume.milliliters)).tag(FoodAmountUnit.milliliters)
+                    }
+                    .frame(minHeight: 44)
                     NumberField(
                         title: "Amount",
                         text: $draft.gramsText,
@@ -51,10 +57,6 @@ struct MealEditorSheet: View {
                     )
                     if !draft.servings.isEmpty {
                         servingChoices
-                    }
-                } footer: {
-                    if draft.amountUnit == .milliliters {
-                        Text("Per 100 ml. Saved as 1 g per ml.")
                     }
                 }
                 Section {

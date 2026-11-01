@@ -8,6 +8,15 @@ public struct FoodSearchPage: Sendable, Equatable, Decodable {
     public var totalPages: Int
     public var totalHits: Int
     public var results: [FoodSearchItem]
+
+    /// A mass estimate cannot be applied to a per-volume food without density. Preserve unknown
+    /// nutrition instead of silently treating grams and milliliters as interchangeable.
+    public func bestMatch(for unit: FoodAmountUnit) -> FoodSearchItem? {
+        let compatible = results.filter { $0.isPerVolume == (unit == .milliliters) }
+        return compatible.first { $0.dataType != "Branded" && $0.per100g.kcal != nil }
+            ?? compatible.first { $0.per100g.kcal != nil }
+            ?? compatible.first
+    }
 }
 
 public struct FoodSearchItem: Sendable, Equatable, Decodable, Identifiable {
@@ -36,8 +45,7 @@ public struct FoodSearchItem: Sendable, Equatable, Decodable, Identifiable {
 
     public var isPerVolume: Bool { basis == "ml" }
 
-    /// The Domain food for logging. A per-100-ml item is stored as per 100 g (1 ml is taken as 1 g), so check
-    /// `isPerVolume` to tell the user.
+    /// Preserves the provider's mass/volume basis through persistence and later edits.
     public func makeFood(id: EntityID, createdAt: Date) -> Food {
         Food(
             id: id,
@@ -45,6 +53,7 @@ public struct FoodSearchItem: Sendable, Equatable, Decodable, Identifiable {
             externalID: String(fdcId),
             name: name,
             brand: brand,
+            amountUnit: isPerVolume ? .milliliters : .grams,
             per100g: Nutrients(
                 energy: per100g.kcal.map { Energy(kilocalories: $0) },
                 protein: per100g.protein.map { Mass(grams: $0) },

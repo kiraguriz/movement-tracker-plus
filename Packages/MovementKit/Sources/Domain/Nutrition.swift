@@ -39,6 +39,13 @@ public enum FoodSource: String, Codable, CaseIterable, Sendable {
     case muse
 }
 
+/// The unit of a food's per-100 values and of the quantity eaten. Volume is never converted to mass
+/// without density information.
+public enum FoodAmountUnit: String, Codable, CaseIterable, Sendable {
+    case grams = "g"
+    case milliliters = "ml"
+}
+
 public struct FoodServing: Hashable, Sendable, Codable {
     public var label: String
     public var grams: Double
@@ -56,7 +63,8 @@ public struct Food: Equatable, Sendable, Identifiable {
     public var externalID: String?
     public var name: String
     public var brand: String?
-    /// Nutrients in 100 g of the food.
+    public var amountUnit: FoodAmountUnit
+    /// Nutrients in 100 units of `amountUnit`. The name is retained for source/schema compatibility.
     public var per100g: Nutrients
     public var servings: [FoodServing]
     public var createdAt: Date
@@ -67,6 +75,7 @@ public struct Food: Equatable, Sendable, Identifiable {
         externalID: String? = nil,
         name: String,
         brand: String? = nil,
+        amountUnit: FoodAmountUnit = .grams,
         per100g: Nutrients,
         servings: [FoodServing] = [],
         createdAt: Date
@@ -76,6 +85,7 @@ public struct Food: Equatable, Sendable, Identifiable {
         self.externalID = externalID
         self.name = name
         self.brand = brand
+        self.amountUnit = amountUnit
         self.per100g = per100g
         self.servings = servings
         self.createdAt = createdAt
@@ -107,7 +117,12 @@ public struct MealEntry: Equatable, Sendable, Identifiable {
     public var slot: MealSlot
     public var foodID: EntityID?
     public var label: String
+    /// Legacy quantity storage. Read `amountUnit` before presenting it: for ml the numeric value is
+    /// a volume, not an assertion that a milliliter weighs one gram.
     public var grams: Mass
+    public var amountUnit: FoodAmountUnit
+    /// The editable nutritional basis survives even a zero-quantity save.
+    public var per100Amount: Nutrients?
     /// Nutrients of the eaten amount, already scaled from the food.
     public var nutrients: Nutrients
     public var source: MealSource
@@ -123,6 +138,8 @@ public struct MealEntry: Equatable, Sendable, Identifiable {
         foodID: EntityID? = nil,
         label: String,
         grams: Mass,
+        amountUnit: FoodAmountUnit = .grams,
+        per100Amount: Nutrients? = nil,
         nutrients: Nutrients,
         source: MealSource,
         photoFile: String? = nil,
@@ -136,6 +153,8 @@ public struct MealEntry: Equatable, Sendable, Identifiable {
         self.foodID = foodID
         self.label = label
         self.grams = grams
+        self.amountUnit = amountUnit
+        self.per100Amount = per100Amount
         self.nutrients = nutrients
         self.source = source
         self.photoFile = photoFile
@@ -162,11 +181,32 @@ public struct MealEntry: Equatable, Sendable, Identifiable {
             foodID: food.id,
             label: food.name,
             grams: amount,
+            amountUnit: food.amountUnit,
+            per100Amount: food.per100g,
             nutrients: food.nutrients(for: amount),
             source: source,
             loggedAt: loggedAt,
             timeZoneID: timeZone.identifier
         )
+    }
+
+    public var amount: Double { grams.grams }
+
+    /// Old entries have no explicit basis. Derive it from their saved numbers, preserving any manual
+    /// corrections and keeping unknown nutrients unknown rather than fetching a newer food value.
+    public var portionBasis: Nutrients? {
+        if let per100Amount { return per100Amount }
+        guard amount.isFinite, amount > 0 else { return nil }
+        return nutrients.scaled(by: 100 / amount)
+    }
+
+    public func resized(to amount: Double) -> MealEntry? {
+        guard amount.isFinite, amount >= 0 else { return nil }
+        var copy = self
+        copy.grams = Mass(grams: amount)
+        copy.per100Amount = portionBasis
+        copy.nutrients = portionBasis?.scaled(by: amount / 100) ?? .unknown
+        return copy
     }
 }
 

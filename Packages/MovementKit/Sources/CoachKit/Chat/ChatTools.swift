@@ -335,7 +335,7 @@ public struct ChatToolbox: Sendable {
             var members = nutrients(meal.nutrients)
             members["label"] = .string(String(meal.label.prefix(80)))
             members["slot"] = .string(meal.slot.rawValue)
-            members["grams"] = .number(meal.grams.grams, decimals: 0)
+            members[meal.amountUnit == .milliliters ? "milliliters" : "grams"] = .number(meal.amount, decimals: 0)
             return .compact2(members)
         }
         var totalMembers: [String: JSONValue?] = totals.map { nutrients($0.nutrients) } ?? [:]

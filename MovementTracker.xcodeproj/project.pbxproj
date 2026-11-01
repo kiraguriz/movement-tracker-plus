@@ -13,6 +13,7 @@
 		7A10C0DE0000000000000084 /* Persistence in Frameworks */ = {isa = PBXBuildFile; productRef = 7A10C0DE0000000000000074 /* Persistence */; };
 		7A10C0DE0000000000000085 /* CoachKit in Frameworks */ = {isa = PBXBuildFile; productRef = 7A10C0DE0000000000000075 /* CoachKit */; };
 		7A10C0DE0000000000000086 /* HealthBridge in Frameworks */ = {isa = PBXBuildFile; productRef = 7A10C0DE0000000000000076 /* HealthBridge */; };
+		7A10C0DE0000000000000087 /* AppLogic in Frameworks */ = {isa = PBXBuildFile; productRef = 7A10C0DE0000000000000077 /* AppLogic */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,6 +56,7 @@
 				7A10C0DE0000000000000084 /* Persistence in Frameworks */,
 				7A10C0DE0000000000000085 /* CoachKit in Frameworks */,
 				7A10C0DE0000000000000086 /* HealthBridge in Frameworks */,
+				7A10C0DE0000000000000087 /* AppLogic in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -121,6 +123,7 @@
 				7A10C0DE0000000000000074 /* Persistence */,
 				7A10C0DE0000000000000075 /* CoachKit */,
 				7A10C0DE0000000000000076 /* HealthBridge */,
+				7A10C0DE0000000000000077 /* AppLogic */,
 			);
 			productName = MovementTracker;
 			productReference = 7A10C0DE0000000000000010 /* MovementTracker.app */;
@@ -525,6 +528,10 @@
 		7A10C0DE0000000000000076 /* HealthBridge */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = HealthBridge;
+		};
+		7A10C0DE0000000000000077 /* AppLogic */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AppLogic;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

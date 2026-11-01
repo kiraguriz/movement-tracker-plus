@@ -45,6 +45,13 @@ struct UnitFormatter: Equatable, Sendable {
         measure(grams, UnitMass.grams, digits: digits)
     }
 
+    static func foodAmount(_ amount: Double, unit: FoodAmountUnit) -> String {
+        switch unit {
+        case .grams: measure(amount, UnitMass.grams, digits: 0...1)
+        case .milliliters: measure(amount, UnitVolume.milliliters, digits: 0...1)
+        }
+    }
+
     static func number(_ value: Double, digits: ClosedRange<Int> = 0...0) -> String {
         value.formatted(.number.precision(.fractionLength(digits)))
     }
