@@ -135,6 +135,13 @@ Initial snapshot (Nov 1, about 4:43 PM CST):
 This confirms actual camera capture, an initial latency reading and the no-person gate. It does not yet
 establish framed-human latency, skeleton alignment, stillness stability, rep accuracy or back-camera acceptance.
 
+A second single-shot capture at about 4:46 PM CST showed 8,757 processed frames, 30.0 fps, p50 15.0 ms,
+p95 16.1 ms, 0 failures and the same 18 cumulative drops. Across the additional 5,804 frames the drop count
+did not increase; the pressure remained nominal and both cropping features stayed off. The view still had
+no framed subject, Step into view and zero reps. This is continued no-person operation, not a human idle or
+accuracy fixture. The user has been asked to position the phone and stand sideways fully in frame before
+the first independently counted set.
+
 The permission-sheet screenshot also exposed a Debug HUD label bug: before camera statistics existed, it
 said `replay` regardless of the selected source. `LiveDebugHUD` now selects `camera` or `replay` from
 `model.source`; the normal camera statistics branch is unchanged. Debug Simulator compilation and a signed

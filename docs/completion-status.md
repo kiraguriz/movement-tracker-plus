@@ -23,7 +23,10 @@ HealthKit in both the signed entitlements and the provisioning profile. See
 Actual Health nutrition writes, editing/deduplication and app-driven deletion also passed: each of the four
 nutrient types had one updated sample, then No Data after cleanup. The real OS sample showed sync version
 advancing from 1 to 2 with a stable identifier. No stub was used.
-External acceptance remains separate: real human pose recordings and Vision latency, additional HealthKit
+The real front camera also launched with continuous Device Hub sharing off; single-shot device screenshots
+showed 30 fps, initial Vision p50 14.5–15.0 ms / p95 15.8–16.1 ms and zero failures. The cumulative drop count
+stayed at 18 over another 5,804 processed frames. A fully framed human subject is still needed for the next gate.
+External acceptance remains separate: real human pose recordings, framed-human/back-camera performance, additional HealthKit
 workout/body-mass/permission/recovery cases, and full device/accessibility acceptance. Cloudflare deployment and both secrets
 are now configured; real Muse non-streaming/SSE, USDA and one simulator live Coach call passed.
 
