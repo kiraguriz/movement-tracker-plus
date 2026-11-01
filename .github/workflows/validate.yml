@@ -38,7 +38,8 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - run: xcodebuild -version && swift --version
       - name: Report Vision hardware availability
-        run: swift -e 'import Metal; print("Metal compute device:", MTLCreateSystemDefaultDevice() == nil ? "unavailable; eight body-pose integration tests will be explicitly skipped" : "available")'
+        run: |
+          swift -e 'import Metal; print("Metal compute device:", MTLCreateSystemDefaultDevice() == nil ? "unavailable; eight body-pose integration tests will be explicitly skipped" : "available")'
       - name: Build portable tests
         timeout-minutes: 8
         run: swift build --package-path Packages/MovementKit --build-tests --jobs 3
