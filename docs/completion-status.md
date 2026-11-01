@@ -10,10 +10,22 @@ Scope: finish the locally executable MVP work identified in the repository revie
 | Workout execution | Coach prescriptions retain sets/reps/rest; workout history and exercise progress are accessible | Implemented and feature-tested; Debug app compiled; no UI runtime claim |
 | Feature-level regression coverage | Exercise application logic through portable tests and real repositories; do not rely on UI tests for data correctness | 17 portable feature tests including real SQLite saves, reopen, plan application, history and deletion |
 | Proxy and configuration | Prepare a real endpoint configuration path; bounded service usage; offline tests and dry-run build pass | 146 tests; SQLite durable limits, local Worker burst test, dry-run bundle, TypeScript check, npm audit zero findings |
-| Delivery | Original app icon, compatible CI/check scripts, safe migrations, reproducible reports and handoff instructions | Pending |
+| Delivery | Original app icon, compatible CI/check scripts, safe migrations, reproducible reports and handoff instructions | Full local check passed; GitHub native + proxy jobs passed, including all three builds; eight hardware-only CI skips are explicit |
 
 Required checks: affected package tests, full `swift test`, import-tool tests, proxy tests, Debug/Release builds, and an unsigned device-SDK compile where available. Report the actual proof layer for each result.
 
 External acceptance remains separate: real human pose recordings and Vision latency, actual HealthKit authorization/writes, signing on the user's team, Cloudflare login/provisioning/deploy, Meta/USDA secrets and live contract checks, and later UI/device acceptance. Do not mark these passed without evidence.
+
+Detailed Chinese functionality inventory, fixes, evidence and next steps: [completion-report.md](completion-report.md).
+
+Latest application/package implementation: `940e69e`; test capability probe/workflow: `65f24d2`. GitHub verification:
+[Validate run 41300391099](https://github.com/kiraguriz/movement-tracker-plus/actions/runs/41300391099) — **success**, both jobs completed.
+The hosted VM has no body-pose main-stage compute device; eight integration cases use an actual request
+probe and skip only that known unavailable-device error. Other probe failures still fail the tests.
+Deterministic failure-path tests and all core tests stay enabled. Local hardware runs all cases.
+
+Final evidence: local `tools/check.sh` passed 1,181 Swift tests (no Vision skips), 146 proxy tests, eight
+import-tool tests, proxy dry-run and Debug/Release Simulator SDK plus unsigned Release iPhone SDK builds.
+The cloud run reported the same seven test modules, eight explicit hardware skips, and successful builds.
 
 Post-hackathon features in `rebuild-brief.md` §12 remain outside the MVP: Watch, cloud sync, learned pose recognition, 3D/SAM replay and App Attest. Reassess only if needed to make the requested MVP work.

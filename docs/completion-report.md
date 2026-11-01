@@ -31,6 +31,7 @@
 6. 默认 Release 代理地址原来是代码里的 nil。现在通过公开的 `COACH_PROXY_URL` 构建设置配置，拒绝非 HTTPS、URL 中的凭据和 query token；API key 仍只放 Worker secrets。
 7. 原代理 KV 计数跨实例只能尽力而为。现在部署配置强制使用一个 SQLite Durable Object，原子检查 token/feature 与全局额度；退款幂等，退款不返还硬尝试额度，缺少服务绑定时先拒绝再调用上游。请求数量限制不等于精确美元账单上限。
 8. Debug 曾允许 schema 变动后自动清库。现在 Debug/Release 都保留数据，按追加迁移升级。Wrangler 更新到已批准工具的兼容 4.x 版本，当前 npm audit 无已知问题。
+9. 云端无 Vision compute device 的实际错误暴露了评估工具的数据质量问题：视频里所有 Vision 调用失败也可能形成 0 次的“正确 idle”。现在空 fixture、无测量视频、任何带 Vision 错误的视频都明确失败，不进入次数准确率或延迟统计；新增 4 项确定性回归测试，用可注入估计器区分有效的无人帧和测量失败。
 
 ## 数据与架构
 
@@ -43,11 +44,11 @@
 
 ## 验证证据
 
-本地初次完整检查通过 1,177 项 Swift 测试；随后补齐全局限额错误的客户端映射，并重新跑相关 CoachKit 测试。最终 `tools/check.sh` 的复核正在收集结果，本文件将在检查完成后更新。
+最终 `MOVEMENT_DERIVED_DATA=/tmp/mt-recording-build tools/check.sh` 已整套通过，包含评估质量修复：1,181 项 Swift 测试、8 项导入工具测试、146 项代理测试、代理 dry-run bundle，以及 Debug/Release Simulator SDK 和 Release iPhone 设备 SDK 三次编译。最后的能力探测调整另通过本机 187 项 PoseCapture 测试和完整云端复核。没有运行 Simulator，也没有把编译结果当作真实设备验收。
 
 已独立完成的检查：
 
-- `swift test --package-path Packages/MovementKit`：1,177 项通过，7 个测试模块。
+- `swift test --package-path Packages/MovementKit`：1,181 项通过，7 个测试模块，本机没有跳过 Vision 集成项。
 - `python3 -m unittest discover -s tools/tests -v`：8 项通过。
 - `npm test --prefix proxy`：146 项通过。
 - `tsc -p proxy/tsconfig.json`：通过（本机已有 TypeScript 5.9.2）。
@@ -56,13 +57,14 @@
 - 本地真实 `wrangler dev --local`：health 200；同网络 12 个并发安装请求恰好 5 个 201、7 个 429；测试服务随后停止。
 - Debug/Release 通用 Simulator SDK 编译和 Release 通用 iOS 设备 SDK 未签名编译：通过。没有启动模拟器或实际安装到手机。
 - `tools/accuracy.sh`：生成回归 17/17 精确，打包 replay 2/2 精确；真人片段仍为 0。
-- 原生与代理 GitHub Actions 已启动；结果在 `completion-status.md` 记录，不能用本地通过替代云端运行结果。
+- 原生与代理 GitHub Actions 的结果在 `completion-status.md` 记录，不能用本地通过替代云端运行结果。首次并行原生运行卡在 framework 测试，停止后改串行获得了明确错误：GitHub VM 无 `VNComputeStageMain` 设备。8 个需要真实 body-pose compute device 的集成测试以一次实际 revision-2 请求做条件探测：仅该明确的无设备错误才跳过，其他错误仍失败；其余测试、fake estimator 的失败处理和三种编译必须通过。本机有硬件时全部启用，没有把 app 的 Vision 模型换成其他 revision。Metal 设备存在本身不足以证明 Vision 可运行。
+- 最终 [GitHub Validate 41300391099](https://github.com/kiraguriz/movement-tracker-plus/actions/runs/41300391099) **成功**：native/proxy 两个 job 均完成；七个测试模块的 1,181 项中，8 项硬件集成项明确跳过，其余启用项通过；代理、导入测试和三种 app 构建通过。使用 job 原始日志核对了全部七个模块，不能只根据被截断的聚合日志推断覆盖。
 
 ## 仍需的外部输入与验收
 
 | 项目 | 为什么现在不能确认 | 接续步骤 |
 | --- | --- | --- |
-| 在线 Muse/USDA | 仓库默认配置仍无公开代理地址，KV namespace 是部署占位值；没有把真实密钥放进本地源码。未检查云账户中是否已有其他部署 | 按 `proxy/README.md` 登录 Cloudflare、填 namespace、设置 `MODEL_API_KEY`/`USDA_API_KEY`、部署；把 Worker HTTPS URL 传给 `COACH_PROXY_URL`，跑 `tools/muse-smoke.sh` |
+| 在线 Muse/USDA | `wrangler whoami` 确认本机 Cloudflare CLI 未认证；仓库默认配置无公开代理地址，KV namespace 是部署占位值。不能据此推断云账户没有其他部署；未把真实密钥放进本地源码 | 按 `proxy/README.md` 登录 Cloudflare、填 namespace、设置 `MODEL_API_KEY`/`USDA_API_KEY`、部署；把 Worker HTTPS URL 传给 `COACH_PROXY_URL`，跑 `tools/muse-smoke.sh` |
 | 签名安装和 HealthKit | 未选择用户开发团队并连接一台签名可用的真实 iPhone；未执行真实 Health 授权/读写验收 | 按 `docs/device-checklist.md` 配置团队、capability、安装；验收部分授权、编辑、删除及重启补偿 |
 | 真人计数和性能 | 没有真人标注片段或真实相机延迟数据。生成数据成绩不能说明真人精度 | 录制不同人员、环境、前后镜头和 idle/partial；人工标注后导入，重新生成 accuracy；测真实设备帧延迟和温度/耗电 |
 | UI/交互验收 | 用户明确本轮暂不做 UI debug | 后续在真实设备检查布局、横竖屏、VoiceOver、键盘、照片/相机权限、所有入口与整段 demo |
@@ -79,5 +81,8 @@
 - `164db88`：训练 checkpoint、prescription、历史与进度、公开代理配置。
 - `4b1a0d2`：Durable Object 用量控制、交付脚本、图标与 CI。
 - `4df9c0c`：客户端全局限额处理。
+- `e580503`：拆分云端编译/测试、串行执行与超时诊断。
+- `940e69e`：评估失败片段不计入准确率；Vision 硬件集成条件与确定性错误回归。
+- `65f24d2`：以实际 Vision 请求探测运行条件，不依赖虚拟机的 Metal 设备声明。
 
 代码提交已按批次推送到 `origin/main`；报告和生成记录另作文档提交。完整历史见 `docs/build-log.md`。

@@ -2,7 +2,7 @@
 
 What was built when, generated from `git log main` by `tools/build-log.sh`. Times are author times in Chicago time (CST/CDT); merge commits are left out.
 
-Source: `main` at `4df9c0c`, 29 commits, 2026-10-29 to 2026-11-01.
+Source: `main` at `65f24d2`, 34 commits, 2026-10-29 to 2026-11-01.
 
 ## 2026-10-29 (Thu)
 
@@ -41,3 +41,8 @@ Source: `main` at `4df9c0c`, 29 commits, 2026-10-29 to 2026-11-01.
 - 04:23 CST `164db88` Recover counted sets and retain workout prescriptions, history and progress
 - 04:24 CST `4b1a0d2` Enforce durable proxy budgets and add reproducible delivery checks
 - 04:27 CST `4df9c0c` Handle global proxy limits without retrying exhausted daily budgets
+- 04:29 CST `3979068` Document verified functionality, delivery evidence and remaining device acceptance
+- 04:49 CST `e580503` Bound native CI test execution after hosted Vision concurrency stalled
+- 04:58 CST `940e69e` Reject unmeasured evaluation clips and declare Vision hardware integration requirements
+- 05:00 CST `fcb102f` Quote the CI hardware diagnostic as a YAML block
+- 05:06 CST `65f24d2` Probe actual Vision body-pose availability instead of assuming Metal support
