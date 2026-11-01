@@ -170,14 +170,34 @@ class AppUITestCase: XCTestCase {
     @MainActor
     func enter(_ text: String, into field: XCUIElement) {
         XCTAssertTrue(field.waitForExistence(timeout: 10), "field \(field) not found")
-        for _ in 0..<3 where !hasKeyboardFocus(field) {
-            // Fields are right-aligned: tap their right edge so the cursor lands after the existing text.
+        let app = XCUIApplication()
+        let keyboard = app.keyboards.firstMatch
+        // XCTest's keyboard frame excludes the predictive bar on some keyboards. Keep the field
+        // clear of that bar too, and start the swipe in the visible form rather than on the keyboard.
+        for _ in 0..<3 where keyboard.exists && field.frame.maxY > keyboard.frame.minY - 64 {
+            let window = app.windows.firstMatch.frame
+            let startY = min(keyboard.frame.minY - 90, window.maxY - 120)
+            let upperLimit = window.minY + 80
+            guard startY > upperLimit + 30 else { break }
+            let origin = app.coordinate(withNormalizedOffset: .zero)
+            let start = origin.withOffset(CGVector(dx: window.midX, dy: startY))
+            let end = origin.withOffset(CGVector(dx: window.midX, dy: max(upperLimit, startY - 200)))
+            start.press(forDuration: 0.05, thenDragTo: end)
+        }
+        // An already-focused field can have its cursor at the beginning after reopening a sheet.
+        for _ in 0..<3 {
             field.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap()
-            _ = waitUntil(timeout: 4) { self.hasKeyboardFocus(field) }
+            if waitUntil(timeout: 4, { self.hasKeyboardFocus(field) }) { break }
+        }
+        if !hasKeyboardFocus(field) {
+            let keyboardFrame = keyboard.exists ? String(describing: keyboard.frame) : "absent"
+            print("Input focus diagnostic: \(field.identifier) frame=\(field.frame), hittable=\(field.isHittable), keyboard=\(keyboardFrame)")
+            attachScreenshot("input-focus-failure")
         }
         XCTAssertTrue(hasKeyboardFocus(field), "field \(field) did not get keyboard focus")
-        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
+        field.tap(withNumberOfTaps: 3, numberOfTouches: 1)
         field.typeText(text)
+        XCTAssertTrue(waitUntil { (field.value as? String) == text }, "field \(field.identifier) did not accept the expected text")
     }
 
     @MainActor

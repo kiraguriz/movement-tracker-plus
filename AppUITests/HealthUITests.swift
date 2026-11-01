@@ -199,6 +199,8 @@ final class HealthUITests: TrainUITestCase {
         tap(ID.editProfile, in: app)
         XCTAssertTrue(element(ID.profileEditor, in: app).waitForExistence(timeout: 10))
         enter("81", into: app.textFields[ID.weight])
+        XCTAssertEqual(text(of: app.textFields[ID.weight]), "81", "synthetic weight input")
+        XCTAssertTrue(app.buttons[ID.profileSave].isEnabled, "profile save is disabled after weight input")
         tap(ID.profileSave, in: app)
         XCTAssertTrue(element(ID.profileEditor, in: app).waitForNonExistence(timeout: 10), "the editor did not close")
         XCTAssertTrue(waitForStubCount("weights", 1, in: app), "the weight was not sent (\(stubCount("weights", in: app)))")
