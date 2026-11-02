@@ -9,18 +9,18 @@ struct StatTile: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value)
-                .font(.system(.title, design: .rounded, weight: .semibold))
+                .font(TraceTheme.numeral(36))
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
             Text(title)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(TraceTheme.label)
+                .foregroundStyle(TraceTheme.secondary)
                 .lineLimit(2)
         }
         .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 24))
+        .background(TraceTheme.card, in: .rect(cornerRadius: 24))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(title)
         .accessibilityValue(value)

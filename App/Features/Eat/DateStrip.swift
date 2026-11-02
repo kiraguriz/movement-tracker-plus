@@ -11,47 +11,50 @@ struct DateStrip: View {
 
     var body: some View {
         ScrollViewReader { proxy in
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 4) {
-                    ForEach(days, id: \.self) { day in
-                        chip(day)
-                            .id(day)
+            GeometryReader { geometry in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 4) {
+                        ForEach(days, id: \.self) { day in
+                            chip(day, width: max(44, min(64, (geometry.size.width - 56) / 7)))
+                                .id(day)
+                        }
                     }
+                    .padding(.horizontal, 16)
                 }
-                .padding(.horizontal, 12)
+                .onAppear { proxy.scrollTo(selection, anchor: .center) }
+                .onChange(of: selection) {
+                    withAnimation(.smooth) { proxy.scrollTo(selection, anchor: .center) }
+                }
             }
-            .onAppear { proxy.scrollTo(selection, anchor: .center) }
-            .onChange(of: selection) {
-                withAnimation(.smooth) { proxy.scrollTo(selection, anchor: .center) }
-            }
+            .frame(height: 70)
         }
         // A navigation control, like the tab bar: it stops growing before the numbers outgrow their chips.
         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .accessibilityIdentifier(AccessibilityID.dateStrip)
     }
 
-    private func chip(_ day: LocalDay) -> some View {
+    private func chip(_ day: LocalDay, width: CGFloat) -> some View {
         let date = day.date(in: timeZone)
         let isSelected = day == selection
         return Button {
             selection = day
         } label: {
-            VStack(spacing: 2) {
+            VStack(spacing: 4) {
                 Text(date, format: .dateTime.weekday(.narrow))
                     .font(.caption2.weight(.medium))
-                    .foregroundStyle(isSelected ? AnyShapeStyle(.white.opacity(0.85)) : AnyShapeStyle(.secondary))
+                    .foregroundStyle(isSelected ? AnyShapeStyle(TraceTheme.paper.opacity(0.85)) : AnyShapeStyle(TraceTheme.secondary))
                 Text(day.day, format: .number)
-                    .font(.body.weight(.semibold))
+                    .font(TraceTheme.numeral(24))
                     .monospacedDigit()
-                    .foregroundStyle(isSelected ? AnyShapeStyle(.white) : (day == today ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.primary)))
+                    .foregroundStyle(isSelected ? TraceTheme.paper : TraceTheme.ink)
                 Circle()
-                    .fill(loggedDays.contains(day) ? (isSelected ? Color.white : Color.accentColor) : Color.clear)
-                    .frame(width: 5, height: 5)
+                    .fill(loggedDays.contains(day) ? (isSelected ? TraceTheme.paper : TraceTheme.blue) : Color.clear)
+                    .frame(width: 4, height: 4)
             }
-            .frame(width: 44, height: 64)
+            .frame(width: width, height: 66)
             .background {
                 if isSelected {
-                    Capsule().fill(Color.accentColor)
+                    RoundedRectangle(cornerRadius: 22).fill(TraceTheme.ink)
                 }
             }
             .contentShape(.capsule)

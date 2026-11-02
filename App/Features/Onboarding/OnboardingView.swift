@@ -60,8 +60,11 @@ struct OnboardingView: View {
         @ViewBuilder content: () -> Content
     ) -> some View {
         Form { content() }
+            .scrollContentBackground(.hidden)
+            .background(TraceTheme.paper)
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle(title)
+            .safeAreaInset(edge: .top) { progress }
             .safeAreaInset(edge: .bottom) {
                 PrimaryButton(title: "Continue", isEnabled: canContinue) {
                     path.append(next)
@@ -74,17 +77,32 @@ struct OnboardingView: View {
         ScrollView {
             if let plan = draft.plan {
                 PlanSummaryView(plan: plan, units: UnitFormatter(system: draft.unitSystem))
-                    .padding(20)
+                    .padding(16)
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(TraceTheme.paper)
         .navigationTitle("Your plan")
+        .safeAreaInset(edge: .top) { progress }
         .safeAreaInset(edge: .bottom) {
             PrimaryButton(title: "Start", isEnabled: draft.plan != nil, isBusy: isSaving) {
                 Task { await finish() }
             }
             .accessibilityIdentifier(AccessibilityID.onboardingFinish)
         }
+    }
+
+    private var progress: some View {
+        HStack(spacing: 6) {
+            ForEach(0..<4) { step in
+                Capsule().fill(step <= path.count ? TraceTheme.blue : TraceTheme.line)
+                    .frame(height: 4)
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
+        .background(TraceTheme.paper)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Step \(path.count + 1) of 4")
     }
 
     private func finish() async {

@@ -95,8 +95,8 @@ final class ProfileFlowUITests: AppUITestCase {
         choose("Imperial", fromPicker: ID.unitsSetting, in: app)
         openTab(0, in: app)
         XCTAssertTrue(
-            waitUntil { self.element(ID.latestWeight, in: app).label.contains("lb") },
-            "Today's weight is not in pounds: \(element(ID.latestWeight, in: app).label)"
+            waitUntil { self.value(of: ID.latestWeight, in: app).contains("lb") },
+            "Today's weight is not in pounds: \(value(of: ID.latestWeight, in: app))"
         )
 
         openTab(3, in: app)

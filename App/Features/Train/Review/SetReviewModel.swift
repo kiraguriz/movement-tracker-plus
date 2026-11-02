@@ -18,6 +18,7 @@ struct SetReviewSubject {
     let level: ActivityLevel
     let goal: GoalKind?
     let unitSystem: UnitSystem
+    var trace: LiveTraceSnapshot? = nil
 }
 
 /// The review after a counted set. The on-device numbers are there from the start; Muse's words arrive after,

@@ -104,9 +104,22 @@ struct WorkoutExecutionTests {
         #expect(model.summaries.count == 1 && model.summaries[0].totalReps == 38)
         #expect(model.progress.count == 1 && model.progress[0].reps == 8)
         #expect(model.progress[0].maximumLoad?.kilograms == 20)
+        #expect(model.selectedExerciseSets.count == 1)
+        #expect(model.selectedExerciseSets[0].sessionID == step.workout.id)
+        #expect(model.selectedExerciseSets[0].set.reps == 8)
         #expect(model.errorMessage == nil && !model.hasMore)
+        model.exerciseID = BuiltInCatalog.pushup
+        await model.refresh(reset: true)
+        #expect(model.selectedExerciseSets.count == 1 && model.selectedExerciseSets[0].set.reps == 30)
+        #expect(model.summaries[0].totalReps == 38)
+        model.exerciseID = nil
+        await model.refresh(reset: true)
+        #expect(model.selectedExerciseSets.isEmpty && model.progress.isEmpty)
+        #expect(model.summaries[0].totalReps == 38)
+        model.exerciseID = BuiltInCatalog.squatBodyweight
+        await model.refresh(reset: true)
         await model.delete(id: step.workout.id)
-        #expect(model.summaries.isEmpty && model.progress.isEmpty)
+        #expect(model.summaries.isEmpty && model.progress.isEmpty && model.selectedExerciseSets.isEmpty)
         #expect(try await db.healthExports.export(entity: .workout, entityID: step.workout.id)?.syncVersion == 2)
     }
 

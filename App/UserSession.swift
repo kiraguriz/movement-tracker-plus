@@ -87,6 +87,7 @@ struct AppGate: View {
         .animation(.default, value: session.profile == nil)
         .environment(\.appEnvironment, environment)
         .environment(session)
+        .tint(TraceTheme.blue)
         .errorAlert($session.failure)
         .task(id: attempt) { await session.run() }
         // Writes whatever Health could not take earlier: at launch and every time the app comes back.

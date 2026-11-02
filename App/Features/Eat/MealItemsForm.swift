@@ -159,56 +159,97 @@ struct MealItemsForm<Header: View>: View {
     @ViewBuilder var header: Header
 
     var body: some View {
-        Form {
-            header
-            Section {
-                Picker("Meal", selection: $model.slot) {
-                    ForEach(MealSlot.allCases, id: \.self) { slot in
-                        Text(slot.title).tag(slot)
+        ScrollView {
+            VStack(spacing: 12) {
+                header
+                VStack(spacing: 0) {
+                    ForEach(Array(model.items.enumerated()), id: \.element.id) { index, draft in
+                        if index > 0 { Divider().padding(.horizontal, 18) }
+                        MealItemSection(draft: draft, index: index, canRemove: model.items.count > 1) {
+                            withAnimation { model.remove(draft) }
+                        } retry: {
+                            Task { await model.retryLookup(draft) }
+                        }
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 10)
                     }
                 }
-                .frame(minHeight: 44)
-                .accessibilityIdentifier(AccessibilityID.mealSlot)
-            }
-            ForEach(Array(model.items.enumerated()), id: \.element.id) { index, draft in
-                MealItemSection(draft: draft, index: index, canRemove: model.items.count > 1) {
-                    withAnimation { model.remove(draft) }
-                } retry: {
-                    Task { await model.retryLookup(draft) }
+                .background(TraceTheme.card, in: .rect(cornerRadius: 24))
+                Card {
+                    VStack(alignment: .leading, spacing: 14) {
+                        totalRow
+                        macroTotals
+                        Picker("Meal", selection: $model.slot) {
+                            ForEach(MealSlot.allCases, id: \.self) { slot in
+                                Text(slot.title).tag(slot)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .frame(minHeight: 44)
+                        .accessibilityIdentifier(AccessibilityID.mealSlot)
+                    }
                 }
             }
-            Section {
-                totalRow
-            }
+            .padding(16)
         }
+        .background(TraceTheme.paper)
         .scrollDismissesKeyboard(.interactively)
         .testIdentifier(AccessibilityID.mealItems)
     }
 
     private var totalRow: some View {
         let total = model.energy
-        return HStack {
-            Text("Total")
-                .font(.headline)
-            Spacer(minLength: 8)
+        return HStack(alignment: .firstTextBaseline, spacing: 8) {
             Group {
                 if let kilocalories = total.kilocalories {
-                    let text = UnitFormatter.energy(kilocalories)
-                    Text(total.isPartial ? String(localized: "At least \(text)") : text)
+                    Text(verbatim: (total.isPartial ? "≥ " : "") + UnitFormatter.number(kilocalories))
                 } else {
                     Text(verbatim: "–")
                 }
             }
-            .font(.headline)
+            .font(TraceTheme.numeral(52))
             .monospacedDigit()
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            Text("kcal")
+                .font(TraceTheme.label)
+                .foregroundStyle(TraceTheme.secondary)
+            Spacer(minLength: 0)
         }
         .frame(minHeight: 44)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier(AccessibilityID.mealItemsTotal)
     }
+
+    private var macroTotals: some View {
+        HStack(spacing: 16) {
+            ForEach(Macro.allCases) { macro in
+                let values: [Double] = model.items.compactMap { draft in
+                    switch macro {
+                    case .protein: NumberInput(draft.proteinText).value
+                    case .carbs: NumberInput(draft.carbsText).value
+                    case .fat: NumberInput(draft.fatText).value
+                    }
+                }
+                let amountText = values.isEmpty ? "–" : (values.count < model.items.count ? "≥ " : "") + UnitFormatter.grams(values.reduce(0, +))
+                HStack(spacing: 5) {
+                    RoundedRectangle(cornerRadius: 2).fill(macro.color).frame(width: 8, height: 8)
+                    Text(verbatim: amountText)
+                        .monospacedDigit()
+                }
+                .font(.subheadline)
+                .foregroundStyle(TraceTheme.secondary)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text(macro.title))
+                .accessibilityValue(Text(verbatim: amountText))
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
 }
 
 private struct MealItemSection: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Bindable var draft: MealDraft
     let index: Int
     let canRemove: Bool
@@ -216,17 +257,20 @@ private struct MealItemSection: View {
     let retry: () -> Void
 
     var body: some View {
-        Section {
-            TextField("Name", text: $draft.name)
-                .frame(minHeight: 44)
-                .accessibilityIdentifier(AccessibilityID.mealItemName(index))
-            NumberField(
-                title: "Amount",
-                text: $draft.gramsText,
-                unit: draft.amountSymbol,
-                isInvalid: draft.input(.grams).isInvalid,
-                identifier: AccessibilityID.mealItemGrams(index)
-            )
+        VStack(alignment: .leading, spacing: 4) {
+            Group {
+                if dynamicTypeSize.isAccessibilitySize {
+                    VStack(alignment: .leading, spacing: 4) {
+                        nameField
+                        amountField
+                    }
+                } else {
+                    HStack(spacing: 10) {
+                        nameField
+                        amountField
+                    }
+                }
+            }
             lookupRow
             DisclosureGroup(isExpanded: $draft.showsNutrients) {
                 NumberField(
@@ -236,22 +280,51 @@ private struct MealItemSection: View {
                 macroField(.protein, field: .protein, text: $draft.proteinText)
                 macroField(.carbs, field: .carbs, text: $draft.carbsText)
                 macroField(.fat, field: .fat, text: $draft.fatText)
+                if canRemove {
+                    Button(role: .destructive, action: remove) {
+                        Label("Remove", systemImage: "minus.circle")
+                    }
+                    .frame(minHeight: 44)
+                    .accessibilityIdentifier(AccessibilityID.mealItemRemove(index))
+                }
             } label: {
                 summary
             }
             .frame(minHeight: 44)
-            if canRemove {
-                Button(role: .destructive, action: remove) {
-                    Label("Remove", systemImage: "minus.circle")
-                }
-                .frame(minHeight: 44)
-                .accessibilityIdentifier(AccessibilityID.mealItemRemove(index))
-            }
         }
         .onChange(of: draft.gramsText) { draft.amountChanged() }
     }
 
     // MARK: Pieces
+
+    private var nameField: some View {
+        TextField("Name", text: $draft.name)
+            .font(.body)
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .accessibilityIdentifier(AccessibilityID.mealItemName(index))
+    }
+
+    private var amountField: some View {
+        HStack(spacing: 4) {
+            TextField("Amount", text: $draft.gramsText)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .font(TraceTheme.numeral(24))
+                .frame(minWidth: 50, maxWidth: 70, minHeight: 44)
+                .accessibilityLabel(Text("Amount \(draft.amountSymbol)"))
+                .accessibilityIdentifier(AccessibilityID.mealItemGrams(index))
+            Text(draft.amountSymbol)
+                .font(.caption)
+                .foregroundStyle(TraceTheme.secondary)
+            if draft.input(.grams).isInvalid {
+                Image(systemName: "exclamationmark.circle.fill")
+                    .foregroundStyle(.red)
+                    .accessibilityLabel("Invalid value")
+            }
+        }
+        .padding(.horizontal, 12)
+        .background(TraceTheme.paper, in: .capsule)
+    }
 
     @ViewBuilder
     private var lookupRow: some View {
@@ -272,7 +345,7 @@ private struct MealItemSection: View {
                 Label(food.brand.map { "\(food.name), \($0)" } ?? food.name, systemImage: "checkmark.circle")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .frame(minHeight: 44, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityElement(children: .combine)
                     .accessibilityIdentifier(AccessibilityID.mealItemLookup(index))
             }
@@ -306,7 +379,7 @@ private struct MealItemSection: View {
     private var summary: some View {
         HStack(spacing: 10) {
             Text(NumberInput(draft.kcalText).value.map { UnitFormatter.energy($0) } ?? "–")
-                .font(.body.weight(.semibold))
+                .font(TraceTheme.numeral(26))
             Spacer(minLength: 4)
             ForEach(Macro.allCases) { macro in
                 HStack(spacing: 3) {

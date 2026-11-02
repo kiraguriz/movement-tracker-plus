@@ -2,44 +2,53 @@
 import AppKit
 import Foundation
 
-// Original vector artwork. No external assets or image packages. Run from the repository root.
+// Trace artwork from the redesign, drawn natively. Run from the repository root.
 let size = 1024
-let context = CGContext(data: nil, width: size, height: size, bitsPerComponent: 8,
-    bytesPerRow: size * 4, space: CGColorSpaceCreateDeviceRGB(),
-    bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)!
-NSGraphicsContext.saveGraphicsState()
-NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: false)
-NSColor(srgbRed: 0.035, green: 0.075, blue: 0.12, alpha: 1).setFill()
-NSBezierPath(rect: NSRect(x: 0, y: 0, width: size, height: size)).fill()
+let variants: [(filename: String, background: UInt32, trace: UInt32, plus: UInt32)] = [
+    ("AppIcon.png", 0x2B4BFF, 0xFFFFFF, 0xFFB020),
+    ("AppIcon-Dark.png", 0x0B0D12, 0x8C9DFF, 0xFFB020),
+    ("AppIcon-Tinted.png", 0x25272D, 0xDADDE5, 0xDADDE5)
+]
 
-let glow = NSBezierPath(ovalIn: NSRect(x: 150, y: 150, width: 724, height: 724))
-NSGradient(starting: NSColor(srgbRed: 0.06, green: 0.22, blue: 0.27, alpha: 1),
-           ending: NSColor(srgbRed: 0.035, green: 0.075, blue: 0.12, alpha: 1))!
-    .draw(in: glow, relativeCenterPosition: NSPoint(x: 0.3, y: 0.5))
-
-let movement = NSBezierPath()
-movement.move(to: NSPoint(x: 222, y: 317))
-movement.line(to: NSPoint(x: 373, y: 650))
-movement.line(to: NSPoint(x: 513, y: 416))
-movement.line(to: NSPoint(x: 653, y: 650))
-movement.line(to: NSPoint(x: 802, y: 317))
-movement.lineWidth = 84
-movement.lineJoinStyle = .round
-movement.lineCapStyle = .round
-NSColor(srgbRed: 0.2, green: 0.89, blue: 0.77, alpha: 1).setStroke()
-movement.stroke()
-
-NSColor(srgbRed: 0.7, green: 1, blue: 0.84, alpha: 1).setFill()
-for point in [NSPoint(x: 373, y: 650), NSPoint(x: 513, y: 416), NSPoint(x: 653, y: 650)] {
-    NSBezierPath(ovalIn: NSRect(x: point.x - 22, y: point.y - 22, width: 44, height: 44)).fill()
+func color(_ hex: UInt32) -> CGColor {
+    NSColor(srgbRed: CGFloat((hex >> 16) & 0xFF) / 255,
+        green: CGFloat((hex >> 8) & 0xFF) / 255,
+        blue: CGFloat(hex & 0xFF) / 255, alpha: 1).cgColor
 }
-let plus = NSBezierPath()
-plus.move(to: NSPoint(x: 764, y: 735)); plus.line(to: NSPoint(x: 764, y: 855))
-plus.move(to: NSPoint(x: 704, y: 795)); plus.line(to: NSPoint(x: 824, y: 795))
-plus.lineWidth = 30; plus.lineCapStyle = .round
-NSColor(srgbRed: 0.7, green: 1, blue: 0.84, alpha: 1).setStroke(); plus.stroke()
-NSGraphicsContext.restoreGraphicsState()
-let output = URL(fileURLWithPath: "App/Assets.xcassets/AppIcon.appiconset/AppIcon.png")
-let bitmap = NSBitmapImageRep(cgImage: context.makeImage()!)
-try bitmap.representation(using: .png, properties: [:])!.write(to: output)
-print(output.path)
+
+for variant in variants {
+    let context = CGContext(data: nil, width: size, height: size, bitsPerComponent: 8,
+        bytesPerRow: size * 4, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+        bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)!
+    context.setFillColor(color(variant.background))
+    context.fill(CGRect(x: 0, y: 0, width: size, height: size))
+    context.translateBy(x: 0, y: CGFloat(size))
+    context.scaleBy(x: CGFloat(size) / 112, y: -CGFloat(size) / 112)
+    context.setLineCap(.round)
+    context.setLineJoin(.round)
+
+    context.move(to: CGPoint(x: 14, y: 40))
+    context.addLine(to: CGPoint(x: 30, y: 40))
+    context.addCurve(to: CGPoint(x: 56, y: 82),
+        control1: CGPoint(x: 40, y: 40), control2: CGPoint(x: 42, y: 82))
+    context.addCurve(to: CGPoint(x: 82, y: 40),
+        control1: CGPoint(x: 70, y: 82), control2: CGPoint(x: 72, y: 40))
+    context.addLine(to: CGPoint(x: 98, y: 40))
+    context.setLineWidth(9)
+    context.setStrokeColor(color(variant.trace))
+    context.strokePath()
+
+    context.move(to: CGPoint(x: 92, y: 13))
+    context.addLine(to: CGPoint(x: 92, y: 27))
+    context.move(to: CGPoint(x: 85, y: 20))
+    context.addLine(to: CGPoint(x: 99, y: 20))
+    context.setLineWidth(5)
+    context.setStrokeColor(color(variant.plus))
+    context.strokePath()
+
+    // Leave corners square so the system applies the current app icon mask.
+    let output = URL(fileURLWithPath: "App/Assets.xcassets/AppIcon.appiconset/\(variant.filename)")
+    let bitmap = NSBitmapImageRep(cgImage: context.makeImage()!)
+    try bitmap.representation(using: .png, properties: [:])!.write(to: output)
+    print(output.path)
+}

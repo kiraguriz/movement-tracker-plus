@@ -147,18 +147,30 @@ struct MealPhotoSheet: View {
                         Button(role: .close) { dismiss() }
                             .accessibilityIdentifier(AccessibilityID.photoClose)
                     }
+                }
+                .safeAreaInset(edge: .bottom) {
                     if model.phase == .review, let items = model.items {
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button(role: .confirm) {
-                                Task {
-                                    if await items.save(using: context.log) { onSaved() }
-                                }
+                        Button {
+                            Task {
+                                if await items.save(using: context.log) { onSaved() }
                             }
-                            .disabled(!items.canSave)
-                            .accessibilityIdentifier(AccessibilityID.photoSave)
+                        } label: {
+                            Group {
+                                if items.isSaving { ProgressView() } else { Text("Log meal") }
+                            }
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, minHeight: 44)
                         }
+                        .buttonStyle(.glassProminent)
+                        .controlSize(.large)
+                        .disabled(!items.canSave)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(.bar)
+                        .accessibilityIdentifier(AccessibilityID.photoSave)
                     }
                 }
+                .background(TraceTheme.paper)
         }
         .task { await model.run() }
         .onDisappear { model.cancel() }
@@ -185,6 +197,7 @@ struct MealPhotoSheet: View {
             }
         }
         .testIdentifier(AccessibilityID.mealPhoto)
+        .interactiveDismissDisabled(model.items?.isSaving == true)
     }
 
     // MARK: Phases
@@ -200,6 +213,7 @@ struct MealPhotoSheet: View {
             if let items = model.items {
                 MealItemsForm(model: items) { reviewHeader }
                     .task { await items.lookUpPending() }
+                    .errorAlert(Binding(get: { items.errorMessage }, set: { items.errorMessage = $0 }))
             }
         case .noFood:
             ContentUnavailableView {
@@ -278,7 +292,7 @@ struct MealPhotoSheet: View {
             .padding(16)
             .frame(maxWidth: .infinity)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(TraceTheme.paper)
     }
 
     private var estimating: some View {
@@ -288,7 +302,7 @@ struct MealPhotoSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(maxHeight: 260)
-                    .clipShape(.rect(cornerRadius: 20))
+                    .clipShape(.rect(cornerRadius: 28))
                     .accessibilityHidden(true)
             }
             ProgressView()
@@ -298,21 +312,22 @@ struct MealPhotoSheet: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemGroupedBackground))
+        .background(TraceTheme.paper)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier(AccessibilityID.photoEstimating)
     }
 
     @ViewBuilder
     private var reviewHeader: some View {
-        Section {
+        VStack(alignment: .leading, spacing: 12) {
             if let thumbnail = model.thumbnail {
                 Image(uiImage: thumbnail)
                     .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: 220)
-                    .clipShape(.rect(cornerRadius: 16))
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 232)
+                    .clipped()
+                    .clipShape(.rect(cornerRadius: 28))
                     .accessibilityHidden(true)
                     .accessibilityIdentifier(AccessibilityID.photoThumbnail)
             }
@@ -322,14 +337,15 @@ struct MealPhotoSheet: View {
                     .foregroundStyle(.secondary)
             }
             if model.saw != nil {
-                Button("What Muse saw") { isShowingSaw = true }
+                Button { isShowingSaw = true } label: {
+                    Label("What Muse saw", systemImage: "eye")
+                }
                     .frame(minHeight: 44)
                     .accessibilityIdentifier(AccessibilityID.photoSaw)
             }
         }
         if context.environment.coachIsStub {
-            Section { StubBadge() }
-                .listRowBackground(Color.clear)
+            StubBadge()
         }
     }
 }

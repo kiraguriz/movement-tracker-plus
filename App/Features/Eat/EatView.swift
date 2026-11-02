@@ -30,7 +30,8 @@ struct EatView: View {
                     timeZone: model.timeZone,
                     selection: $model.selectedDay
                 )
-                .padding(.vertical, 4)
+                .padding(.vertical, 6)
+                .background(TraceTheme.paper)
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -125,7 +126,7 @@ struct EatView: View {
                 .frame(maxWidth: 380)
                 mealList(includesSummary: false)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(TraceTheme.paper)
         } else {
             mealList(includesSummary: true)
         }
@@ -159,6 +160,8 @@ struct EatView: View {
                     Section {
                         ForEach(entries) { meal in
                             MealRow(meal: meal)
+                                .listRowBackground(TraceTheme.card)
+                                .listRowInsets(EdgeInsets(top: 10, leading: 18, bottom: 10, trailing: 18))
                                 .contentShape(.rect)
                                 .onTapGesture { editing = meal }
                                 .accessibilityAddTraits(.isButton)
@@ -183,6 +186,10 @@ struct EatView: View {
                 }
             }
         }
+        .listStyle(.insetGrouped)
+        .listSectionSpacing(12)
+        .scrollContentBackground(.hidden)
+        .background(TraceTheme.paper)
     }
 
     private var emptyDay: some View {
@@ -205,12 +212,18 @@ struct EatView: View {
         let known = entries.compactMap { $0.nutrients.energy?.kilocalories }
         return HStack {
             Text(slot.title)
+                .font(TraceTheme.label)
             Spacer()
             if !known.isEmpty {
-                Text(UnitFormatter.energy(known.reduce(0, +)))
+                Text(verbatim: (known.count < entries.count ? "≥ " : "") + UnitFormatter.number(known.reduce(0, +)))
+                    .font(TraceTheme.numeral(20))
                     .monospacedDigit()
+            } else {
+                Text(verbatim: "–")
             }
         }
+        .foregroundStyle(TraceTheme.secondary)
+        .textCase(nil)
     }
 }
 
@@ -228,27 +241,44 @@ private struct MealRow: View {
                     if meal.grams.grams > 0 {
                         Text(UnitFormatter.foodAmount(meal.amount, unit: meal.amountUnit))
                     }
-                    ForEach(Macro.allCases) { macro in
-                        HStack(spacing: 3) {
-                            Circle().fill(macro.color).frame(width: 6, height: 6)
-                            Text(macro.grams(in: meal.nutrients).map { UnitFormatter.number($0) } ?? "–")
-                        }
-                    }
+                    macroBar
                 }
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(TraceTheme.secondary)
                 .monospacedDigit()
             }
             Spacer(minLength: 8)
-            Text(meal.nutrients.energy.map { UnitFormatter.energy($0.kilocalories) } ?? "–")
-                .font(.body.weight(.semibold))
+            Text(meal.nutrients.energy.map { UnitFormatter.number($0.kilocalories) } ?? "–")
+                .font(TraceTheme.numeral(28))
                 .monospacedDigit()
+                .foregroundStyle(TraceTheme.ink)
         }
         .frame(minHeight: 44)
-        // The macro numbers are told apart by color on screen; VoiceOver gets them by name.
+        // VoiceOver keeps the entry's nutrient quantities available alongside the visual proportions.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(meal.label))
         .accessibilityValue(Text(spokenSummary))
+    }
+
+    /// The proportions come from the nutrients on this entry; incomplete data has no decorative estimate.
+    @ViewBuilder
+    private var macroBar: some View {
+        if let protein = meal.nutrients.protein?.grams,
+           let carbs = meal.nutrients.carbohydrate?.grams,
+           let fat = meal.nutrients.fat?.grams,
+           protein * 4 + carbs * 4 + fat * 9 > 0 {
+            let energy = protein * 4 + carbs * 4 + fat * 9
+            GeometryReader { geometry in
+                HStack(spacing: 1) {
+                    Rectangle().fill(TraceTheme.blue).frame(width: max(0, geometry.size.width - 2) * protein * 4 / energy)
+                    Rectangle().fill(TraceTheme.sky).frame(width: max(0, geometry.size.width - 2) * carbs * 4 / energy)
+                    Rectangle().fill(TraceTheme.amber).frame(width: max(0, geometry.size.width - 2) * fat * 9 / energy)
+                }
+            }
+            .frame(width: 64, height: 6)
+            .clipShape(.capsule)
+            .accessibilityHidden(true)
+        }
     }
 
     private var spokenSummary: String {

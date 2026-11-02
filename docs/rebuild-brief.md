@@ -184,6 +184,16 @@ Workout_movement_tracker+/
   `systemPressureState`, consider deferred start.
 
 ### 5.4 Navigation and screens (SwiftUI, iOS 26 design)
+The UI now follows the user's **Movement Tracker+ Redesign.html** (2026-11-01), the Trace design:
+paper surfaces, ink/ultramarine hero cards, SF Pro compressed heavy numerals, expanded metric labels,
+and shape-coded rep marks. Use native tabs, glass actions, Dynamic Type and the en/zh-Hans catalog.
+The HTML's numerical examples and generated curves are reference content, not application data.
+
+Live Trace samples carry capture timestamps from MotionCore; review markers anchor to the matching
+rep's measured bottom inside its time interval. The trace is bounded to 3,600 in-memory samples and is
+available in the immediate set review. Saved history retains rep metrics, but does not invent a waveform
+or start a new Muse request when opened. Nutrition cards preserve unknown and partial totals.
+
 - `TabView`: **Today · Train · Eat · Me**, plus an "Ask Coach" bar as the iOS 26 tab-view bottom
   accessory (verify modifier name `tabViewBottomAccessory`), opening the Coach sheet from anywhere.
 - Train → choose exercise → **Live Set** (`fullScreenCover`, camera island) → **Set Review** sheet →

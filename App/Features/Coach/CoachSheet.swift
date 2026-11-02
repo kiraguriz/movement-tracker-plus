@@ -50,6 +50,9 @@ struct CoachSheet: View {
                 }
                 .errorAlert($model.errorMessage)
         }
+        .tint(TraceTheme.blue)
+        .presentationBackground(TraceTheme.paper)
+        .presentationDragIndicator(.visible)
         .task { await model.run() }
         .onDisappear { model.stop() }
         .sheet(isPresented: $isShowingThreads) { CoachThreadList(model: model) }

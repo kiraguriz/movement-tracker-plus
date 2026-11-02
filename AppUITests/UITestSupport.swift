@@ -101,19 +101,24 @@ class AppUITestCase: XCTestCase {
         if seed == .none {
             XCTAssertTrue(element(ID.onboarding, in: app).waitForExistence(timeout: 20), "onboarding did not appear")
         } else {
-            XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 20), "tab bar did not appear")
+            XCTAssertTrue(waitUntil(timeout: 20) {
+                app.tabBars.firstMatch.exists || ID.tabs.allSatisfy { app.cells[$0].exists }
+            }, "the native tab bar or sidebar tabs did not appear")
         }
         return app
     }
 
     // MARK: Lookups
 
-    /// Tab bar items are found by position: identifiers set on `Tab` don't reliably reach the tab bar button. On the
+    /// Native sidebar tabs expose stable identifiers on cells. Tab bar items are found by position: identifiers
+    /// set on `Tab` don't reliably reach the tab bar button. On the
     /// iPhone Duo the tabs form a side rail whose buttons are not children of the tab bar: they are the toolbar
     /// buttons at the bottom of the bar's frame, found by where they sit and then by their label, because the
     /// toolbar's other buttons change with the selected tab.
     @MainActor
     func tabButton(_ index: Int, in app: XCUIApplication) -> XCUIElement {
+        let sidebarTab = app.cells[ID.tabs[index]]
+        if sidebarTab.exists { return sidebarTab }
         let bar = app.tabBars.firstMatch
         XCTAssertTrue(bar.waitForExistence(timeout: 10), "no tab bar")
         var tab = bar.buttons.element(boundBy: index)
@@ -172,12 +177,25 @@ class AppUITestCase: XCTestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 10), "field \(field) not found")
         let app = XCUIApplication()
         let keyboard = app.keyboards.firstMatch
-        // XCTest's keyboard frame excludes the predictive bar on some keyboards. Keep the field
-        // clear of that bar too, and start the swipe in the visible form rather than on the keyboard.
-        for _ in 0..<3 where keyboard.exists && field.frame.maxY > keyboard.frame.minY - 64 {
+        // XCTest's keyboard frame excludes the predictive bar on some keyboards. The onboarding
+        // action also rises above the keyboard, so start each drag inside the form above both.
+        for _ in 0..<3 {
             let window = app.windows.firstMatch.frame
-            let startY = min(keyboard.frame.minY - 90, window.maxY - 120)
-            let upperLimit = window.minY + 80
+            var formBottom = keyboard.exists ? keyboard.frame.minY - 64 : window.maxY - 80
+            for id in [ID.onboardingNext, ID.onboardingFinish] {
+                let action = app.buttons[id]
+                if action.exists {
+                    let actionFrame = action.frame
+                    if !actionFrame.isEmpty, actionFrame.intersects(window) {
+                        formBottom = min(formBottom, actionFrame.minY)
+                    }
+                }
+            }
+            formBottom -= 16
+            guard field.frame.maxY > formBottom else { break }
+            let navigationBar = app.navigationBars.firstMatch
+            let upperLimit = navigationBar.exists ? max(window.minY + 80, navigationBar.frame.maxY + 12) : window.minY + 80
+            let startY = formBottom
             guard startY > upperLimit + 30 else { break }
             let origin = app.coordinate(withNormalizedOffset: .zero)
             let start = origin.withOffset(CGVector(dx: window.midX, dy: startY))
@@ -261,15 +279,41 @@ class AppUITestCase: XCTestCase {
         } else {
             let outside = app.otherElements["PopoverDismissRegion"]
             XCTAssertTrue(outside.waitForExistence(timeout: 10), "the dialog cannot be dismissed")
-            outside.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap()
+            let presented = app.popovers.firstMatch.exists ? app.popovers.firstMatch : app.sheets.firstMatch
+            XCTAssertTrue(presented.waitForExistence(timeout: 10), "the presented dialog was not found")
+            let bounds = outside.frame.insetBy(dx: 20, dy: 20)
+            let dialog = presented.frame.insetBy(dx: -12, dy: -12)
+            // The native popover may sit at the top of the screen; choose the centre of actual free space.
+            let spaces = [
+                CGRect(x: bounds.minX, y: max(bounds.minY, dialog.maxY), width: bounds.width, height: max(0, bounds.maxY - dialog.maxY)),
+                CGRect(x: bounds.minX, y: bounds.minY, width: bounds.width, height: max(0, dialog.minY - bounds.minY)),
+                CGRect(x: bounds.minX, y: bounds.minY, width: max(0, dialog.minX - bounds.minX), height: bounds.height),
+                CGRect(x: max(bounds.minX, dialog.maxX), y: bounds.minY, width: max(0, bounds.maxX - dialog.maxX), height: bounds.height)
+            ]
+            guard let space = spaces.max(by: { $0.width * $0.height < $1.width * $1.height }),
+                  space.width > 0, space.height > 0 else {
+                XCTFail("the dialog has no outside dismissal area")
+                return
+            }
+            outside.coordinate(withNormalizedOffset: .zero)
+                .withOffset(CGVector(dx: space.midX - outside.frame.minX, dy: space.midY - outside.frame.minY))
+                .tap()
         }
     }
 
-    /// Picks an option of a menu-style picker.
+    /// Picks an option in the native segmented or menu presentation of a picker.
     @MainActor
     func choose(_ option: String, fromPicker id: String, in app: XCUIApplication) {
         let picker = element(id, in: app)
         XCTAssertTrue(picker.waitForExistence(timeout: 10), "picker \(id) not found")
+        let segmented = app.segmentedControls[id]
+        if segmented.exists {
+            let item = segmented.buttons[option]
+            XCTAssertTrue(item.waitForExistence(timeout: 10), "option \(option) not found in picker \(id)")
+            item.tap()
+            XCTAssertTrue(waitUntil { item.isSelected }, "option \(option) was not selected in picker \(id)")
+            return
+        }
         picker.tap()
         let item = app.buttons[option]
         XCTAssertTrue(item.waitForExistence(timeout: 10), "option \(option) not found")

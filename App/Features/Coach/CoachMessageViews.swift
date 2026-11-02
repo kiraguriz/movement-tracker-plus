@@ -42,7 +42,7 @@ struct CoachMessageRow: View {
                 .foregroundStyle(.white)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(Color.accentColor, in: .rect(cornerRadius: 20))
+                .background(TraceTheme.night, in: UnevenRoundedRectangle(topLeadingRadius: 22, bottomLeadingRadius: 22, bottomTrailingRadius: 6, topTrailingRadius: 22))
                 .opacity(message.status == .sent || model.activeMessageID == message.id ? 1 : 0.7)
                 .frame(maxWidth: 560, alignment: .trailing)
                 .textSelection(.enabled)
@@ -77,14 +77,14 @@ struct CoachMessageRow: View {
     private var assistantRow: some View {
         let metadata = message.coachMetadata
         return VStack(alignment: .leading, spacing: 10) {
+            if let looked = metadata?.looked, !looked.isEmpty {
+                ToolChips(runs: looked, isRunning: false)
+            }
             if !message.content.isEmpty {
                 Text(AttributedString(coachText: message.content))
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityIdentifier(AccessibilityID.coachAssistantMessage)
-            }
-            if let looked = metadata?.looked, !looked.isEmpty {
-                ToolChips(runs: looked, isRunning: false)
             }
             ForEach(metadata?.proposals ?? []) { proposal in
                 ProposalCard(proposal: proposal, message: message, model: model, environment: environment, units: UnitFormatter(system: unitSystem), openTrain: openTrain)
@@ -138,7 +138,7 @@ struct ToolChips: View {
                 .font(.caption.weight(.medium))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(.quaternary, in: .capsule)
+                .background(TraceTheme.blue.opacity(0.1), in: .capsule)
             }
         }
     }
@@ -151,12 +151,13 @@ struct ToolChip: View {
         Label {
             Text(title)
         } icon: {
-            Image(systemName: symbol)
+            Image(systemName: symbol).foregroundStyle(TraceTheme.blue)
         }
         .font(.caption.weight(.medium))
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(.quaternary, in: .capsule)
+        .background(TraceTheme.card, in: .capsule)
+        .overlay { Capsule().strokeBorder(TraceTheme.line, lineWidth: 0.5) }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("Coach looked at \(title)"))
         .accessibilityIdentifier(AccessibilityID.coachToolChip)

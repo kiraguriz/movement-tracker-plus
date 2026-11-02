@@ -3,6 +3,21 @@ import XCTest
 /// The app shell: tabs, the Ask Coach bar and the layout in regular width.
 final class MovementTrackerUITests: AppUITestCase {
     @MainActor
+    func testTodayCardsOpenTheirDetailScreens() {
+        let app = launchApp(seed: .sample)
+        let calories = element(ID.todayKcal, in: app)
+        XCTAssertTrue(calories.waitForExistence(timeout: 10))
+        XCTAssertTrue(element("today.macro.protein", in: app).exists, "nutrition metrics remain individually accessible")
+        calories.tap()
+        XCTAssertTrue(element(ID.screens[2], in: app).waitForExistence(timeout: 10))
+        openTab(0, in: app)
+        let workout = element("today.workout", in: app)
+        XCTAssertTrue(workout.waitForExistence(timeout: 10))
+        workout.tap()
+        XCTAssertTrue(app.navigationBars["Workout history"].waitForExistence(timeout: 10))
+    }
+
+    @MainActor
     func testEachTabShowsOnlyItsOwnScreen() {
         let app = launchApp()
 

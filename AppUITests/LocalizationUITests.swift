@@ -20,7 +20,9 @@ final class LocalizationUITests: AppUITestCase {
         XCTAssertTrue(element("today.macro.protein", in: app).label.hasPrefix("蛋白质"))
         XCTAssertTrue(element("today.macro.carbs", in: app).label.hasPrefix("碳水"))
         XCTAssertTrue(element("today.macro.fat", in: app).label.hasPrefix("脂肪"))
-        XCTAssertTrue(app.staticTexts["体重"].waitForExistence(timeout: 5), "weight card title")
+        let latestWeight = element(ID.latestWeight, in: app)
+        XCTAssertTrue(latestWeight.waitForExistence(timeout: 5), "weight value")
+        XCTAssertEqual(latestWeight.label, "体重", "weight accessibility label is not localized")
         XCTAssertTrue(value(of: ID.todayKcal, in: app).contains("千卡"), "energy unit is not localized: \(value(of: ID.todayKcal, in: app))")
 
         openTab(2, in: app)

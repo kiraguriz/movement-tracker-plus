@@ -18,20 +18,26 @@ struct SessionSummaryView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                ViewThatFits(in: .horizontal) {
-                    HStack(alignment: .top, spacing: 20) {
-                        sets.frame(minWidth: 320, maxWidth: .infinity)
-                        debrief.frame(minWidth: 320, maxWidth: .infinity)
-                    }
-                    VStack(spacing: 20) {
+                Group {
+                    if case .off = model.debrief {
                         sets
-                        debrief
+                    } else {
+                        ViewThatFits(in: .horizontal) {
+                            HStack(alignment: .top, spacing: 12) {
+                                sets.frame(minWidth: 320, maxWidth: .infinity)
+                                debrief.frame(minWidth: 320, maxWidth: .infinity)
+                            }
+                            VStack(spacing: 12) {
+                                sets
+                                debrief
+                            }
+                        }
                     }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(TraceTheme.paper)
             .navigationTitle("Summary")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -57,21 +63,60 @@ struct SessionSummaryView: View {
     // MARK: Sets
 
     private var sets: some View {
-        VStack(spacing: 16) {
-            StatTileGrid(minimum: 140) {
-                StatTile(title: "Sets", value: "\(model.workout.setCount)")
-                StatTile(title: "Reps", value: "\(model.workout.totalReps)", identifier: AccessibilityID.summaryReps)
-                if let duration = model.duration {
-                    StatTile(
-                        title: "Time",
-                        value: duration.formatted(.units(allowed: [.hours, .minutes, .seconds], width: .narrow, maximumUnitCount: 2))
-                    )
+        VStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 18) {
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .firstTextBaseline, spacing: 24) {
+                        repTotal
+                        summaryMetrics
+                    }
+                    VStack(alignment: .leading, spacing: 12) {
+                        repTotal
+                        summaryMetrics
+                    }
                 }
+                TraceTally(count: model.workout.totalReps, color: .white.opacity(0.85))
             }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .foregroundStyle(.white)
+            .background(TraceTheme.cobalt, in: .rect(cornerRadius: 28))
             ForEach(exercises) { workoutExercise in
                 exerciseBlock(workoutExercise)
             }
         }
+    }
+
+    private var repTotal: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(model.workout.totalReps, format: .number)
+                .font(TraceTheme.numeral(104))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            Text("Reps").font(TraceTheme.label)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Reps")
+        .accessibilityValue("\(model.workout.totalReps)")
+        .accessibilityIdentifier(AccessibilityID.summaryReps)
+    }
+
+    private var summaryMetrics: some View {
+        HStack(alignment: .top, spacing: 20) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(model.workout.setCount, format: .number).font(TraceTheme.numeral(40))
+                Text("Sets").font(TraceTheme.label)
+            }
+            if let duration = model.duration {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(duration.formatted(.units(allowed: [.hours, .minutes, .seconds], width: .narrow, maximumUnitCount: 2)))
+                        .font(TraceTheme.numeral(32))
+                    Text("Time").font(TraceTheme.label)
+                }
+            }
+        }
+        .foregroundStyle(.white.opacity(0.9))
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var exercises: [WorkoutExercise] {
@@ -82,16 +127,16 @@ struct SessionSummaryView: View {
         let id = workoutExercise.entry.exerciseID
         let name = ExerciseNames.name(id: id, fallback: model.exerciseName(for: id))
         let ordered = workoutExercise.sets.sorted { $0.set.position < $1.set.position }
-        return VStack(alignment: .leading, spacing: 4) {
+        return VStack(alignment: .leading, spacing: 12) {
             Text(name)
                 .font(.headline)
             ForEach(Array(ordered.enumerated()), id: \.element.id) { offset, logged in
                 SetRow(number: offset + 1, logged: logged, units: session.units)
             }
         }
-        .padding(16)
+        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 24))
+        .background(TraceTheme.card, in: .rect(cornerRadius: 28))
     }
 
     // MARK: Debrief
@@ -134,9 +179,9 @@ struct SessionSummaryView: View {
             MuseHeader(isWorking: model.isDebriefRunning)
             content()
         }
-        .padding(16)
+        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 24))
+        .background(TraceTheme.card, in: .rect(cornerRadius: 28))
         .testIdentifier(AccessibilityID.summaryDebrief)
     }
 
@@ -152,7 +197,7 @@ struct SessionSummaryView: View {
             Label {
                 Text(item)
             } icon: {
-                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(TraceTheme.blue)
             }
         }
     }
@@ -163,7 +208,7 @@ struct SessionSummaryView: View {
             Label {
                 Text(concern.detail)
             } icon: {
-                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(TraceTheme.amber)
             }
         }
     }
@@ -182,6 +227,9 @@ struct SessionSummaryView: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(TraceTheme.blue.opacity(0.07), in: .rect(cornerRadius: 20))
     }
 
     @ViewBuilder

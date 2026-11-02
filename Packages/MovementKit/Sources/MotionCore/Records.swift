@@ -226,7 +226,9 @@ public enum MotionEvent: Equatable, Codable, Sendable {
     /// At most one per rep, highest severity first, rate-limited.
     case cue(CueKey)
     /// Live gauge value: 0 at the top, 1 at the bottom of the calibrated range.
-    case signal(Double)
+    /// The capture timestamp shares the coordinate system of `RepRecord` times. Optional for callers
+    /// constructing a standalone event without a pose frame.
+    case signal(Double, at: TimeInterval? = nil)
     /// No movement for the idle time. The engine never ends a set by itself.
     case idle
 }

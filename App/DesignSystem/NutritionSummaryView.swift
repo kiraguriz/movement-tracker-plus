@@ -1,133 +1,127 @@
 import Domain
 import SwiftUI
 
-/// Energy and macros eaten against the targets of a goal. Shared by Today and Eat.
+/// Shared Trace nutrition panel. Unknown and partially known totals keep their original semantics.
 struct NutritionSummaryView: View {
     let total: NutritionDayTotal?
     let goal: Goal?
-    /// Prefix of the accessibility identifiers, for example `today` gives `today.kcal`.
     let idPrefix: String
 
-    @ScaledMetric(relativeTo: .title) private var ringSize = 128.0
-
-    var body: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(alignment: .center, spacing: 24) {
-                ring
-                macroRows
-            }
-            VStack(alignment: .leading, spacing: 20) {
-                ring.frame(maxWidth: .infinity)
-                macroRows
-            }
-        }
-    }
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @ScaledMetric(relativeTo: .largeTitle) private var energySize = 72.0
+    @ScaledMetric(relativeTo: .title) private var macroSize = 32.0
 
     private var hasEntries: Bool { (total?.entryCount ?? 0) > 0 }
-
-    // MARK: Ring
-
     private var kcalEaten: Double? { total?.nutrients.energy?.kilocalories }
 
-    private var ring: some View {
-        let eaten = kcalEaten ?? 0
-        let target = goal.map { Double($0.kcal) }
-        let progress = target.map { $0 > 0 ? min(eaten / $0, 1) : 0 } ?? 0
-        let isOver = target.map { eaten > $0 } ?? false
-        let marker = (total?.entriesMissingEnergy ?? 0) > 0 && kcalEaten != nil
-        let eatenText = (hasEntries && kcalEaten == nil) ? "–" : UnitFormatter.number(eaten)
-        return ZStack {
-            Circle()
-                .stroke(.quaternary, lineWidth: 12)
-            Circle()
-                .trim(from: 0, to: progress)
-                .stroke(isOver ? Color.orange : Color.accentColor, style: StrokeStyle(lineWidth: 12, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .animation(.smooth, value: progress)
-            VStack(spacing: 2) {
-                Text(verbatim: (marker ? "≥ " : "") + eatenText)
-                    .font(.title2.bold())
-                    .monospacedDigit()
-                    .minimumScaleFactor(0.6)
-                    .lineLimit(1)
-                if let target {
-                    Text(verbatim: "/ " + UnitFormatter.energy(target))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .minimumScaleFactor(0.7)
-                        .lineLimit(1)
-                } else {
-                    Text("kcal")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            energy
+            energyBar
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 16) {
+                    ForEach(Macro.allCases) { macroRow($0) }
+                }
+            } else {
+                HStack(alignment: .top, spacing: 12) {
+                    ForEach(Macro.allCases) { macroRow($0) }
                 }
             }
-            .padding(.horizontal, 12)
-            // The ring grows with the text size, but its own numbers stop before they reach the stroke.
-            .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         }
-        .frame(width: ringSize, height: ringSize)
+        .foregroundStyle(TraceTheme.ink)
+    }
+
+    private var energy: some View {
+        let eatenText = (hasEntries && kcalEaten == nil) ? "–" : UnitFormatter.number(kcalEaten ?? 0)
+        let marker = (total?.entriesMissingEnergy ?? 0) > 0 && kcalEaten != nil
+        return HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(verbatim: (marker ? "≥ " : "") + eatenText)
+                .font(TraceTheme.numeral(min(energySize, 100)))
+                .minimumScaleFactor(0.45)
+                .lineLimit(1)
+                .layoutPriority(1)
+            if let goal {
+                Text(verbatim: "/ " + goal.kcal.formatted())
+                    .font(TraceTheme.numeral(34))
+                    .foregroundStyle(TraceTheme.secondary)
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+            }
+            Spacer(minLength: 0)
+            Text(UnitFormatter.symbol(UnitEnergy.kilocalories))
+                .font(TraceTheme.label)
+                .foregroundStyle(TraceTheme.secondary)
+                .fixedSize()
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("Calories"))
-        .accessibilityValue(Text(verbatim: eatenText + (target.map { " / " + UnitFormatter.energy($0) } ?? "")))
+        .accessibilityValue(Text(verbatim: (marker ? "≥ " : "") + eatenText + (goal.map { " / " + UnitFormatter.energy(Double($0.kcal)) } ?? "")))
         .accessibilityIdentifier("\(idPrefix).kcal")
     }
 
-    // MARK: Macros
-
-    private var macroRows: some View {
-        VStack(spacing: 14) {
-            ForEach(Macro.allCases) { macro in
-                macroRow(macro)
+    private var energyBar: some View {
+        GeometryReader { geometry in
+            let energies = Macro.allCases.map { macro in
+                max(0, total.flatMap { macro.grams(in: $0.nutrients) } ?? 0) * (macro == .fat ? 9 : 4)
+            }
+            let denominator = max(Double(goal?.kcal ?? 0), energies.reduce(0, +), 1)
+            HStack(spacing: 2) {
+                ForEach(Array(Macro.allCases.enumerated()), id: \.element) { index, macro in
+                    if energies[index] > 0 {
+                        Rectangle().fill(macro.color)
+                            .frame(width: max(0, (geometry.size.width - 4) * energies[index] / denominator))
+                    }
+                }
+                Spacer(minLength: 0)
             }
         }
-        .frame(maxWidth: .infinity)
+        .frame(height: 14)
+        .background(TraceTheme.line)
+        .clipShape(.capsule)
+        .accessibilityHidden(true)
     }
 
     private func macroRow(_ macro: Macro) -> some View {
         let eaten = total.flatMap { macro.grams(in: $0.nutrients) }
         let target = goal.map { macro.target(in: $0) }
-        let amount = hasEntries && eaten == nil ? 0 : (eaten ?? 0)
         let marker = (total.map { macro.entriesMissing(in: $0) } ?? 0) > 0 && eaten != nil
-        let eatenText = (hasEntries && eaten == nil) ? "–" : UnitFormatter.number(amount)
+        let eatenText = (hasEntries && eaten == nil) ? "–" : UnitFormatter.number(eaten ?? 0)
         return VStack(alignment: .leading, spacing: 6) {
-            let amountText = (marker ? "≥ " : "") + eatenText + (target.map { " / " + UnitFormatter.grams($0) } ?? "")
             ViewThatFits(in: .horizontal) {
-                HStack(alignment: .firstTextBaseline) {
-                    macroTitle(macro)
-                    Spacer(minLength: 8)
-                    macroAmount(amountText)
+                HStack(alignment: .firstTextBaseline, spacing: 3) {
+                    macroAmount((marker ? "≥ " : "") + eatenText)
+                    if let target { macroTarget(target) }
                 }
-                // At large text sizes the amount moves under the name instead of wrapping in the middle.
                 VStack(alignment: .leading, spacing: 2) {
-                    macroTitle(macro)
-                    macroAmount(amountText)
+                    macroAmount((marker ? "≥ " : "") + eatenText)
+                    if let target { macroTarget(target) }
                 }
             }
-            ProgressView(value: target.map { min(amount, $0) } ?? 0, total: max(target ?? 1, 1))
-                .tint(macro.color)
+            HStack(spacing: 6) {
+                RoundedRectangle(cornerRadius: 2).fill(macro.color).frame(width: 8, height: 8)
+                Text(macro.title).font(.caption).foregroundStyle(TraceTheme.secondary)
+            }
         }
-        .accessibilityElement(children: .combine)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(macro.title))
+        .accessibilityValue(Text(verbatim: (marker ? "≥ " : "") + eatenText + (target.map { " / " + UnitFormatter.grams($0) } ?? "")))
         .accessibilityIdentifier("\(idPrefix).macro.\(macro.idString)")
     }
-}
 
-private extension NutritionSummaryView {
-    func macroTitle(_ macro: Macro) -> some View {
-        Text(macro.title)
-            .font(.subheadline.weight(.medium))
+    private func macroAmount(_ value: String) -> some View {
+        Text(verbatim: value).font(TraceTheme.numeral(min(macroSize, 48)))
+            .lineLimit(1).minimumScaleFactor(0.7)
     }
 
-    func macroAmount(_ text: String) -> some View {
-        Text(verbatim: text)
-            .font(.subheadline)
-            .monospacedDigit()
-            .foregroundStyle(.secondary)
+    private func macroTarget(_ target: Double) -> some View {
+        Text(verbatim: "/ " + UnitFormatter.grams(target))
+            .font(.caption).foregroundStyle(TraceTheme.secondary).fixedSize()
     }
 }
 
 extension Macro {
-    /// Stable lowercase name for accessibility identifiers.
     var idString: String {
         switch self {
         case .protein: "protein"

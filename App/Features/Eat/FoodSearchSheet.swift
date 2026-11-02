@@ -103,6 +103,7 @@ struct FoodSearchSheet: View {
     var body: some View {
         NavigationStack {
             content
+                .background(TraceTheme.paper)
                 .navigationTitle("Search food")
                 .navigationBarTitleDisplayMode(.inline)
                 .searchable(text: $model.query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search foods")
@@ -169,6 +170,8 @@ struct FoodSearchSheet: View {
             .foregroundStyle(.primary)
             .accessibilityIdentifier(AccessibilityID.foodResult(item.fdcId))
         }
+        .scrollContentBackground(.hidden)
+        .background(TraceTheme.paper)
         .opacity(model.phase == .searching ? 0.5 : 1)
         .accessibilityIdentifier(AccessibilityID.foodSearchResults)
     }
@@ -191,6 +194,8 @@ struct FoodSearchSheet: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(TraceTheme.paper)
         }
     }
 }

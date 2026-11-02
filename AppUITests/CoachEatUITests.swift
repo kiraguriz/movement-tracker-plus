@@ -469,11 +469,16 @@ final class CoachEatUITests: AppUITestCase {
     @MainActor
     private func replaceText(_ text: String, into field: XCUIElement) {
         XCTAssertTrue(field.waitForExistence(timeout: 10), "field \(field) not found")
+        let app = XCUIApplication()
         // The first tap scrolls the field above the keyboard and focuses it.
         field.tap()
         XCTAssertTrue(
             waitUntil(timeout: 15) { (field.value(forKey: "hasKeyboardFocus") as? Bool) == true },
             "the field did not get keyboard focus"
+        )
+        XCTAssertTrue(
+            waitForStableEditingPosition(of: field, in: app),
+            "the focused field did not settle above the keyboard and meal action"
         )
         field.tap(withNumberOfTaps: 3, numberOfTouches: 1)
         field.typeText(text)
@@ -481,6 +486,38 @@ final class CoachEatUITests: AppUITestCase {
             waitUntil(timeout: 10) { (field.value as? String) == text },
             "the field holds \(String(describing: field.value)), not \(text)"
         )
+    }
+
+    /// Keyboard avoidance and the photo action move together; select text only once their layout has settled.
+    @MainActor
+    private func waitForStableEditingPosition(of field: XCUIElement, in app: XCUIApplication) -> Bool {
+        var stableFrame: CGRect?
+        var stableSince: Date?
+        return waitUntil(timeout: 10) {
+            guard field.exists, field.isHittable,
+                  (field.value(forKey: "hasKeyboardFocus") as? Bool) == true else {
+                stableFrame = nil
+                stableSince = nil
+                return false
+            }
+            let frame = field.frame
+            let keyboard = app.keyboards.firstMatch
+            let save = app.buttons[CoachID.photoSave]
+            guard (!keyboard.exists || frame.maxY <= keyboard.frame.minY - 4),
+                  (!save.exists || frame.maxY <= save.frame.minY - 4) else {
+                stableFrame = nil
+                stableSince = nil
+                return false
+            }
+            if let previous = stableFrame, let since = stableSince,
+               abs(frame.minX - previous.minX) < 0.5, abs(frame.minY - previous.minY) < 0.5,
+               abs(frame.width - previous.width) < 0.5, abs(frame.height - previous.height) < 0.5 {
+                return Date().timeIntervalSince(since) >= 0.4
+            }
+            stableFrame = frame
+            stableSince = Date()
+            return false
+        }
     }
 
     /// Scrolls a lazy list down until the element is in the hierarchy.

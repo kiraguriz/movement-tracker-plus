@@ -1,0 +1,1109 @@
+{
+  "date": "2026-11-01",
+  "scope": "Trace redesign; synthetic in-memory data, local Coach/USDA/Health stubs and replay poses",
+  "delivery_gates": {
+    "swift_package_tests": 1185,
+    "python_tests": 8,
+    "proxy_tests": 146,
+    "proxy_dry_run_bundle": "passed",
+    "debug_simulator_build": "passed",
+    "release_simulator_build": "passed",
+    "release_device_sdk_unsigned_build": "passed",
+    "original_log": "/tmp/mt-redesign-gate.log",
+    "final_affected_builds_log": "/tmp/mt-trace-layout-gate.log",
+    "contrast_builds_log": "/tmp/mt-trace-contrast-gate.log"
+  },
+  "combined_unique_cases": 61,
+  "combined_passed": 61,
+  "combined_failed": 0,
+  "note": "Combined coverage with scoped retests; not a single clean full-suite run. Initial failures are preserved in attempts. The photo diagnostic run preceded the final stable-layout helper retest. Final focused batch logged every test body but Xcode postprocessing stalled; its process was stopped and the complete text log/direct screenshots retained. Final isolated retests finalized normally. Final layout preserves automatic native tabs/rails and removes the exploratory forced sidebar.",
+  "attempts": [
+    {
+      "label": "shell-localization-accessibility",
+      "log_path": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T00-28-14-240Z_pid70014_b69a60f4.log",
+      "counts": {
+        "passed": 8,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "suite": "AccessibilityUITests",
+          "test": "testEatWorksAtTheLargestTextSize",
+          "status": "passed",
+          "duration_seconds": 27.506
+        },
+        {
+          "suite": "AccessibilityUITests",
+          "test": "testMainControlsAreAtLeast44PointsTall",
+          "status": "passed",
+          "duration_seconds": 27.92
+        },
+        {
+          "suite": "AccessibilityUITests",
+          "test": "testOnboardingWorksAtTheLargestTextSize",
+          "status": "passed",
+          "duration_seconds": 41.971
+        },
+        {
+          "suite": "LocalizationUITests",
+          "test": "testOnboardingInChinese",
+          "status": "passed",
+          "duration_seconds": 10.067
+        },
+        {
+          "suite": "LocalizationUITests",
+          "test": "testTodayEatAndMeInChinese",
+          "status": "passed",
+          "duration_seconds": 38.038
+        },
+        {
+          "suite": "MovementTrackerUITests",
+          "test": "testChineseLocalization",
+          "status": "passed",
+          "duration_seconds": 21.19
+        },
+        {
+          "suite": "MovementTrackerUITests",
+          "test": "testEachTabShowsOnlyItsOwnScreen",
+          "status": "passed",
+          "duration_seconds": 48.871
+        },
+        {
+          "suite": "MovementTrackerUITests",
+          "test": "testRegularWidthLandscape",
+          "status": "passed",
+          "duration_seconds": 51.309
+        }
+      ]
+    },
+    {
+      "label": "train-coach-cards",
+      "log_path": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T00-33-39-339Z_pid70014_d26f679d.log",
+      "counts": {
+        "passed": 25,
+        "failed": 2
+      },
+      "tests": [
+        {
+          "suite": "CoachEatUITests",
+          "test": "testAFailedSendStaysVisibleAndCanBeRetried",
+          "status": "passed",
+          "duration_seconds": 20.733
+        },
+        {
+          "suite": "CoachEatUITests",
+          "test": "testAPlanStartedFromTheChatShowsOnATrainTabThatIsAlreadyOpen",
+          "status": "passed",
+          "duration_seconds": 35.658
+        },
+        {
+          "suite": "CoachEatUITests",
+          "test": "testAPlanStartedFromTheChatShowsWhenSwitchingBackToTrain",
+          "status": "passed",
+          "duration_seconds": 54.921
+        },
+        {
+          "suite": "CoachEatUITests",
+          "test": "testAPlanStartsADraftAndTheCardNamesWhatItLeftOut",
+          "status": "passed",
+          "duration_seconds": 27.184
+        },
+        {
+          "suite": "CoachEatUITests",
+          "test": "testChatStreamsAnswerShowsToolChipAndMealProposalLogsToEat",
+          "status": "passed",
+          "duration_seconds": 51.248
+        },
+        {
+          "suite": "CoachEatUITests",
+          "test": "testClosingTheSheetStopsTheReplyAndTheMessageCanBeRetried",
+          "status": "passed",
+          "duration_seconds": 28.925
+        },
+        {
+          "suite": "CoachEatUITests",
+          "test": "testCoachShowsOneUnavailableStateWithoutAProxy",
+          "status": "passed",
+          "duration_seconds": 24.808
+        },
+        {
+          "suite": "CoachEatUITests",
+          "test": "testConsentCardShowsWhileSharingIsOffAndTheToggleOpensTheComposer",
+          "status": "passed",
+          "duration_seconds": 19.268
+        },
+        {
+          "suite": "CoachEatUITests",
+          "test": "testDismissingProposalsWritesNothing",
+          "status": "passed",
+          "duration_seconds": 61.486
+        },
+        {
+          "suite": "CoachEatUITests",
+          "test": "testFoodSearchAddsAResultWithEditedGramsAndEatTotalsChange",
+          "status": "passed",
+          "duration_seconds": 51.599
+        },
+        {
+          "suite": "CoachEatUITests",
+          "test": "testFoodSearchLiquidIsPer100mlAndAMissingNutrientStaysEmpty",
+          "status": "passed",
+          "duration_seconds": 36.434
+        },
+        {
+          "suite": "CoachEatUITests",
+          "test": "testFoodSearchOfflineOffersARetry",
+          "status": "passed",
+          "duration_seconds": 19.193
+        },
+        {
+          "suite": "CoachEatUITests",
+          "test": "testFoodSearchShowsTheBudgetLimitWithoutARetry",
+          "status": "passed",
+          "duration_seconds": 22.056
+        },
+        {
+          "suite": "CoachEatUITests",
+          "test": "testGoalChangeProposalShowsThePlannerNumbersAndAppliesOnConfirm",
+          "status": "passed",
+          "duration_seconds": 54.554
+        },
+        {
+          "suite": "CoachEatUITests",
+          "test": "testMealPhotoAsksForConsentBeforeAnythingIsSent",
+          "status": "passed",
+          "duration_seconds": 19.117
+        },
+        {
+          "suite": "CoachEatUITests",
+          "test": "testMealPhotoEstimatesLooksUpAndSavesEveryItem",
+          "status": "failed",
+          "duration_seconds": 25.995
+        },
+        {
+          "suite": "CoachEatUITests",
+          "test": "testStopEndsTheReplyAndTheMessageCanBeRetried",
+          "status": "passed",
+          "duration_seconds": 25.074
+        },
+        {
+          "suite": "MovementTrackerUITests",
+          "test": "testTodayCardsOpenTheirDetailScreens",
+          "status": "passed",
+          "duration_seconds": 18.652
+        },
+        {
+          "suite": "TrainFlowUITests",
+          "test": "testClosingLiveSetKeepsRecordedCheckpoint",
+          "status": "failed",
+          "duration_seconds": 28.326
+        },
+        {
+          "suite": "TrainFlowUITests",
+          "test": "testDeniedCameraOffersSettings",
+          "status": "passed",
+          "duration_seconds": 28.017
+        },
+        {
+          "suite": "TrainFlowUITests",
+          "test": "testDiscardingAWorkout",
+          "status": "passed",
+          "duration_seconds": 42.683
+        },
+        {
+          "suite": "TrainFlowUITests",
+          "test": "testManualSetThroughToToday",
+          "status": "passed",
+          "duration_seconds": 54.636
+        },
+        {
+          "suite": "TrainFlowUITests",
+          "test": "testNextSetReturnsToTheCamera",
+          "status": "passed",
+          "duration_seconds": 47.061
+        },
+        {
+          "suite": "TrainFlowUITests",
+          "test": "testNoCameraReplaysAutomatically",
+          "status": "passed",
+          "duration_seconds": 24.195
+        },
+        {
+          "suite": "TrainFlowUITests",
+          "test": "testOnlyTheLatestCueIsShown",
+          "status": "passed",
+          "duration_seconds": 32.681
+        },
+        {
+          "suite": "TrainFlowUITests",
+          "test": "testReplayedSquatSetFromLiveSetToToday",
+          "status": "passed",
+          "duration_seconds": 83.892
+        },
+        {
+          "suite": "TrainFlowUITests",
+          "test": "testRestrictedCameraShowsItsState",
+          "status": "passed",
+          "duration_seconds": 23.532
+        }
+      ]
+    },
+    {
+      "label": "health-meals-profile",
+      "log_path": "/tmp/mt-redesign-ui-max.log",
+      "counts": {
+        "passed": 22,
+        "failed": 2
+      },
+      "tests": [
+        {
+          "suite": "HealthUITests",
+          "test": "testDeniedAccessKeepsTheSwitchOff",
+          "status": "passed",
+          "duration_seconds": 72.827
+        },
+        {
+          "suite": "HealthUITests",
+          "test": "testEditingAMealSendsItAgainAndDeletingItRemovesIt",
+          "status": "passed",
+          "duration_seconds": 101.003
+        },
+        {
+          "suite": "HealthUITests",
+          "test": "testFinishedWorkoutIsSentAndTheDraftIsNot",
+          "status": "passed",
+          "duration_seconds": 71.318
+        },
+        {
+          "suite": "HealthUITests",
+          "test": "testMealIsSentOnceHealthIsOnAndEarlierDataIsNot",
+          "status": "passed",
+          "duration_seconds": 58.88
+        },
+        {
+          "suite": "HealthUITests",
+          "test": "testTurningHealthOffStopsExports",
+          "status": "passed",
+          "duration_seconds": 103.231
+        },
+        {
+          "suite": "HealthUITests",
+          "test": "testWeightChangedInTheProfileEditorIsSent",
+          "status": "passed",
+          "duration_seconds": 44.314
+        },
+        {
+          "suite": "HealthUITests",
+          "test": "testWeightIsSent",
+          "status": "passed",
+          "duration_seconds": 37.52
+        },
+        {
+          "suite": "MealFlowUITests",
+          "test": "testAddEditAndDeleteAMealChangesTodaysTotals",
+          "status": "passed",
+          "duration_seconds": 122.206
+        },
+        {
+          "suite": "MealFlowUITests",
+          "test": "testAMealWithMissingValuesIsAllowed",
+          "status": "passed",
+          "duration_seconds": 23.678
+        },
+        {
+          "suite": "MealFlowUITests",
+          "test": "testAnyPastDayCanBeOpenedFromTheStrip",
+          "status": "passed",
+          "duration_seconds": 16.385
+        },
+        {
+          "suite": "MealFlowUITests",
+          "test": "testDecimalCommaIsReadWhereTheRegionUsesIt",
+          "status": "passed",
+          "duration_seconds": 30.015
+        },
+        {
+          "suite": "MealFlowUITests",
+          "test": "testDeletingFromTheEditorAsksForConfirmation",
+          "status": "passed",
+          "duration_seconds": 58.319
+        },
+        {
+          "suite": "MealFlowUITests",
+          "test": "testImplausibleNumbersCannotBeSaved",
+          "status": "passed",
+          "duration_seconds": 50.432
+        },
+        {
+          "suite": "MealFlowUITests",
+          "test": "testMealLoggedOnAPastDayCountsThatDayOnly",
+          "status": "passed",
+          "duration_seconds": 47.763
+        },
+        {
+          "suite": "ProfileFlowUITests",
+          "test": "testChangingUnitsConvertsTheBodyValues",
+          "status": "passed",
+          "duration_seconds": 38.856
+        },
+        {
+          "suite": "ProfileFlowUITests",
+          "test": "testCoachSwitchAsksBeforeSendingData",
+          "status": "failed",
+          "duration_seconds": 24.234
+        },
+        {
+          "suite": "ProfileFlowUITests",
+          "test": "testDatabaseFailureOffersRetry",
+          "status": "passed",
+          "duration_seconds": 8.356
+        },
+        {
+          "suite": "ProfileFlowUITests",
+          "test": "testEditingTheGoalSetsANewActiveGoal",
+          "status": "passed",
+          "duration_seconds": 25.769
+        },
+        {
+          "suite": "ProfileFlowUITests",
+          "test": "testOnboardingLandsOnTodayWithPlannedTargets",
+          "status": "passed",
+          "duration_seconds": 43.434
+        },
+        {
+          "suite": "ProfileFlowUITests",
+          "test": "testPreferNotToSayAsksForTheEquation",
+          "status": "passed",
+          "duration_seconds": 27.65
+        },
+        {
+          "suite": "ProfileFlowUITests",
+          "test": "testPrivacyScreenStatesWhatLeavesThePhone",
+          "status": "passed",
+          "duration_seconds": 24.638
+        },
+        {
+          "suite": "ProfileFlowUITests",
+          "test": "testTrainingLevelIsEditableAndSaved",
+          "status": "passed",
+          "duration_seconds": 23.367
+        },
+        {
+          "suite": "ProfileFlowUITests",
+          "test": "testUnderSixteenIsRejectedAndUnderEighteenIsWarned",
+          "status": "passed",
+          "duration_seconds": 37.563
+        },
+        {
+          "suite": "ProfileFlowUITests",
+          "test": "testUnitsApplyEverywhereAndPrivacyScreenOpens",
+          "status": "failed",
+          "duration_seconds": 27.479
+        }
+      ]
+    },
+    {
+      "label": "photo-diagnostic",
+      "log_path": "/tmp/mt-trace-photo-diagnostic.log",
+      "counts": {
+        "passed": 1,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "suite": "CoachEatUITests",
+          "test": "testMealPhotoEstimatesLooksUpAndSavesEveryItem",
+          "status": "passed",
+          "duration_seconds": 45.262
+        }
+      ]
+    },
+    {
+      "label": "focused-layout-and-screenshots",
+      "log_path": "/tmp/mt-trace-final-focused.log",
+      "counts": {
+        "passed": 8,
+        "failed": 1
+      },
+      "tests": [
+        {
+          "suite": "AccessibilityUITests",
+          "test": "testOnboardingWorksAtTheLargestTextSize",
+          "status": "failed",
+          "duration_seconds": 43.298
+        },
+        {
+          "suite": "CoachEatUITests",
+          "test": "testMealPhotoEstimatesLooksUpAndSavesEveryItem",
+          "status": "passed",
+          "duration_seconds": 43.763
+        },
+        {
+          "suite": "MovementTrackerUITests",
+          "test": "testRegularWidthLandscape",
+          "status": "passed",
+          "duration_seconds": 43.319
+        },
+        {
+          "suite": "MovementTrackerUITests",
+          "test": "testTodayCardsOpenTheirDetailScreens",
+          "status": "passed",
+          "duration_seconds": 19.585
+        },
+        {
+          "suite": "ProfileFlowUITests",
+          "test": "testCoachSwitchAsksBeforeSendingData",
+          "status": "passed",
+          "duration_seconds": 21.045
+        },
+        {
+          "suite": "ProfileFlowUITests",
+          "test": "testUnitsApplyEverywhereAndPrivacyScreenOpens",
+          "status": "passed",
+          "duration_seconds": 29.854
+        },
+        {
+          "suite": "TrainFlowUITests",
+          "test": "testClosingLiveSetKeepsRecordedCheckpoint",
+          "status": "passed",
+          "duration_seconds": 35.48
+        },
+        {
+          "suite": "TrainScreenshotUITests",
+          "test": "testEnglishLandscape",
+          "status": "passed",
+          "duration_seconds": 85.492
+        },
+        {
+          "suite": "TrainScreenshotUITests",
+          "test": "testEnglishPortrait",
+          "status": "passed",
+          "duration_seconds": 81.629
+        }
+      ]
+    },
+    {
+      "label": "final-largest-text",
+      "log_path": "/tmp/mt-trace-ax-final.log",
+      "counts": {
+        "passed": 1,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "suite": "AccessibilityUITests",
+          "test": "testOnboardingWorksAtTheLargestTextSize",
+          "status": "passed",
+          "duration_seconds": 40.024
+        }
+      ]
+    },
+    {
+      "label": "coach-contrast-final",
+      "log_path": "/tmp/mt-trace-contrast-final.log",
+      "counts": {
+        "passed": 1,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "suite": "CoachEatUITests",
+          "test": "testChatStreamsAnswerShowsToolChipAndMealProposalLogsToEat",
+          "status": "passed",
+          "duration_seconds": 57.073
+        }
+      ]
+    },
+    {
+      "label": "native-sidebar-helper-initial",
+      "log_path": "/tmp/mt-trace-landscape-final.log",
+      "counts": {
+        "passed": 0,
+        "failed": 1
+      },
+      "tests": [
+        {
+          "suite": "MovementTrackerUITests",
+          "test": "testRegularWidthLandscape",
+          "status": "failed",
+          "duration_seconds": 87.722
+        }
+      ]
+    },
+    {
+      "label": "native-sidebar-helper-retest",
+      "log_path": "/tmp/mt-trace-landscape-final-retest.log",
+      "counts": {
+        "passed": 1,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "suite": "MovementTrackerUITests",
+          "test": "testRegularWidthLandscape",
+          "status": "passed",
+          "duration_seconds": 24.787
+        }
+      ]
+    },
+    {
+      "label": "final-width-layout",
+      "log_path": "/tmp/mt-trace-layout-fixed.log",
+      "counts": {
+        "passed": 1,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "suite": "MovementTrackerUITests",
+          "test": "testRegularWidthLandscape",
+          "status": "passed",
+          "duration_seconds": 43.068
+        }
+      ]
+    },
+    {
+      "label": "final-layout-localization-accessibility",
+      "log_path": "/tmp/mt-trace-layout-regression.log",
+      "counts": {
+        "passed": 3,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "suite": "AccessibilityUITests",
+          "test": "testEatWorksAtTheLargestTextSize",
+          "status": "passed",
+          "duration_seconds": 30.416
+        },
+        {
+          "suite": "LocalizationUITests",
+          "test": "testTodayEatAndMeInChinese",
+          "status": "passed",
+          "duration_seconds": 37.222
+        },
+        {
+          "suite": "MovementTrackerUITests",
+          "test": "testTodayCardsOpenTheirDetailScreens",
+          "status": "passed",
+          "duration_seconds": 18.313
+        }
+      ]
+    }
+  ],
+  "final_by_case": {
+    "AccessibilityUITests/testEatWorksAtTheLargestTextSize": {
+      "source": "final-layout-localization-accessibility",
+      "suite": "AccessibilityUITests",
+      "test": "testEatWorksAtTheLargestTextSize",
+      "status": "passed",
+      "duration_seconds": 30.416
+    },
+    "AccessibilityUITests/testMainControlsAreAtLeast44PointsTall": {
+      "source": "shell-localization-accessibility",
+      "suite": "AccessibilityUITests",
+      "test": "testMainControlsAreAtLeast44PointsTall",
+      "status": "passed",
+      "duration_seconds": 27.92
+    },
+    "AccessibilityUITests/testOnboardingWorksAtTheLargestTextSize": {
+      "source": "final-largest-text",
+      "suite": "AccessibilityUITests",
+      "test": "testOnboardingWorksAtTheLargestTextSize",
+      "status": "passed",
+      "duration_seconds": 40.024
+    },
+    "LocalizationUITests/testOnboardingInChinese": {
+      "source": "shell-localization-accessibility",
+      "suite": "LocalizationUITests",
+      "test": "testOnboardingInChinese",
+      "status": "passed",
+      "duration_seconds": 10.067
+    },
+    "LocalizationUITests/testTodayEatAndMeInChinese": {
+      "source": "final-layout-localization-accessibility",
+      "suite": "LocalizationUITests",
+      "test": "testTodayEatAndMeInChinese",
+      "status": "passed",
+      "duration_seconds": 37.222
+    },
+    "MovementTrackerUITests/testChineseLocalization": {
+      "source": "shell-localization-accessibility",
+      "suite": "MovementTrackerUITests",
+      "test": "testChineseLocalization",
+      "status": "passed",
+      "duration_seconds": 21.19
+    },
+    "MovementTrackerUITests/testEachTabShowsOnlyItsOwnScreen": {
+      "source": "shell-localization-accessibility",
+      "suite": "MovementTrackerUITests",
+      "test": "testEachTabShowsOnlyItsOwnScreen",
+      "status": "passed",
+      "duration_seconds": 48.871
+    },
+    "MovementTrackerUITests/testRegularWidthLandscape": {
+      "source": "final-width-layout",
+      "suite": "MovementTrackerUITests",
+      "test": "testRegularWidthLandscape",
+      "status": "passed",
+      "duration_seconds": 43.068
+    },
+    "CoachEatUITests/testAFailedSendStaysVisibleAndCanBeRetried": {
+      "source": "train-coach-cards",
+      "suite": "CoachEatUITests",
+      "test": "testAFailedSendStaysVisibleAndCanBeRetried",
+      "status": "passed",
+      "duration_seconds": 20.733
+    },
+    "CoachEatUITests/testAPlanStartedFromTheChatShowsOnATrainTabThatIsAlreadyOpen": {
+      "source": "train-coach-cards",
+      "suite": "CoachEatUITests",
+      "test": "testAPlanStartedFromTheChatShowsOnATrainTabThatIsAlreadyOpen",
+      "status": "passed",
+      "duration_seconds": 35.658
+    },
+    "CoachEatUITests/testAPlanStartedFromTheChatShowsWhenSwitchingBackToTrain": {
+      "source": "train-coach-cards",
+      "suite": "CoachEatUITests",
+      "test": "testAPlanStartedFromTheChatShowsWhenSwitchingBackToTrain",
+      "status": "passed",
+      "duration_seconds": 54.921
+    },
+    "CoachEatUITests/testAPlanStartsADraftAndTheCardNamesWhatItLeftOut": {
+      "source": "train-coach-cards",
+      "suite": "CoachEatUITests",
+      "test": "testAPlanStartsADraftAndTheCardNamesWhatItLeftOut",
+      "status": "passed",
+      "duration_seconds": 27.184
+    },
+    "CoachEatUITests/testChatStreamsAnswerShowsToolChipAndMealProposalLogsToEat": {
+      "source": "coach-contrast-final",
+      "suite": "CoachEatUITests",
+      "test": "testChatStreamsAnswerShowsToolChipAndMealProposalLogsToEat",
+      "status": "passed",
+      "duration_seconds": 57.073
+    },
+    "CoachEatUITests/testClosingTheSheetStopsTheReplyAndTheMessageCanBeRetried": {
+      "source": "train-coach-cards",
+      "suite": "CoachEatUITests",
+      "test": "testClosingTheSheetStopsTheReplyAndTheMessageCanBeRetried",
+      "status": "passed",
+      "duration_seconds": 28.925
+    },
+    "CoachEatUITests/testCoachShowsOneUnavailableStateWithoutAProxy": {
+      "source": "train-coach-cards",
+      "suite": "CoachEatUITests",
+      "test": "testCoachShowsOneUnavailableStateWithoutAProxy",
+      "status": "passed",
+      "duration_seconds": 24.808
+    },
+    "CoachEatUITests/testConsentCardShowsWhileSharingIsOffAndTheToggleOpensTheComposer": {
+      "source": "train-coach-cards",
+      "suite": "CoachEatUITests",
+      "test": "testConsentCardShowsWhileSharingIsOffAndTheToggleOpensTheComposer",
+      "status": "passed",
+      "duration_seconds": 19.268
+    },
+    "CoachEatUITests/testDismissingProposalsWritesNothing": {
+      "source": "train-coach-cards",
+      "suite": "CoachEatUITests",
+      "test": "testDismissingProposalsWritesNothing",
+      "status": "passed",
+      "duration_seconds": 61.486
+    },
+    "CoachEatUITests/testFoodSearchAddsAResultWithEditedGramsAndEatTotalsChange": {
+      "source": "train-coach-cards",
+      "suite": "CoachEatUITests",
+      "test": "testFoodSearchAddsAResultWithEditedGramsAndEatTotalsChange",
+      "status": "passed",
+      "duration_seconds": 51.599
+    },
+    "CoachEatUITests/testFoodSearchLiquidIsPer100mlAndAMissingNutrientStaysEmpty": {
+      "source": "train-coach-cards",
+      "suite": "CoachEatUITests",
+      "test": "testFoodSearchLiquidIsPer100mlAndAMissingNutrientStaysEmpty",
+      "status": "passed",
+      "duration_seconds": 36.434
+    },
+    "CoachEatUITests/testFoodSearchOfflineOffersARetry": {
+      "source": "train-coach-cards",
+      "suite": "CoachEatUITests",
+      "test": "testFoodSearchOfflineOffersARetry",
+      "status": "passed",
+      "duration_seconds": 19.193
+    },
+    "CoachEatUITests/testFoodSearchShowsTheBudgetLimitWithoutARetry": {
+      "source": "train-coach-cards",
+      "suite": "CoachEatUITests",
+      "test": "testFoodSearchShowsTheBudgetLimitWithoutARetry",
+      "status": "passed",
+      "duration_seconds": 22.056
+    },
+    "CoachEatUITests/testGoalChangeProposalShowsThePlannerNumbersAndAppliesOnConfirm": {
+      "source": "train-coach-cards",
+      "suite": "CoachEatUITests",
+      "test": "testGoalChangeProposalShowsThePlannerNumbersAndAppliesOnConfirm",
+      "status": "passed",
+      "duration_seconds": 54.554
+    },
+    "CoachEatUITests/testMealPhotoAsksForConsentBeforeAnythingIsSent": {
+      "source": "train-coach-cards",
+      "suite": "CoachEatUITests",
+      "test": "testMealPhotoAsksForConsentBeforeAnythingIsSent",
+      "status": "passed",
+      "duration_seconds": 19.117
+    },
+    "CoachEatUITests/testMealPhotoEstimatesLooksUpAndSavesEveryItem": {
+      "source": "focused-layout-and-screenshots",
+      "suite": "CoachEatUITests",
+      "test": "testMealPhotoEstimatesLooksUpAndSavesEveryItem",
+      "status": "passed",
+      "duration_seconds": 43.763
+    },
+    "CoachEatUITests/testStopEndsTheReplyAndTheMessageCanBeRetried": {
+      "source": "train-coach-cards",
+      "suite": "CoachEatUITests",
+      "test": "testStopEndsTheReplyAndTheMessageCanBeRetried",
+      "status": "passed",
+      "duration_seconds": 25.074
+    },
+    "MovementTrackerUITests/testTodayCardsOpenTheirDetailScreens": {
+      "source": "final-layout-localization-accessibility",
+      "suite": "MovementTrackerUITests",
+      "test": "testTodayCardsOpenTheirDetailScreens",
+      "status": "passed",
+      "duration_seconds": 18.313
+    },
+    "TrainFlowUITests/testClosingLiveSetKeepsRecordedCheckpoint": {
+      "source": "focused-layout-and-screenshots",
+      "suite": "TrainFlowUITests",
+      "test": "testClosingLiveSetKeepsRecordedCheckpoint",
+      "status": "passed",
+      "duration_seconds": 35.48
+    },
+    "TrainFlowUITests/testDeniedCameraOffersSettings": {
+      "source": "train-coach-cards",
+      "suite": "TrainFlowUITests",
+      "test": "testDeniedCameraOffersSettings",
+      "status": "passed",
+      "duration_seconds": 28.017
+    },
+    "TrainFlowUITests/testDiscardingAWorkout": {
+      "source": "train-coach-cards",
+      "suite": "TrainFlowUITests",
+      "test": "testDiscardingAWorkout",
+      "status": "passed",
+      "duration_seconds": 42.683
+    },
+    "TrainFlowUITests/testManualSetThroughToToday": {
+      "source": "train-coach-cards",
+      "suite": "TrainFlowUITests",
+      "test": "testManualSetThroughToToday",
+      "status": "passed",
+      "duration_seconds": 54.636
+    },
+    "TrainFlowUITests/testNextSetReturnsToTheCamera": {
+      "source": "train-coach-cards",
+      "suite": "TrainFlowUITests",
+      "test": "testNextSetReturnsToTheCamera",
+      "status": "passed",
+      "duration_seconds": 47.061
+    },
+    "TrainFlowUITests/testNoCameraReplaysAutomatically": {
+      "source": "train-coach-cards",
+      "suite": "TrainFlowUITests",
+      "test": "testNoCameraReplaysAutomatically",
+      "status": "passed",
+      "duration_seconds": 24.195
+    },
+    "TrainFlowUITests/testOnlyTheLatestCueIsShown": {
+      "source": "train-coach-cards",
+      "suite": "TrainFlowUITests",
+      "test": "testOnlyTheLatestCueIsShown",
+      "status": "passed",
+      "duration_seconds": 32.681
+    },
+    "TrainFlowUITests/testReplayedSquatSetFromLiveSetToToday": {
+      "source": "train-coach-cards",
+      "suite": "TrainFlowUITests",
+      "test": "testReplayedSquatSetFromLiveSetToToday",
+      "status": "passed",
+      "duration_seconds": 83.892
+    },
+    "TrainFlowUITests/testRestrictedCameraShowsItsState": {
+      "source": "train-coach-cards",
+      "suite": "TrainFlowUITests",
+      "test": "testRestrictedCameraShowsItsState",
+      "status": "passed",
+      "duration_seconds": 23.532
+    },
+    "HealthUITests/testDeniedAccessKeepsTheSwitchOff": {
+      "source": "health-meals-profile",
+      "suite": "HealthUITests",
+      "test": "testDeniedAccessKeepsTheSwitchOff",
+      "status": "passed",
+      "duration_seconds": 72.827
+    },
+    "HealthUITests/testEditingAMealSendsItAgainAndDeletingItRemovesIt": {
+      "source": "health-meals-profile",
+      "suite": "HealthUITests",
+      "test": "testEditingAMealSendsItAgainAndDeletingItRemovesIt",
+      "status": "passed",
+      "duration_seconds": 101.003
+    },
+    "HealthUITests/testFinishedWorkoutIsSentAndTheDraftIsNot": {
+      "source": "health-meals-profile",
+      "suite": "HealthUITests",
+      "test": "testFinishedWorkoutIsSentAndTheDraftIsNot",
+      "status": "passed",
+      "duration_seconds": 71.318
+    },
+    "HealthUITests/testMealIsSentOnceHealthIsOnAndEarlierDataIsNot": {
+      "source": "health-meals-profile",
+      "suite": "HealthUITests",
+      "test": "testMealIsSentOnceHealthIsOnAndEarlierDataIsNot",
+      "status": "passed",
+      "duration_seconds": 58.88
+    },
+    "HealthUITests/testTurningHealthOffStopsExports": {
+      "source": "health-meals-profile",
+      "suite": "HealthUITests",
+      "test": "testTurningHealthOffStopsExports",
+      "status": "passed",
+      "duration_seconds": 103.231
+    },
+    "HealthUITests/testWeightChangedInTheProfileEditorIsSent": {
+      "source": "health-meals-profile",
+      "suite": "HealthUITests",
+      "test": "testWeightChangedInTheProfileEditorIsSent",
+      "status": "passed",
+      "duration_seconds": 44.314
+    },
+    "HealthUITests/testWeightIsSent": {
+      "source": "health-meals-profile",
+      "suite": "HealthUITests",
+      "test": "testWeightIsSent",
+      "status": "passed",
+      "duration_seconds": 37.52
+    },
+    "MealFlowUITests/testAddEditAndDeleteAMealChangesTodaysTotals": {
+      "source": "health-meals-profile",
+      "suite": "MealFlowUITests",
+      "test": "testAddEditAndDeleteAMealChangesTodaysTotals",
+      "status": "passed",
+      "duration_seconds": 122.206
+    },
+    "MealFlowUITests/testAMealWithMissingValuesIsAllowed": {
+      "source": "health-meals-profile",
+      "suite": "MealFlowUITests",
+      "test": "testAMealWithMissingValuesIsAllowed",
+      "status": "passed",
+      "duration_seconds": 23.678
+    },
+    "MealFlowUITests/testAnyPastDayCanBeOpenedFromTheStrip": {
+      "source": "health-meals-profile",
+      "suite": "MealFlowUITests",
+      "test": "testAnyPastDayCanBeOpenedFromTheStrip",
+      "status": "passed",
+      "duration_seconds": 16.385
+    },
+    "MealFlowUITests/testDecimalCommaIsReadWhereTheRegionUsesIt": {
+      "source": "health-meals-profile",
+      "suite": "MealFlowUITests",
+      "test": "testDecimalCommaIsReadWhereTheRegionUsesIt",
+      "status": "passed",
+      "duration_seconds": 30.015
+    },
+    "MealFlowUITests/testDeletingFromTheEditorAsksForConfirmation": {
+      "source": "health-meals-profile",
+      "suite": "MealFlowUITests",
+      "test": "testDeletingFromTheEditorAsksForConfirmation",
+      "status": "passed",
+      "duration_seconds": 58.319
+    },
+    "MealFlowUITests/testImplausibleNumbersCannotBeSaved": {
+      "source": "health-meals-profile",
+      "suite": "MealFlowUITests",
+      "test": "testImplausibleNumbersCannotBeSaved",
+      "status": "passed",
+      "duration_seconds": 50.432
+    },
+    "MealFlowUITests/testMealLoggedOnAPastDayCountsThatDayOnly": {
+      "source": "health-meals-profile",
+      "suite": "MealFlowUITests",
+      "test": "testMealLoggedOnAPastDayCountsThatDayOnly",
+      "status": "passed",
+      "duration_seconds": 47.763
+    },
+    "ProfileFlowUITests/testChangingUnitsConvertsTheBodyValues": {
+      "source": "health-meals-profile",
+      "suite": "ProfileFlowUITests",
+      "test": "testChangingUnitsConvertsTheBodyValues",
+      "status": "passed",
+      "duration_seconds": 38.856
+    },
+    "ProfileFlowUITests/testCoachSwitchAsksBeforeSendingData": {
+      "source": "focused-layout-and-screenshots",
+      "suite": "ProfileFlowUITests",
+      "test": "testCoachSwitchAsksBeforeSendingData",
+      "status": "passed",
+      "duration_seconds": 21.045
+    },
+    "ProfileFlowUITests/testDatabaseFailureOffersRetry": {
+      "source": "health-meals-profile",
+      "suite": "ProfileFlowUITests",
+      "test": "testDatabaseFailureOffersRetry",
+      "status": "passed",
+      "duration_seconds": 8.356
+    },
+    "ProfileFlowUITests/testEditingTheGoalSetsANewActiveGoal": {
+      "source": "health-meals-profile",
+      "suite": "ProfileFlowUITests",
+      "test": "testEditingTheGoalSetsANewActiveGoal",
+      "status": "passed",
+      "duration_seconds": 25.769
+    },
+    "ProfileFlowUITests/testOnboardingLandsOnTodayWithPlannedTargets": {
+      "source": "health-meals-profile",
+      "suite": "ProfileFlowUITests",
+      "test": "testOnboardingLandsOnTodayWithPlannedTargets",
+      "status": "passed",
+      "duration_seconds": 43.434
+    },
+    "ProfileFlowUITests/testPreferNotToSayAsksForTheEquation": {
+      "source": "health-meals-profile",
+      "suite": "ProfileFlowUITests",
+      "test": "testPreferNotToSayAsksForTheEquation",
+      "status": "passed",
+      "duration_seconds": 27.65
+    },
+    "ProfileFlowUITests/testPrivacyScreenStatesWhatLeavesThePhone": {
+      "source": "health-meals-profile",
+      "suite": "ProfileFlowUITests",
+      "test": "testPrivacyScreenStatesWhatLeavesThePhone",
+      "status": "passed",
+      "duration_seconds": 24.638
+    },
+    "ProfileFlowUITests/testTrainingLevelIsEditableAndSaved": {
+      "source": "health-meals-profile",
+      "suite": "ProfileFlowUITests",
+      "test": "testTrainingLevelIsEditableAndSaved",
+      "status": "passed",
+      "duration_seconds": 23.367
+    },
+    "ProfileFlowUITests/testUnderSixteenIsRejectedAndUnderEighteenIsWarned": {
+      "source": "health-meals-profile",
+      "suite": "ProfileFlowUITests",
+      "test": "testUnderSixteenIsRejectedAndUnderEighteenIsWarned",
+      "status": "passed",
+      "duration_seconds": 37.563
+    },
+    "ProfileFlowUITests/testUnitsApplyEverywhereAndPrivacyScreenOpens": {
+      "source": "focused-layout-and-screenshots",
+      "suite": "ProfileFlowUITests",
+      "test": "testUnitsApplyEverywhereAndPrivacyScreenOpens",
+      "status": "passed",
+      "duration_seconds": 29.854
+    },
+    "TrainScreenshotUITests/testEnglishLandscape": {
+      "source": "focused-layout-and-screenshots",
+      "suite": "TrainScreenshotUITests",
+      "test": "testEnglishLandscape",
+      "status": "passed",
+      "duration_seconds": 85.492
+    },
+    "TrainScreenshotUITests/testEnglishPortrait": {
+      "source": "focused-layout-and-screenshots",
+      "suite": "TrainScreenshotUITests",
+      "test": "testEnglishPortrait",
+      "status": "passed",
+      "duration_seconds": 81.629
+    }
+  },
+  "screenshots": [
+    {
+      "file": "coach.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "c754ae7bedbd2a88d1e6f1db555dab729e77df436f2291aad78d329a810aadfc",
+      "altered": false
+    },
+    {
+      "file": "eat-en.png",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "1062546da2dd83d0989aa97b36b3b295e3b4883321dc66f59e2b9a1ee2f086f6",
+      "altered": false
+    },
+    {
+      "file": "live-landscape.png",
+      "width": 2622,
+      "height": 1206,
+      "sha256": "132e588b2bb009fb6377cbc88ef6eace88c8ecdbbbc44069a94a1124e0d315eb",
+      "altered": false
+    },
+    {
+      "file": "live-portrait.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "a572365acbeae2c765c593b21e8dcbf26ad7da8d7b937d08ff91dadf3cdc1aed",
+      "altered": false
+    },
+    {
+      "file": "me-en.png",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "60ee04f9efb477d38b5f2af2b48a344be611d07b102a9b5225a885cf1ec2d1cf",
+      "altered": false
+    },
+    {
+      "file": "meal-photo.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "d55d7ae79eeb03fc740d669770e84f708d212f0e5942c41765536a17ff0b0ff1",
+      "altered": false
+    },
+    {
+      "file": "review.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "1286f3a539f0dcacd6775340e5007b841e4657a3f1591bd702f8af79597cba2a",
+      "altered": false
+    },
+    {
+      "file": "summary.png",
+      "width": 1206,
+      "height": 2622,
+      "sha256": "c400904fcfc326197f4675ffd4bc6c96c8b93f985552fa54b59051cce5308aad",
+      "altered": false
+    },
+    {
+      "file": "today-dark.png",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "f28c88e4dd700eb9d8e850e0cebd94652efc84b10282243d896c663cf2c4e6d2",
+      "altered": false
+    },
+    {
+      "file": "today-en.png",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "9b985be81cadb07996b1b66edcf548a6c789e4dc24d37e8f053e0f9c371ad56e",
+      "altered": false
+    },
+    {
+      "file": "today-landscape.png",
+      "width": 2868,
+      "height": 1320,
+      "sha256": "dd3fd7b2b350037e318191265fc53edd8d4d96cc8f73b9cde297226132922896",
+      "altered": false
+    },
+    {
+      "file": "today-zh.png",
+      "width": 1320,
+      "height": 2868,
+      "sha256": "63ef66cbde4cb90feb37509ecb1d0b4ef18030bdbeeb794dab61e3de3e20dd73",
+      "altered": false
+    }
+  ]
+}

@@ -15,13 +15,46 @@ struct LiveSetResult {
     let recording: PoseRecording?
     /// Why a requested pose recording could not be kept, if it could not.
     let recordingFailure: String?
+    /// A bounded, in-memory view of the normalized signal actually emitted by MotionCore.
+    var trace: LiveTraceSnapshot? = nil
 }
 
 /// The live depth signal, 0 at the top and 1 at the bottom of the calibrated range. It lives apart from the
-/// model so that only the gauge re-renders on every frame.
+/// model so that only the trace re-renders on every frame.
 @Observable
 final class LiveSignal {
     var value = 0.0
+    private(set) var samples: [LiveTraceSample] = []
+    private(set) var marks: [LiveTraceMarker] = []
+    @ObservationIgnored private var nextSample = 0
+    func append(_ value: Double, at time: TimeInterval) {
+        guard value.isFinite, time.isFinite else { return }
+        self.value = value
+        // A capture clock restart must not let an earlier epoch supply a new rep's marker.
+        if let last = samples.last, time <= last.time {
+            samples.removeAll(keepingCapacity: true)
+            marks.removeAll(keepingCapacity: true)
+        }
+        samples.append(LiveTraceSample(id: nextSample, depth: value, time: time))
+        nextSample += 1
+        // Two minutes at 30 Hz; keeping a trace never grows the set's memory without a bound.
+        if samples.count > 3_600 { samples.removeFirst(samples.count - 3_600) }
+        if let first = samples.first { marks.removeAll { $0.sampleID < first.id } }
+    }
+
+    func mark(_ record: RepRecord, number: Int?) {
+        // Rejected dips and framing movements may also have signal samples. Anchor evidence to the
+        // engine's actual rep interval and fitted bottom time, never to the largest intervening dip.
+        guard let bottom = samples.filter({ $0.time >= record.tStart && $0.time <= record.tEnd }).min(by: {
+            abs($0.time - record.tBottom) < abs($1.time - record.tBottom)
+        }) else { return }
+        let kind: LiveTraceMarker.Kind = !record.isCounted ? .partial
+            : record.issues.contains(where: { $0.severity == .major }) ? .major
+            : !record.issues.isEmpty ? .fix : .good
+        marks.append(LiveTraceMarker(sampleID: bottom.id, number: number, kind: kind))
+    }
+
+    var snapshot: LiveTraceSnapshot { LiveTraceSnapshot(samples: samples, marks: marks) }
 }
 
 /// A coaching cue on screen.
@@ -365,6 +398,7 @@ final class LiveSetModel: Identifiable {
         case .repCompleted(let record):
             counted.append(record)
             reps = counted.count
+            signal.mark(record, number: reps)
             lastRep = record
             isEngineIdle = false
             // The engine reports a rep after it ended; the frame of its bottom is still in the store.
@@ -373,14 +407,15 @@ final class LiveSetModel: Identifiable {
             }
             holdReplayIfWanted()
             await checkpoint()
-        case .partialRep:
+        case .partialRep(let record):
             partials += 1
+            signal.mark(record, number: nil)
             isEngineIdle = false
             await checkpoint()
         case .cue(let key):
             show(cue: LiveText.cue(key))
-        case .signal(let value):
-            signal.value = value
+        case .signal(let value, let time):
+            if let time { signal.append(value, at: time) }
         case .idle:
             isEngineIdle = true
         }
@@ -478,7 +513,8 @@ final class LiveSetModel: Identifiable {
             endedAt: finishedAt,
             bottomFrames: bottomFrames,
             recording: recording,
-            recordingFailure: recordingFailure
+            recordingFailure: recordingFailure,
+            trace: signal.snapshot
         )
         finalResult = result
         return result

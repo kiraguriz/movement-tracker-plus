@@ -4,40 +4,44 @@ import SwiftUI
 struct TodayView: View {
     @Environment(\.appEnvironment) private var environment
     @Environment(UserSession.self) private var session
-    @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.scenePhase) private var scenePhase
     @State private var model: TodayModel
     @State private var isLoggingWeight = false
 
     private let openTrain: () -> Void
+    private let openEat: () -> Void
 
-    init(environment: AppEnvironment, openTrain: @escaping () -> Void = {}) {
+    init(environment: AppEnvironment, openTrain: @escaping () -> Void = {}, openEat: @escaping () -> Void = {}) {
         _model = State(initialValue: TodayModel(environment: environment))
         self.openTrain = openTrain
+        self.openEat = openEat
     }
 
     var body: some View {
-        ScrollView {
-            Group {
-                if sizeClass == .regular {
-                    HStack(alignment: .top, spacing: 16) {
-                        VStack(spacing: 16) {
+        GeometryReader { geometry in
+            ScrollView {
+                Group {
+                    if geometry.size.width >= 720 && !dynamicTypeSize.isAccessibilitySize {
+                        HStack(alignment: .top, spacing: 12) {
+                            VStack(spacing: 12) {
+                                nutritionCard
+                                workoutCard
+                            }
+                            weightCard
+                        }
+                    } else {
+                        VStack(spacing: 12) {
                             nutritionCard
                             workoutCard
+                            weightCard
                         }
-                        weightCard
-                    }
-                } else {
-                    VStack(spacing: 16) {
-                        nutritionCard
-                        workoutCard
-                        weightCard
                     }
                 }
+                .padding(16)
             }
-            .padding(16)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(TraceTheme.paper)
         .navigationTitle("Today")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -67,22 +71,32 @@ struct TodayView: View {
         Card {
             NutritionSummaryView(total: model.totals.value ?? nil, goal: session.goal, idPrefix: "today")
         }
+        .contentShape(.rect(cornerRadius: 28))
+        .onTapGesture(perform: openEat)
+        .accessibilityElement(children: .contain)
+        .accessibilityAction(named: Text("Eat"), openEat)
     }
 
     @ViewBuilder
     private var workoutCard: some View {
         if let loaded = model.latestWorkout.value {
-            Card {
-                if let summary = loaded {
-                    WorkoutSummaryView(summary: summary, units: session.units)
-                } else {
+            if let summary = loaded {
+                NavigationLink { WorkoutHistoryView(environment: environment) } label: {
+                    TodayWorkoutCard(summary: summary, setCounts: model.latestSetCounts)
+                        .padding(20)
+                        .background(TraceTheme.cobalt, in: .rect(cornerRadius: 28))
+                }
+                .buttonStyle(.plain)
+                .testIdentifier(AccessibilityID.todayWorkout)
+            } else {
+                Card {
                     emptyState("No workouts yet", systemImage: "figure.strengthtraining.traditional") {
                         Button("Train", action: openTrain)
                             .buttonStyle(.bordered)
                     }
                 }
+                .testIdentifier(AccessibilityID.todayWorkout)
             }
-            .testIdentifier(AccessibilityID.todayWorkout)
         }
     }
 

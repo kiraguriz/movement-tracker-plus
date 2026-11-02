@@ -20,9 +20,9 @@ enum Macro: CaseIterable, Identifiable {
 
     var color: Color {
         switch self {
-        case .protein: .blue
-        case .carbs: .green
-        case .fat: .purple
+        case .protein: TraceTheme.blue
+        case .carbs: TraceTheme.sky
+        case .fat: TraceTheme.amber
         }
     }
 
@@ -59,9 +59,9 @@ struct Card<Content: View>: View {
 
     var body: some View {
         content
-            .padding(16)
+            .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 24))
+            .background(TraceTheme.card, in: .rect(cornerRadius: 28))
     }
 }
 

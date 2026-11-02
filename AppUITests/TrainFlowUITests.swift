@@ -106,6 +106,23 @@ class TrainUITestCase: AppUITestCase {
 }
 
 final class TrainFlowUITests: TrainUITestCase {
+    /// Closing the live camera preserves its crash-safe checkpoint; it never claims to discard those reps.
+    @MainActor
+    func testClosingLiveSetKeepsRecordedCheckpoint() {
+        let app = launchTrain(extraArguments: ["-MTReplayHoldReps", "3"])
+        startWorkout(with: Self.squat, in: app)
+        openLiveSet(for: Self.squat, in: app)
+        XCTAssertTrue(waitForReps(3, in: app))
+        tap(TrainID.close, in: app)
+        let confirm = app.buttons["live.close.confirm"].firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 10))
+        confirm.tap()
+        XCTAssertTrue(element(TrainID.liveSet, in: app).waitForNonExistence(timeout: 15))
+        let checkpoint = element(TrainID.setRow(Self.squat, 1), in: app)
+        XCTAssertTrue(checkpoint.waitForExistence(timeout: 10), "closing must keep the already recorded set")
+        XCTAssertTrue(checkpoint.label.contains("3"), "the checkpoint should keep its three counted reps")
+    }
+
     /// Ten squats and one partial rep are counted from the replayed recording, reviewed, finished, summarised and
     /// saved; Today then shows the workout.
     @MainActor
@@ -144,6 +161,19 @@ final class TrainFlowUITests: TrainUITestCase {
         XCTAssertTrue(app.staticTexts["No workouts yet"].waitForNonExistence(timeout: 10), "Today still shows no workouts")
         let tenReps = card.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH '10'")).firstMatch
         XCTAssertTrue(tenReps.waitForExistence(timeout: 10), "Today's workout does not show 10 reps")
+        card.tap()
+        XCTAssertTrue(app.navigationBars["Workout history"].waitForExistence(timeout: 10))
+        let savedWorkout = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'history.workout.'")).firstMatch
+        XCTAssertTrue(savedWorkout.waitForExistence(timeout: 10))
+        savedWorkout.tap()
+        let cameraSet = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'history.set.'")).firstMatch
+        XCTAssertTrue(cameraSet.waitForExistence(timeout: 10))
+        cameraSet.tap()
+        XCTAssertTrue(element(TrainID.review, in: app).waitForExistence(timeout: 10))
+        XCTAssertEqual(value(of: TrainID.reviewReps, in: app), "10")
+        XCTAssertFalse(element(TrainID.reviewNextSet, in: app).exists, "saved reviews are read-only")
+        XCTAssertFalse(element(TrainID.reviewFinish, in: app).exists, "saved reviews cannot finish another workout")
+        XCTAssertFalse(element(TrainID.reviewMuse, in: app).exists, "opening history must not send a new coach request")
     }
 
     /// The review tells the story the recording scripts, in counted-rep numbers (the same as the counter's): a

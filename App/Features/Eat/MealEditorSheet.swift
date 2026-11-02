@@ -79,6 +79,8 @@ struct MealEditorSheet: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(TraceTheme.paper)
             .scrollDismissesKeyboard(.interactively)
             .onChange(of: draft.gramsText) { draft.amountChanged() }
             .navigationTitle(draft.original == nil ? "Add meal" : "Edit meal")

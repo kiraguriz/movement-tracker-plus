@@ -44,7 +44,11 @@ struct SessionTests {
         let events = await consumer.value
         #expect(summary.reps == 3)
         #expect(events.contains { if case .repCompleted = $0 { true } else { false } })
-        #expect(events.last == .signal(events.compactMap { if case let .signal(s) = $0 { s } else { nil } }.last ?? 0))
+        if case .signal(_, let time)? = events.last {
+            #expect(time == frames.last?.t)
+        } else {
+            Testing.Issue.record("the final processed frame should carry its signal and capture timestamp")
+        }
     }
 
     @Test("finish is idempotent and later frames are ignored")
@@ -57,6 +61,25 @@ struct SessionTests {
         #expect(first == second)
         for frame in frames { await session.process(frame) }
         #expect(await session.summary == first)
+    }
+
+    @Test("signal samples keep their capture timestamps before and after framing is ready")
+    func signalCaptureTimestamps() throws {
+        var pipeline = try MotionPipeline(spec: squatSpec())
+        var signalWhileFraming = false
+        var signalWhileReady = false
+        let frames = SyntheticMotion.squats(reps: 2).frames()
+        for frame in frames {
+            for event in pipeline.process(frame) {
+                if case .signal(_, let timestamp) = event {
+                    #expect(timestamp == frame.t)
+                    if pipeline.framing.isReady { signalWhileReady = true } else { signalWhileFraming = true }
+                }
+            }
+        }
+        #expect(signalWhileFraming, "the plot may include uncounted framing motion")
+        #expect(signalWhileReady)
+        #expect(pipeline.summary.reps == 2)
     }
 
     @Test("an empty session produces an empty summary and a stream that ends")

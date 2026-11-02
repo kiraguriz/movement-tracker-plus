@@ -9,24 +9,31 @@ struct SetReviewView: View {
     let onNextSet: () -> Void
     let onFinish: () -> Void
     let onClose: () -> Void
+    var isHistorical = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                ViewThatFits(in: .horizontal) {
-                    HStack(alignment: .top, spacing: 20) {
-                        numbers.frame(minWidth: 320, maxWidth: .infinity)
-                        coach.frame(minWidth: 320, maxWidth: .infinity)
-                    }
-                    VStack(spacing: 20) {
+                Group {
+                    if case .off = model.muse {
                         numbers
-                        coach
+                    } else {
+                        ViewThatFits(in: .horizontal) {
+                            HStack(alignment: .top, spacing: 12) {
+                                numbers.frame(minWidth: 320, maxWidth: .infinity)
+                                coach.frame(minWidth: 320, maxWidth: .infinity)
+                            }
+                            VStack(spacing: 12) {
+                                numbers
+                                coach
+                            }
+                        }
                     }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(TraceTheme.paper)
             .navigationTitle(ExerciseNames.name(of: model.subject.exercise))
             .navigationSubtitle("Set \(model.subject.setNumber)")
             .navigationBarTitleDisplayMode(.inline)
@@ -36,9 +43,11 @@ struct SetReviewView: View {
                         .accessibilityIdentifier(AccessibilityID.reviewClose)
                 }
             }
-            .safeAreaInset(edge: .bottom) { actions }
+            .safeAreaInset(edge: .bottom) {
+                if !isHistorical { actions }
+            }
         }
-        .task { model.start() }
+        .task { if !isHistorical { model.start() } }
         .onDisappear { model.cancel() }
         .testIdentifier(AccessibilityID.setReview)
     }
@@ -46,18 +55,64 @@ struct SetReviewView: View {
     // MARK: On-device numbers
 
     private var numbers: some View {
-        VStack(spacing: 16) {
-            StatTileGrid(minimum: 140) {
-                StatTile(title: "Reps", value: "\(model.set.reps ?? 0)", identifier: AccessibilityID.reviewReps)
-                StatTile(title: "Partial", value: "\(model.set.partialReps)", identifier: AccessibilityID.reviewPartials)
-                StatTile(title: "Score", value: scoreText, identifier: AccessibilityID.reviewScore)
-                StatTile(title: "Velocity loss", value: velocityLossText, identifier: AccessibilityID.reviewVelocityLoss)
+        VStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 20) {
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .center, spacing: 20) {
+                        repTotal
+                        reviewMetrics
+                    }
+                    VStack(alignment: .leading, spacing: 12) {
+                        repTotal
+                        reviewMetrics
+                    }
+                }
+                if let trace = model.subject.trace, trace.samples.count > 1 {
+                    MotionTraceView(trace: trace, selectedRep: model.selectedRep)
+                        .frame(height: 140)
+                }
             }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .foregroundStyle(.white)
+            .background(TraceTheme.night, in: .rect(cornerRadius: 28))
+            .environment(\.colorScheme, .dark)
             repChips
             if let rep = model.reps.first(where: { $0.index == model.selectedRep }) {
                 RepDetail(rep: rep)
             }
         }
+    }
+
+    private var repTotal: some View {
+        Text(model.set.reps ?? 0, format: .number)
+            .font(TraceTheme.numeral(104))
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .accessibilityLabel("Reps")
+            .accessibilityValue("\(model.set.reps ?? 0)")
+            .accessibilityIdentifier(AccessibilityID.reviewReps)
+    }
+
+    private var reviewMetrics: some View {
+        HStack(alignment: .top, spacing: 12) {
+            reviewMetric("Partial", value: "\(model.set.partialReps)", identifier: AccessibilityID.reviewPartials)
+            reviewMetric("Score", value: scoreText, identifier: AccessibilityID.reviewScore)
+            reviewMetric("Velocity loss", value: velocityLossText, identifier: AccessibilityID.reviewVelocityLoss)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func reviewMetric(_ title: LocalizedStringKey, value: String, identifier: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title).font(TraceTheme.label).foregroundStyle(.white.opacity(0.65))
+            Text(verbatim: value).font(TraceTheme.numeral(32)).lineLimit(1).minimumScaleFactor(0.6)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(title))
+        .accessibilityValue(value)
+        .accessibilityIdentifier(identifier)
     }
 
     private var scoreText: String {
@@ -71,10 +126,24 @@ struct SetReviewView: View {
     @ScaledMetric(relativeTo: .headline) private var chipMinimum = 60.0
 
     private var repChips: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: chipMinimum), spacing: 8)], spacing: 8) {
-            ForEach(model.reps) { rep in
-                RepChip(rep: rep, isSelected: model.selectedRep == rep.index) {
-                    model.selectedRep = model.selectedRep == rep.index ? nil : rep.index
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(model.reps) { rep in
+                        RepChip(rep: rep, isSelected: model.selectedRep == rep.index) {
+                            model.selectedRep = model.selectedRep == rep.index ? nil : rep.index
+                        }
+                        .frame(width: chipMinimum)
+                        .id(rep.index)
+                    }
+                }
+            }
+            .onAppear {
+                if let selected = model.selectedRep { proxy.scrollTo(selected, anchor: .center) }
+            }
+            .onChange(of: model.selectedRep) { _, selected in
+                if let selected {
+                    withAnimation(.smooth) { proxy.scrollTo(selected, anchor: .center) }
                 }
             }
         }
@@ -112,7 +181,7 @@ struct SetReviewView: View {
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, minHeight: 36)
         }
-        .buttonStyle(.glass)
+        .buttonStyle(.glassProminent)
         .accessibilityIdentifier(AccessibilityID.reviewNextSet)
     }
 
@@ -122,7 +191,7 @@ struct SetReviewView: View {
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, minHeight: 36)
         }
-        .buttonStyle(.glassProminent)
+        .buttonStyle(.glass)
         .accessibilityIdentifier(AccessibilityID.reviewFinish)
     }
 }
@@ -134,8 +203,10 @@ private extension RepEntry {
     var hasIssue: Bool { !measurement.issues.isEmpty }
 
     var tint: Color {
-        if hasMajorIssue { .red } else if hasIssue { .orange } else { .green }
+        if hasMajorIssue { TraceTheme.vermilion } else if hasIssue { TraceTheme.amber } else { TraceTheme.blue }
     }
+
+    var traceStatus: TraceRepStatus { hasMajorIssue ? .major : hasIssue ? .fix : .good }
 }
 
 /// One counted rep: its number and score, coloured by the worst issue it has.
@@ -146,19 +217,21 @@ private struct RepChip: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 0) {
+            VStack(spacing: 5) {
+                TraceMark(status: rep.traceStatus)
                 Text(rep.index, format: .number)
-                    .font(.headline)
+                    .font(TraceTheme.numeral(28))
                     .monospacedDigit()
                 Text(rep.measurement.score, format: .number)
                     .font(.caption)
                     .monospacedDigit()
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(isSelected ? .white.opacity(0.7) : TraceTheme.secondary)
             }
             .lineLimit(1)
             .minimumScaleFactor(0.6)
-            .frame(maxWidth: .infinity, minHeight: 52)
-            .background(rep.tint.opacity(0.18), in: .rect(cornerRadius: 14))
+            .frame(maxWidth: .infinity, minHeight: 84)
+            .foregroundStyle(isSelected ? .white : TraceTheme.ink)
+            .background(isSelected ? TraceTheme.night : TraceTheme.card, in: .rect(cornerRadius: 18))
             .overlay {
                 RoundedRectangle(cornerRadius: 14)
                     .strokeBorder(isSelected ? rep.tint : .clear, lineWidth: 2)
@@ -199,13 +272,13 @@ private struct RepDetail: View {
                     Text(LiveText.cue(issue.cue ?? issue.ruleID))
                 } icon: {
                     Image(systemName: issue.severity == .major ? "exclamationmark.octagon.fill" : "exclamationmark.triangle.fill")
-                        .foregroundStyle(issue.severity == .major ? Color.red : Color.orange)
+                        .foregroundStyle(issue.severity == .major ? TraceTheme.vermilion : TraceTheme.amber)
                 }
             }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 24))
+        .background(TraceTheme.card, in: .rect(cornerRadius: 24))
     }
 
     private func seconds(_ milliseconds: Double) -> String {
@@ -252,9 +325,9 @@ private struct MuseCard: View {
                 notice(message)
             }
         }
-        .padding(16)
+        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 24))
+        .background(TraceTheme.card, in: .rect(cornerRadius: 28))
         .testIdentifier(AccessibilityID.reviewMuse)
     }
 
@@ -275,7 +348,7 @@ private struct MuseCard: View {
             Label {
                 Text(item)
             } icon: {
-                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(TraceTheme.blue)
             }
         }
     }
@@ -288,17 +361,30 @@ private struct MuseCard: View {
                     Label {
                         Text(item.cue).fontWeight(.semibold)
                     } icon: {
-                        Image(systemName: "arrow.turn.down.right").foregroundStyle(.orange)
+                        Image(systemName: "arrow.turn.down.right").foregroundStyle(TraceTheme.amber)
                     }
                     if !item.why.isEmpty {
                         Text(item.why)
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(TraceTheme.secondary)
                     }
                     if !item.reps.isEmpty {
-                        Text("Reps \(item.reps.map(String.init).joined(separator: ", "))")
-                            .font(.caption.monospacedDigit())
-                            .foregroundStyle(.secondary)
+                        HStack(spacing: 8) {
+                            ForEach(item.reps, id: \.self) { number in
+                                if model.reps.contains(where: { $0.index == number }) {
+                                    Button {
+                                        model.selectedRep = number
+                                    } label: {
+                                        Text(number, format: .number)
+                                            .font(TraceTheme.numeral(24))
+                                            .frame(minWidth: 44, minHeight: 44)
+                                    }
+                                    .buttonStyle(.glass)
+                                    .tint(TraceTheme.blue)
+                                    .accessibilityLabel("Rep \(number)")
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -339,8 +425,8 @@ struct MuseHeader: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Label("Muse", systemImage: "sparkles")
-                .font(.headline)
+            TraceCoachGlyph()
+            Text("Muse").font(TraceTheme.label)
             if isWorking {
                 ProgressView()
             }

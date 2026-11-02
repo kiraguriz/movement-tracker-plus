@@ -8,12 +8,16 @@ struct WeightTrendView: View {
     let measurements: [BodyMeasurement]
     let units: UnitFormatter
     let onAdd: () -> Void
+    @ScaledMetric(relativeTo: .largeTitle) private var weightSize = 56.0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Weight")
-                    .font(.headline)
+            HStack(alignment: .top) {
+                if let latest = measurements.last {
+                    header(latest: latest)
+                } else {
+                    Text("Weight").font(.headline)
+                }
                 Spacer()
                 Button(action: onAdd) {
                     Image(systemName: "plus")
@@ -24,8 +28,7 @@ struct WeightTrendView: View {
                 .accessibilityLabel("Log weight")
                 .accessibilityIdentifier(AccessibilityID.logWeight)
             }
-            if let latest = measurements.last {
-                header(latest: latest)
+            if !measurements.isEmpty {
                 chart
             } else {
                 VStack(spacing: 12) {
@@ -44,13 +47,19 @@ struct WeightTrendView: View {
     }
 
     private func header(latest: BodyMeasurement) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
-            Text(units.bodyMass(Mass(kilograms: latest.value)))
-                .font(.title.bold())
-                .monospacedDigit()
-                .accessibilityIdentifier(AccessibilityID.latestWeight)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(UnitFormatter.number(units.massValue(Mass(kilograms: latest.value)), digits: 0...1))
+                    .font(TraceTheme.numeral(min(weightSize, 80)))
+                    .lineLimit(1).minimumScaleFactor(0.6)
+                Text(units.massSymbol).font(TraceTheme.label).foregroundStyle(TraceTheme.secondary)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Weight")
+            .accessibilityValue(units.bodyMass(Mass(kilograms: latest.value)))
+            .accessibilityIdentifier(AccessibilityID.latestWeight)
             if let first = measurements.first, first.id != latest.id, let change = changeText(from: first, to: latest) {
-                Text(verbatim: change)
+                Text("\(change) · 8 wk")
                     .font(.subheadline)
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
@@ -73,23 +82,22 @@ struct WeightTrendView: View {
                 y: .value("Weight", units.massValue(Mass(kilograms: measurement.value)))
             )
             .interpolationMethod(.monotone)
-            .foregroundStyle(Color.accentColor)
-            PointMark(
-                x: .value("Date", measurement.measuredAt),
-                y: .value("Weight", units.massValue(Mass(kilograms: measurement.value)))
-            )
-            .symbolSize(measurement.id == measurements.last?.id ? 70 : 18)
-            .foregroundStyle(Color.accentColor)
+            .foregroundStyle(TraceTheme.ink)
+            if measurement.id == measurements.last?.id {
+                PointMark(
+                    x: .value("Date", measurement.measuredAt),
+                    y: .value("Weight", units.massValue(Mass(kilograms: measurement.value)))
+                )
+                .symbolSize(55)
+                .foregroundStyle(TraceTheme.blue)
+            }
         }
         .chartYScale(domain: .automatic(includesZero: false))
         .chartPlotStyle { $0.padding(.horizontal, 8) }
-        .chartXAxis {
-            AxisMarks(values: .automatic(desiredCount: 4)) { _ in
-                AxisGridLine()
-                AxisValueLabel(format: .dateTime.month(.abbreviated).day())
-            }
-        }
-        .frame(height: 180)
+        .chartXAxis(.hidden)
+        .chartYAxis(.hidden)
+        .frame(height: 76)
+        .accessibilityLabel("Weight over the last 8 weeks")
         .accessibilityIdentifier(AccessibilityID.weightChart)
     }
 }

@@ -109,7 +109,7 @@ public struct MotionPipeline: Sendable {
         absorb(segmentEvents, at: frame.t, into: &events)
 
         if let value {
-            events.append(.signal(segmenter.progress(forValue: value)))
+            events.append(.signal(segmenter.progress(forValue: value), at: capturedFrame.t))
         }
         return events
     }

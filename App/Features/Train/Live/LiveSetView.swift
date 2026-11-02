@@ -14,8 +14,8 @@ struct LiveSetView: View {
 
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
-    @State private var isConfirmingDiscard = false
-    @ScaledMetric(relativeTo: .largeTitle) private var counterSize = 112.0
+    @State private var isConfirmingClose = false
+    @ScaledMetric(relativeTo: .largeTitle) private var counterSize = 220.0
 
     var body: some View {
         ZStack {
@@ -58,8 +58,9 @@ struct LiveSetView: View {
         .sensoryFeedback(.warning, trigger: model.cueCount)
         .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
         .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
-        .confirmationDialog("Discard this set?", isPresented: $isConfirmingDiscard, titleVisibility: .visible) {
-            Button("Discard Set", role: .destructive, action: onClose)
+        .confirmationDialog("Close this set?", isPresented: $isConfirmingClose, titleVisibility: .visible) {
+            Button("Close Set", action: onClose)
+                .accessibilityIdentifier("live.close.confirm")
             Button("Keep Counting", role: .cancel) {}
         }
         .testIdentifier(AccessibilityID.liveSet)
@@ -68,19 +69,32 @@ struct LiveSetView: View {
     // MARK: Live
 
     private var live: some View {
-        ZStack {
-            CameraIsland(model: model)
-                .ignoresSafeArea()
-            GeometryReader { proxy in
-                if proxy.size.width > proxy.size.height * 1.15 {
-                    wideLayout
-                } else {
+        GeometryReader { proxy in
+            if proxy.size.width > 900, proxy.size.width > proxy.size.height {
+                HStack(spacing: 0) {
+                    CameraIsland(model: model)
+                        .frame(width: proxy.size.width * 0.55)
+                        .ignoresSafeArea()
                     tallLayout(height: proxy.size.height)
+                        .frame(maxWidth: .infinity)
+                        .background(TraceTheme.night)
+                }
+            } else {
+                ZStack {
+                    CameraIsland(model: model).ignoresSafeArea()
+                    LinearGradient(colors: [.black.opacity(0.12), .clear, .black.opacity(0.65)], startPoint: .top, endPoint: .bottom)
+                        .ignoresSafeArea()
+                        .allowsHitTesting(false)
+                    if proxy.size.width > proxy.size.height * 1.15 {
+                        wideLayout
+                    } else {
+                        tallLayout(height: proxy.size.height)
+                    }
                 }
             }
-            if model.stage == .preparing {
-                ProgressView().controlSize(.large).tint(.white)
-            }
+        }
+        .overlay {
+            if model.stage == .preparing { ProgressView().controlSize(.large).tint(.white) }
         }
         // The controls sit over the camera picture, which must stay mostly clear for the person; the screens that
         // only explain why there is no camera scale with the text size like any other screen.
@@ -99,11 +113,9 @@ struct LiveSetView: View {
             hud
             prompts
             Spacer(minLength: 0)
-            HStack(alignment: .bottom, spacing: 16) {
-                counter
-                Spacer(minLength: 0)
-                gauge.frame(height: min(280, max(120, height * 0.34)))
-            }
+            counter(size: min(counterSize, height * 0.36))
+                .frame(maxWidth: .infinity, alignment: .leading)
+            LiveMotionTrace(signal: model.signal).frame(height: 96)
             endButton
         }
         .padding(.horizontal, 16)
@@ -111,24 +123,23 @@ struct LiveSetView: View {
     }
 
     private var wideLayout: some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(alignment: .leading, spacing: 12) {
-                closeButton
-                hud
-                Spacer(minLength: 0)
-                counter
-            }
-            VStack(spacing: 12) {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
                 title
                 prompts
                 Spacer(minLength: 0)
+                counter(size: min(counterSize, 150))
+                LiveMotionTrace(signal: model.signal).frame(height: 76)
             }
             .frame(maxWidth: .infinity)
-            VStack(alignment: .trailing, spacing: 12) {
+            VStack(spacing: 12) {
+                closeButton
                 sideButtons
-                gauge.frame(maxHeight: .infinity)
-                endButton.frame(width: 220)
+                Spacer(minLength: 0)
+                hud
+                endButton.frame(width: 160)
             }
+            .frame(width: 160)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
@@ -149,7 +160,7 @@ struct LiveSetView: View {
     private var closeButton: some View {
         Button {
             if model.reps > 0 || model.partials > 0 {
-                isConfirmingDiscard = true
+                isConfirmingClose = true
             } else {
                 onClose()
             }
@@ -197,16 +208,16 @@ struct LiveSetView: View {
         guard model.stage == .running else { return nil }
         if !model.framing.isReady {
             return Prompt(
-                text: LiveText.framing(model.framing), symbol: model.framing.symbolName, tint: .blue,
+                text: LiveText.framing(model.framing), symbol: model.framing.symbolName, tint: TraceTheme.sky,
                 identifier: AccessibilityID.liveFraming
             )
         }
         if let cue = model.cue {
-            return Prompt(text: cue.text, symbol: "speaker.wave.2.fill", tint: .orange, identifier: AccessibilityID.liveCue)
+            return Prompt(text: cue.text, symbol: "speaker.wave.2.fill", tint: TraceTheme.amber, identifier: AccessibilityID.liveCue)
         }
         if model.isIdle {
             return Prompt(
-                text: String(localized: "Done? Tap End set."), symbol: "checkmark.circle", tint: .green,
+                text: String(localized: "Done? Tap End set."), symbol: "checkmark.circle", tint: TraceTheme.sky,
                 identifier: AccessibilityID.liveIdle
             )
         }
@@ -241,20 +252,21 @@ struct LiveSetView: View {
     private func banner(_ text: String, systemImage: String, tint: Color) -> some View {
         Label(text, systemImage: systemImage)
             .font(.title3.weight(.semibold))
+            .foregroundStyle(TraceTheme.night)
             .multilineTextAlignment(.center)
             .lineLimit(3)
             .contentTransition(.identity)
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
             .frame(minHeight: 44)
-            .glassEffect(.regular.tint(tint.opacity(0.35)), in: .rect(cornerRadius: 28))
+            .background(tint, in: .capsule)
             .transition(.scale(scale: 0.9).combined(with: .opacity))
     }
 
-    private var counter: some View {
+    private func counter(size: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(model.reps, format: .number)
-                .font(.system(size: counterSize, weight: .bold, design: .rounded))
+                .font(TraceTheme.numeral(size))
                 .monospacedDigit()
                 .contentTransition(.numericText())
                 .lineLimit(1)
@@ -265,27 +277,34 @@ struct LiveSetView: View {
                 .accessibilityValue("\(model.reps)")
                 .accessibilityIdentifier(AccessibilityID.liveRepCount)
             if model.partials > 0 {
-                Label("\(model.partials) partial", systemImage: "arrow.down.to.line.compact")
+                HStack(spacing: 8) {
+                    TraceMark(status: .partial)
+                    Text("\(model.partials) partial")
+                }
                     .font(.headline)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(TraceTheme.amber)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(.black.opacity(0.4), in: .capsule)
+                    .accessibilityElement(children: .combine)
                     .accessibilityIdentifier(AccessibilityID.livePartials)
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 8)
-        .glassEffect(.regular, in: .rect(cornerRadius: 28))
+        .foregroundStyle(.white)
+        .shadow(color: .black.opacity(0.4), radius: 12, y: 4)
         #if DEBUG
         .onLongPressGesture { model.showsHUD.toggle() }
         #endif
     }
 
-    private var gauge: some View {
-        DepthGauge(signal: model.signal)
-            .accessibilityHidden(true)
-    }
-
     private var endButton: some View {
-        PrimaryButton(title: "End set", action: onEnd)
+        Button(action: onEnd) {
+            Text("End set")
+                .font(.headline)
+                .frame(maxWidth: .infinity, minHeight: 54)
+        }
+            .buttonStyle(.glassProminent)
+            .tint(TraceTheme.cobalt)
             .accessibilityIdentifier(AccessibilityID.liveEnd)
     }
 
@@ -323,31 +342,5 @@ struct LiveSetView: View {
                 actions()
             }
         }
-    }
-}
-
-/// A vertical bar that fills as the body goes down, with a mark where a rep starts to count.
-struct DepthGauge: View {
-    let signal: LiveSignal
-
-    /// The depth, as a fraction of the calibrated range, at which the engine sees the bottom of a rep.
-    private static let countingDepth = 1 - MotionConfig.default.segmenter.bottomEnter
-
-    var body: some View {
-        let depth = min(1, max(0, signal.value))
-        GeometryReader { proxy in
-            ZStack(alignment: .top) {
-                Capsule().fill(.white.opacity(0.2))
-                Capsule()
-                    .fill(depth >= Self.countingDepth ? Color.green : Color.white)
-                    .frame(height: proxy.size.height * depth)
-                Capsule()
-                    .fill(.white)
-                    .frame(width: proxy.size.width + 8, height: 3)
-                    .offset(y: proxy.size.height * Self.countingDepth - 1.5)
-            }
-        }
-        .frame(width: 16)
-        .shadow(color: .black.opacity(0.4), radius: 2)
     }
 }

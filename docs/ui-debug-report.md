@@ -45,3 +45,90 @@ The user paused human camera counting. Manual draft/completed recovery, real Hea
 test-data cleanup and the acceptance-fixture transfer caveat are documented in
 [physical-device-acceptance.md](physical-device-acceptance.md). No private phone screenshots or raw poses
 were added to repository evidence.
+
+## Trace redesign — 2026-11-01 working tree
+
+Implemented from the user's `Movement Tracker+ Redesign.html`, statically extracted as 17 design
+screens/size variants. The reference's example values and generated motion curves were not copied as
+application data. Shared Trace colors, native compressed numerals, expanded metric labels, rep shapes,
+glass actions and three icon appearances now cover Today, Train, Live Set, Review, Summary, Eat,
+Meal Photo, Coach, Me, the onboarding plan and Workout History.
+
+Implementation ownership was split by shared shell/Today, Train/history, live/review/summary,
+Eat/photo, Coach/Me/plan, and independent validation. Acceptance requires existing save/edit/delete,
+consent and checkpoint flows to remain usable, individual nutrition values to remain accessible,
+English/Chinese support, and layouts that adapt to short and wide windows.
+
+- Live curves use timestamped MotionCore output. Rep markers match the actual rep interval and bottom
+  timestamp, including when setup or rejected attempts precede a counted rep. The buffer retains at most
+  3,600 samples in memory; saved history shows persisted rep metrics without inventing a saved waveform
+  or issuing a new Muse request.
+- Today cards navigate to Eat/history. History filtering uses the selected exercise's actual sets;
+  unavailable/truncated older set snapshots show an unknown value. Closing a live set accurately says
+  Close, and keeps its already-saved checkpoint.
+- Nutrient unknowns and partial totals retain `–` and `≥`; VoiceOver reads quantities, units and set
+  numbers. Onboarding has four-step progress. Navigation uses the native automatic tab/rail presentation;
+  Today selects columns from its available width, and nutrition targets keep their full value.
+
+Validation: `tools/check.sh` passed (1,185 Swift package tests, 8 Python tests, 146 proxy tests,
+proxy dry-run bundle, Debug/Release simulator builds, Release device SDK build, diff check).
+Log: `/tmp/mt-redesign-gate.log`. These device SDK builds are unsigned compile evidence.
+The final three app builds passed after all layout and contrast corrections:
+`/tmp/mt-trace-layout-gate.log`. Earlier affected-build logs remain available for the trace-selection
+and Coach contrast changes.
+
+UI coverage is **59 distinct functional/accessibility cases plus 2 screenshot cases**, all with passing
+results after scoped retests. This is combined coverage, not a single clean full-suite invocation:
+
+| Run | Result | Evidence |
+| --- | --- | --- |
+| Tabs, Chinese, landscape, touch sizes, largest text | 8/8 passed | Xcode MCP `test_sim_2026-11-02T00-28-14-240Z` |
+| Train, Coach and Today card navigation | 25 passed, 2 failed | Xcode MCP `test_sim_2026-11-02T00-33-39-339Z` |
+| Health, meals and profile | 22 passed, 2 failed | `/tmp/mt-redesign-ui-max.log` |
+| Isolated photo diagnosis | 1/1 passed | `/tmp/mt-trace-photo-diagnostic.log` |
+| Final affected flows, landscape and train screenshots | 8 passed, 1 failed | `/tmp/mt-trace-final-focused.log` |
+| Final largest-text onboarding | 1/1 passed | `/tmp/mt-trace-ax-final.log` |
+| Coach button contrast | 1/1 passed | `/tmp/mt-trace-contrast-final.log` |
+| Final width-aware landscape | 1/1 passed | `/tmp/mt-trace-layout-fixed.log` |
+| Final width/localization/accessibility | 3/3 passed | `/tmp/mt-trace-layout-regression.log` |
+
+All failures were resolved and their original attempts remain in the
+[machine-readable results](ui-evidence/trace/results.json):
+
+- Photo editing: the test's rapid triple-tap hit the Log meal button as the keyboard moved it upward.
+  The failure recording/hierarchy showed Eat with the unedited 120 g / 50 g items already saved. The
+  helper now waits for the focused field to settle above the keyboard and raised action, keeping exact
+  value and saved-total assertions. The final photo flow passed with the permanent helper.
+- Close confirmation: the system exposes the same native button as nested accessibility nodes. The
+  test now selects the first matching node and verifies the three-rep checkpoint remains saved.
+- Coach consent cancellation: the old fixed outside-tap landed inside the newly positioned popover.
+  Dismissal now uses the actual dialog bounds; cancel/off, confirm/on and turn-off assertions passed.
+- Weight units: the check now reads the numeric accessibility value, which includes pounds, while
+  its label identifies Weight. The conversion and privacy navigation passed.
+- Largest-text onboarding: the original scroll gesture started inside the floating Continue action.
+  It now starts in the form's visible area above that action; the complete flow passed on Pro Max.
+- A landscape probe exposed a TabBar-only test assumption; the helper now also recognizes native
+  sidebar cells. Visual inspection then caught a truncated calorie target in the narrow content area.
+  The final UI preserves automatic native tab/rail navigation, uses available width for Today columns,
+  and keeps the target text at its full width. Final Today/Eat landscape screenshots show `/ 2,317`
+  without ellipsis. The extra probe and its retest are also preserved in the results ledger.
+- Coach primary actions now use the native button foreground instead of inheriting the chat's ink
+  foreground. The final screenshot confirms white text on the blue action and its meal flow passed.
+
+Xcode stalled while finalizing the nine-case focused batch after all test bodies had logged their
+results. That postprocessing process was stopped; its complete text log and direct screenshot outputs
+are retained. The later isolated result bundles finalized normally.
+
+Representative raw, unedited screenshots were inspected: [Today](ui-evidence/trace/today-en.png),
+[Chinese Today](ui-evidence/trace/today-zh.png), [dark Today](ui-evidence/trace/today-dark.png),
+[Eat](ui-evidence/trace/eat-en.png), [Me](ui-evidence/trace/me-en.png),
+[Coach](ui-evidence/trace/coach.png), [meal photo](ui-evidence/trace/meal-photo.png),
+[wide Today](ui-evidence/trace/today-landscape.png), [live portrait](ui-evidence/trace/live-portrait.png),
+[live landscape](ui-evidence/trace/live-landscape.png), [Review](ui-evidence/trace/review.png) and
+[Summary](ui-evidence/trace/summary.png). The live and review views show measured replay traces;
+the selected review rep is centered in the chip strip. Lower scroll content may initially sit behind
+the native glass bars and remains scrollable.
+
+Runtime data is synthetic, the Coach/USDA/Health services are local stubs, and motion is fixture replay.
+This redesign does not establish new physical-device motion accuracy, real-photo inference quality,
+live-service availability or iPhone Duo hardware acceptance.

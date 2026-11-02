@@ -5,11 +5,12 @@ import SwiftUI
 @Observable
 final class TodayModel {
     /// Weight history shown in the trend, in days.
-    static let weightWindowDays = 90
+    static let weightWindowDays = 56
 
     private(set) var day: LocalDay
     private(set) var totals = Loadable<NutritionDayTotal?>.loading
     private(set) var latestWorkout = Loadable<WorkoutSummary?>.loading
+    private(set) var latestSetCounts: [Int] = []
     private(set) var weights = Loadable<[BodyMeasurement]>.loading
     var errorMessage: String?
 
@@ -46,10 +47,21 @@ final class TodayModel {
 
     private func watchWorkout() async {
         let query = WorkoutHistoryQuery(statuses: [.completed], limit: 1)
-        await environment.workouts.observeHistory(query).forEachValue(
-            onFailure: { errorMessage = $0.localizedDescription },
-            { latestWorkout = .loaded($0.first) }
-        )
+        do {
+            for try await summaries in environment.workouts.observeHistory(query) {
+                latestWorkout = .loaded(summaries.first)
+                if let latest = summaries.first,
+                   let workout = try await environment.workouts.workout(id: latest.id) {
+                    latestSetCounts = workout.performedExercises.flatMap { $0.sets.map { $0.set.reps ?? 0 } }
+                } else {
+                    latestSetCounts = []
+                }
+            }
+        } catch is CancellationError {
+            return
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     private func watchWeights() async {

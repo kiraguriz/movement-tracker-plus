@@ -43,7 +43,7 @@ struct RecordTests {
     func eventCoding() throws {
         let events: [MotionEvent] = [
             .framing(.ready), .framing(.turnSideways), .phase(.descending), .repCompleted(record()),
-            .partialRep(record(counted: false, score: 0)), .cue("cue.squat.deeper"), .signal(0.42), .idle,
+            .partialRep(record(counted: false, score: 0)), .cue("cue.squat.deeper"), .signal(0.42), .signal(0.42, at: 12.5), .idle,
         ]
         for event in events { #expect(try roundTrip(event) == event) }
         #expect(try roundTrip(events) == events)

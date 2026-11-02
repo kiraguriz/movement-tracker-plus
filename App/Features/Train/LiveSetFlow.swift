@@ -103,7 +103,8 @@ struct LiveSetFlow: View {
             bottomFrames: result.bottomFrames,
             level: session.profile?.activityLevel ?? .beginner,
             goal: session.goal?.kind,
-            unitSystem: session.unitSystem
+            unitSystem: session.unitSystem,
+            trace: result.trace
         )
     }
 }

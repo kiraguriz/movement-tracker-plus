@@ -19,8 +19,13 @@ public struct ExerciseProgressPoint: Equatable, Sendable, Identifiable {
 
 @MainActor @Observable
 public final class WorkoutHistoryModel {
+    public static let selectedSetLimit = 1000
+
     public private(set) var summaries: [WorkoutSummary] = []
     public private(set) var progress: [ExerciseProgressPoint] = []
+    /// The same bounded recent-set snapshot used for the selected exercise's trend.
+    /// Per-session rows may use this without confusing a session's total with one exercise's reps.
+    public private(set) var selectedExerciseSets: [SetHistoryItem] = []
     public private(set) var hasMore = false
     public private(set) var isLoading = false
     public var errorMessage: String?
@@ -38,12 +43,13 @@ public final class WorkoutHistoryModel {
         do {
             let rows = try await workouts.history(WorkoutHistoryQuery(exerciseID: requestedExercise, limit: limit + 1))
             let sets: [SetHistoryItem]
-            if let requestedExercise { sets = try await workouts.recentSets(exerciseID: requestedExercise, limit: 1000) }
+            if let requestedExercise { sets = try await workouts.recentSets(exerciseID: requestedExercise, limit: Self.selectedSetLimit) }
             else { sets = [] }
             try Task.checkCancellation()
             guard requestedExercise == exerciseID else { return }
             summaries = Array(rows.prefix(limit))
             hasMore = rows.count > limit
+            selectedExerciseSets = sets
             progress = ExerciseProgressPoint.summarize(sets)
             errorMessage = nil
         } catch is CancellationError { }

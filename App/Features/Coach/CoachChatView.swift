@@ -65,7 +65,8 @@ struct CoachChatView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if model.consent.isOn == true { composer }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(TraceTheme.paper)
+        .tint(TraceTheme.blue)
     }
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
@@ -77,7 +78,10 @@ struct CoachChatView: View {
 
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Ask about your training and food", systemImage: "sparkles")
+            HStack(spacing: 10) {
+                TraceCoachGlyph(size: 26)
+                Text("Ask about your training and food")
+            }
                 .font(.headline)
             FlowLayout(spacing: 8) {
                 ForEach(Array(CoachSuggestion.allCases.enumerated()), id: \.element) { index, suggestion in
@@ -89,7 +93,7 @@ struct CoachChatView: View {
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
                             .frame(minHeight: 44)
-                            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 22))
+                            .background(TraceTheme.card, in: .rect(cornerRadius: 22))
                     }
                     .buttonStyle(.plain)
                     .accessibilityIdentifier(AccessibilityID.coachSuggestion(index))
@@ -110,13 +114,15 @@ struct CoachChatView: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .frame(minHeight: 44)
-                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 22))
+                .glassEffect(.regular, in: .capsule)
                 .accessibilityIdentifier(AccessibilityID.coachComposer)
             if model.isSending {
                 Button(action: model.stop) {
-                    Image(systemName: "stop.circle.fill")
-                        .font(.largeTitle)
-                        .frame(minWidth: 44, minHeight: 44)
+                    Image(systemName: "stop.fill")
+                        .font(.body.weight(.bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 52, height: 52)
+                        .background(TraceTheme.night, in: .circle)
                 }
                 .accessibilityLabel("Stop")
                 .accessibilityIdentifier(AccessibilityID.coachStop)
@@ -125,9 +131,12 @@ struct CoachChatView: View {
                     isPinned = true
                     model.send(unitSystem: unitSystem)
                 } label: {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.largeTitle)
-                        .frame(minWidth: 44, minHeight: 44)
+                    Image(systemName: "arrow.up")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 52, height: 52)
+                        .background(TraceTheme.cobalt, in: .circle)
+                        .opacity(model.canSend ? 1 : 0.4)
                 }
                 .disabled(!model.canSend)
                 .accessibilityLabel("Send")
@@ -136,7 +145,7 @@ struct CoachChatView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(.bar)
+        .background(TraceTheme.paper.opacity(0.9))
     }
 }
 

@@ -20,7 +20,9 @@ struct RootView: View {
     var body: some View {
         TabView(selection: $selection) {
             Tab(value: AppTab.today) {
-                NavigationStack { TodayView(environment: environment, openTrain: { selection = .train }) }
+                NavigationStack {
+                    TodayView(environment: environment, openTrain: { selection = .train }, openEat: { selection = .eat })
+                }
             } label: {
                 Label("Today", systemImage: "sun.max")
             }
@@ -48,7 +50,10 @@ struct RootView: View {
             Button {
                 isCoachPresented = true
             } label: {
-                Label("Ask Coach", systemImage: "sparkles")
+                HStack(spacing: 8) {
+                    TraceCoachGlyph()
+                    Text("Ask Coach").font(.subheadline.weight(.semibold))
+                }
                     .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .contentShape(.rect)

@@ -4935,14 +4935,34 @@
     },
     "Set" : {
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Set" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "组" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "组"
+          }
+        }
       }
     },
     "Rep" : {
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Rep" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "次" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rep"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次"
+          }
+        }
       }
     },
     "Exercise" : {
@@ -5069,6 +5089,230 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "训练记录"
+          }
+        }
+      }
+    },
+    "%@ / week" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ / week"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ / 周"
+          }
+        }
+      }
+    },
+    "%@ · 8 wk" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · 8 wk"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · 8 周"
+          }
+        }
+      }
+    },
+    "%lld × %lld · %lld s" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld × %lld · %lld s"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld × %2$lld · %3$lld 秒"
+          }
+        }
+      }
+    },
+    "Amount %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Amount %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "份量 %@"
+          }
+        }
+      }
+    },
+    "Burn at rest" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Burn at rest"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "静息消耗"
+          }
+        }
+      }
+    },
+    "Daily burn" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daily burn"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每日消耗"
+          }
+        }
+      }
+    },
+    "Log meal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log meal"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "记录餐食"
+          }
+        }
+      }
+    },
+    "Motion trace" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Motion trace"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "动作轨迹"
+          }
+        }
+      }
+    },
+    "Set review" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set review"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "组回顾"
+          }
+        }
+      }
+    },
+    "Weight over the last 8 weeks" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weight over the last 8 weeks"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近 8 周的体重"
+          }
+        }
+      }
+    },
+    "kcal a day" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kcal a day"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每日千卡"
+          }
+        }
+      }
+    },
+    "Step %lld of 4" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Step %lld of 4"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第 %lld 步，共 4 步"
+          }
+        }
+      }
+    },
+    "Close this set?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close this set?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭这组训练？"
+          }
+        }
+      }
+    },
+    "Close Set" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close Set"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭这组"
           }
         }
       }

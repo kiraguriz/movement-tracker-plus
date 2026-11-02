@@ -62,7 +62,7 @@ private struct ProposalFrame<Details: View, Actions: View>: View {
                 .accessibilityIdentifier(AccessibilityID.coachProposalResolved)
             } else {
                 VStack(alignment: .leading, spacing: 12) {
-                    Label { title.font(.headline) } icon: { Image(systemName: systemImage) }
+                    title.font(.headline)
                     details
                     actions
                 }
@@ -95,17 +95,22 @@ private struct ProposalButtons: View {
     }
 
     private var dismissButton: some View {
-        Button("Dismiss", action: dismiss)
-            .buttonStyle(.bordered)
+        Button(action: dismiss) {
+            Text("Dismiss").frame(maxWidth: .infinity, minHeight: 36)
+        }
+            .buttonStyle(.glass)
             .disabled(isBusy)
             .accessibilityIdentifier(AccessibilityID.coachProposalDismiss)
     }
 
     private var confirmButton: some View {
         Button(action: confirm) {
-            if isBusy { ProgressView() } else { Text(confirmTitle) }
+            Group {
+                if isBusy { ProgressView() } else { Text(confirmTitle) }
+            }
+            .frame(maxWidth: .infinity, minHeight: 36)
         }
-        .buttonStyle(.borderedProminent)
+        .buttonStyle(.glassProminent)
         .disabled(isBusy || !canConfirm)
         .accessibilityIdentifier(AccessibilityID.coachProposalConfirm)
     }
@@ -369,7 +374,7 @@ private struct PlanCard: View {
             }
             if resolution == .confirmed, let openTrain {
                 Button("Open Train", action: openTrain)
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.glass)
                     .frame(minHeight: 44)
                     .accessibilityIdentifier(AccessibilityID.coachOpenTrain)
             }
@@ -384,15 +389,19 @@ private struct PlanCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(day.name)
                         .font(.subheadline.weight(.semibold))
+                        .padding(.top, 4)
                     ForEach(Array(day.exercises.enumerated()), id: \.offset) { _, exercise in
+                        Divider()
                         HStack(alignment: .firstTextBaseline) {
                             Text(exercise.name)
                             Spacer(minLength: 8)
                             Text("\(exercise.sets) × \(exercise.reps)")
-                                .foregroundStyle(.secondary)
+                                .font(TraceTheme.numeral(24))
                                 .monospacedDigit()
+                                .fixedSize(horizontal: true, vertical: false)
                         }
-                        .font(.subheadline)
+                        .frame(minHeight: 44)
+                        .font(.body)
                     }
                 }
             }
@@ -422,7 +431,7 @@ private struct PlanCard: View {
 
     private var dismissButton: some View {
         Button("Dismiss") { Task { await model.resolve(proposal, in: message, as: .dismissed) } }
-            .buttonStyle(.bordered)
+            .buttonStyle(.glass)
             .disabled(isStarting)
             .accessibilityIdentifier(AccessibilityID.coachProposalDismiss)
     }
@@ -435,7 +444,7 @@ private struct PlanCard: View {
         } label: {
             if isStarting { ProgressView() } else { Text("Start") }
         }
-        .buttonStyle(.borderedProminent)
+        .buttonStyle(.glassProminent)
         .disabled(isStarting)
         .accessibilityIdentifier(AccessibilityID.coachProposalConfirm)
     }
