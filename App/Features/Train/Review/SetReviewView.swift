@@ -152,7 +152,7 @@ struct SetReviewView: View {
             }
             .onChange(of: model.selectedRep) { _, selected in
                 if let selected {
-                    withAnimation(.smooth) { proxy.scrollTo(selected, anchor: .center) }
+                    withAnimation(TraceMotion.scroll) { proxy.scrollTo(selected, anchor: .center) }
                 }
             }
         }

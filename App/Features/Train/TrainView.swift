@@ -19,6 +19,7 @@ private struct TrainScreen: View {
     @State private var isConfirmingDiscard = false
     @State private var skippedRest: EntityID?
     @State private var editingSet: LoggedSet?
+    @ScaledMetric(relativeTo: .largeTitle) private var recentRepSize = 44.0
 
     private let environment: AppEnvironment
     private let refresh: Int
@@ -52,6 +53,7 @@ private struct TrainScreen: View {
                 exercise: model.exercise(for: entry.exerciseID),
                 previous: model.exerciseEntries.first { $0.entry.id == entry.id }?.sets.last,
                 prescribedReps: entry.prescription?.reps,
+                earlier: model.exerciseEntries.first { $0.entry.id == entry.id }?.sets ?? [],
                 units: session.units
             ) { reps, load in
                 model.logManualSet(entryID: entry.id, reps: reps, load: load)
@@ -81,25 +83,151 @@ private struct TrainScreen: View {
     // MARK: Idle
 
     private var idle: some View {
-        VStack(spacing: 28) {
-            Image(systemName: "figure.strengthtraining.traditional")
-                .font(.system(size: 72, weight: .light))
-                .foregroundStyle(TraceTheme.blue)
+        ScrollView {
+            VStack(spacing: 12) {
+                startHero
+                if let last = model.lastWorkout {
+                    NavigationLink { WorkoutHistoryView(environment: environment) } label: {
+                        recentWorkoutCard(last)
+                    }
+                    .buttonStyle(.plain)
+                    recentExercises(last)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 24)
+        }
+    }
+
+    private func recentWorkoutCard(_ workout: Workout) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 10) {
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        recentReps(workout.totalReps)
+                        Spacer(minLength: 8)
+                        Text(workout.session.startedAt, format: .relative(presentation: .named))
+                            .font(.subheadline)
+                            .foregroundStyle(TraceTheme.secondary)
+                    }
+                    VStack(alignment: .leading, spacing: 6) {
+                        recentReps(workout.totalReps)
+                        Text(workout.session.startedAt, format: .relative(presentation: .named))
+                            .font(.subheadline)
+                            .foregroundStyle(TraceTheme.secondary)
+                    }
+                }
+                HStack(spacing: 5) {
+                    ForEach(workout.performedExercises.flatMap(\.sets)) { logged in
+                        if let count = logged.set.reps, count > 0 {
+                            TraceTally(count: count)
+                        }
+                    }
+                }
                 .accessibilityHidden(true)
+            }
+            Image(systemName: "chevron.right")
+                .font(.caption.bold())
+                .foregroundStyle(TraceTheme.secondary)
+                .accessibilityHidden(true)
+        }
+        .foregroundStyle(TraceTheme.ink)
+        .padding(20)
+        .background(TraceTheme.card, in: .rect(cornerRadius: 28))
+        .accessibilityElement(children: .combine)
+    }
+
+    private func recentReps(_ count: Int) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(count, format: .number)
+                .font(TraceTheme.numeral(recentRepSize))
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+            Text(count == 1 ? "Rep" : "Reps")
+                .traceMetricLabel()
+                .foregroundStyle(TraceTheme.secondary)
+        }
+    }
+
+    /// The way in: a dark panel with the trace the camera will draw, and the one action.
+    private var startHero: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            TraceRepWave(reps: 4)
+                .stroke(.white, style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+                .frame(height: 96)
+                .background {
+                    GeometryReader { geometry in
+                        Path { path in
+                            path.move(to: CGPoint(x: 0, y: geometry.size.height * 0.65))
+                            path.addLine(to: CGPoint(x: geometry.size.width, y: geometry.size.height * 0.65))
+                        }
+                        .stroke(TraceTheme.sky.opacity(0.7), style: StrokeStyle(lineWidth: 1, dash: [4, 5]))
+                    }
+                }
+                .overlay(alignment: .topTrailing) {
+                    Circle().fill(.white).frame(width: 8, height: 8).offset(y: -4)
+                }
+                .padding(.top, 28)
+                .padding(.horizontal, 4)
+                .accessibilityHidden(true)
+            Spacer(minLength: 28)
             Button {
                 model.start()
             } label: {
                 Label("Start workout", systemImage: "play.fill")
-                    .font(.title3.weight(.semibold))
-                    .padding(.horizontal, 20)
-                    .frame(minHeight: 52)
+                    .font(.title3.weight(.bold))
+                    .frame(maxWidth: .infinity, minHeight: 56)
             }
             .buttonStyle(.glassProminent)
-            .tint(TraceTheme.blue)
-            .controlSize(.large)
+            .tint(TraceTheme.cobalt)
             .accessibilityIdentifier(AccessibilityID.trainStart)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(16)
+        .frame(minHeight: 260)
+        .background(TraceTheme.night, in: .rect(cornerRadius: 32))
+        .environment(\.colorScheme, .dark)
+    }
+
+    /// What was done last time, each one a tap away from a new workout that starts with it.
+    private func recentExercises(_ last: Workout) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(last.performedExercises.enumerated()), id: \.element.entry.id) { index, item in
+                let exercise = model.exercise(for: item.entry.exerciseID)
+                if index > 0 { Divider().padding(.leading, 72) }
+                Button {
+                    model.start(with: exercise.id)
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: exercise.supportsCameraTracking ? "camera.fill" : "dumbbell.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(exercise.supportsCameraTracking ? TraceTheme.blue : TraceTheme.secondary)
+                            .frame(width: 40, height: 40)
+                            .background(TraceTheme.paper, in: .circle)
+                            .accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(ExerciseNames.name(of: exercise))
+                                .foregroundStyle(TraceTheme.ink)
+                            Text(verbatim: item.sets.compactMap { $0.set.reps.map(String.init) }.joined(separator: " · "))
+                                .font(.subheadline)
+                                .monospacedDigit()
+                                .foregroundStyle(TraceTheme.secondary)
+                        }
+                        Spacer(minLength: 8)
+                        Image(systemName: "play.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(TraceTheme.blue)
+                            .accessibilityHidden(true)
+                    }
+                    .padding(.horizontal, 16)
+                    .frame(minHeight: 64)
+                    .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Starts a workout")
+            }
+        }
+        .padding(.vertical, 4)
+        .background(TraceTheme.card, in: .rect(cornerRadius: 28))
     }
 
     // MARK: Workout
@@ -107,10 +235,17 @@ private struct TrainScreen: View {
     private var workoutList: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             List {
+                if let workout = model.workout {
+                    WorkoutClock(workout: workout, now: context.date)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                }
                 if let workout = model.workout, let rest = RestPeriod(workout: workout), skippedRest != rest.id {
                     let seconds = rest.remaining(at: context.date)
                     if seconds > 0 {
-                        restCard(seconds: seconds, restID: rest.id)
+                        restCard(seconds: seconds, total: rest.seconds, restID: rest.id)
                             .listRowInsets(EdgeInsets())
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
@@ -145,7 +280,7 @@ private struct TrainScreen: View {
         }
     }
 
-    private func restCard(seconds: Int, restID: EntityID) -> some View {
+    private func restCard(seconds: Int, total: Int, restID: EntityID) -> some View {
         HStack(spacing: 14) {
             Image(systemName: "timer")
                 .font(.title2)
@@ -167,7 +302,17 @@ private struct TrainScreen: View {
         .padding(.leading, 22)
         .padding(.trailing, 10)
         .frame(minHeight: 64)
-        .background(TraceTheme.night, in: .capsule)
+        .background(alignment: .bottomLeading) {
+            GeometryReader { proxy in
+                Rectangle()
+                    .fill(TraceTheme.blue)
+                    .frame(width: proxy.size.width * CGFloat(total - seconds) / CGFloat(max(1, total)), height: 4)
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+            }
+            .environment(\.colorScheme, .dark)
+        }
+        .background(TraceTheme.night)
+        .clipShape(.capsule)
     }
 
     private func exerciseSection(_ workoutExercise: WorkoutExercise) -> some View {
@@ -378,5 +523,43 @@ struct SetRow: View {
 #Preview {
     SeededPreview { _ in
         NavigationStack { TrainView(refresh: 0) }
+    }
+}
+
+/// How long the workout has run and how far through its planned sets it is.
+private struct WorkoutClock: View {
+    let workout: Workout
+    let now: Date
+
+    var body: some View {
+        let elapsed = Duration.seconds(max(0, Int(now.timeIntervalSince(workout.session.startedAt))))
+        let done = workout.setCount
+        let planned = workout.exercises.reduce(0) { $0 + max($1.entry.prescription?.sets ?? 0, $1.sets.count) }
+        VStack(alignment: .trailing, spacing: 9) {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(TraceTheme.blue)
+                    .frame(width: 8, height: 8)
+                    .background(Circle().fill(TraceTheme.blue.opacity(0.16)).padding(-4))
+                    .accessibilityHidden(true)
+                Text(elapsed, format: .time(pattern: elapsed < .seconds(3600) ? .minuteSecond : .hourMinuteSecond))
+                    .font(TraceTheme.numeral(34))
+                    .monospacedDigit()
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Workout time")
+            if planned > 0 {
+                HStack(spacing: 4) {
+                    ForEach(0..<min(planned, 16), id: \.self) { index in
+                        Capsule()
+                            .fill(index < done ? TraceTheme.ink : index == done ? TraceTheme.blue : TraceTheme.line)
+                            .frame(width: index == done ? 20 : 12, height: 6)
+                    }
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text("Set \(min(done + 1, planned)) of \(planned)"))
+            }
+        }
+        .foregroundStyle(TraceTheme.ink)
     }
 }

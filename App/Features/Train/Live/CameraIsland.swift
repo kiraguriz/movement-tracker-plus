@@ -59,7 +59,7 @@ final class CameraIslandView: UIView {
         bones.lineWidth = 4
         bones.lineCap = .round
         bones.lineJoin = .round
-        joints.fillColor = UIColor.systemGreen.cgColor
+        joints.fillColor = UIColor.white.cgColor
         joints.strokeColor = nil
     }
 

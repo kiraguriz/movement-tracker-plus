@@ -44,6 +44,16 @@ struct TodayView: View {
         .background(TraceTheme.paper)
         .navigationTitle("Today")
         .toolbar {
+            if !model.week.isEmpty {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink { WorkoutHistoryView(environment: environment) } label: {
+                        WeekStrip(days: model.week, today: model.day)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .sharedBackgroundVisibility(.hidden)
+                ToolbarSpacer(.fixed, placement: .topBarTrailing)
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink { WorkoutHistoryView(environment: environment) } label: {
                     Label("Workout history", systemImage: "clock.arrow.circlepath")
@@ -57,7 +67,10 @@ struct TodayView: View {
         }
         .onDayChange { model.refreshDay() }
         .sheet(isPresented: $isLoggingWeight) {
-            WeightEntrySheet(units: session.units, initial: model.weights.value?.last?.weight) { weight in
+            WeightEntrySheet(
+                units: session.units, initial: model.weights.value?.last?.weight,
+                since: model.weights.value?.last?.measuredAt
+            ) { weight in
                 try await model.logWeight(weight)
             }
         }

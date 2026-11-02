@@ -34,11 +34,13 @@ struct LiveSetFlow: View {
                 )
                 .transition(.move(edge: .bottom))
             } else {
-                LiveSetView(model: model, onEnd: end, onClose: close)
+                LiveSetView(model: model, onEnd: end, onClose: close) {
+                    train.logByHandFromLiveSet(entryID: request.entryID)
+                }
                     .transition(.opacity)
             }
         }
-        .animation(.snappy, value: review == nil)
+        .animation(TraceMotion.screen, value: review == nil)
         .errorAlert($errorMessage)
         .onDisappear {
             let live = model

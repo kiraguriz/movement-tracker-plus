@@ -12,6 +12,8 @@ final class TodayModel {
     private(set) var latestWorkout = Loadable<WorkoutSummary?>.loading
     private(set) var latestSetCounts: [Int] = []
     private(set) var weights = Loadable<[BodyMeasurement]>.loading
+    /// Reps of completed workouts on each day of this calendar week, first weekday first.
+    private(set) var week: [WeekDayReps] = []
     var errorMessage: String?
 
     private let environment: AppEnvironment
@@ -35,7 +37,8 @@ final class TodayModel {
         async let totalUpdates: Void = watchTotals()
         async let workoutUpdates: Void = watchWorkout()
         async let weightUpdates: Void = watchWeights()
-        _ = await (totalUpdates, workoutUpdates, weightUpdates)
+        async let weekUpdates: Void = watchWeek()
+        _ = await (totalUpdates, workoutUpdates, weightUpdates, weekUpdates)
     }
 
     private func watchTotals() async {
@@ -64,6 +67,25 @@ final class TodayModel {
         }
     }
 
+    private func watchWeek() async {
+        let timeZone = environment.timeZone()
+        var calendar = Calendar.current
+        calendar.timeZone = timeZone
+        let weekday = calendar.component(.weekday, from: day.date(in: timeZone))
+        let start = day.adding(days: -((weekday - calendar.firstWeekday + 7) % 7))
+        let days = (0..<7).map { start.adding(days: $0) }
+        let query = WorkoutHistoryQuery(statuses: [.completed], from: start, through: days[6], limit: 200)
+        await environment.workouts.observeHistory(query).forEachValue(
+            onFailure: { errorMessage = $0.localizedDescription },
+            { summaries in
+                week = days.map { day in
+                    WeekDayReps(day: day, date: day.date(in: timeZone),
+                                reps: summaries.filter { $0.session.localDay == day }.reduce(0) { $0 + $1.totalReps })
+                }
+            }
+        )
+    }
+
     private func watchWeights() async {
         let from = day.adding(days: -(Self.weightWindowDays - 1))
         await environment.bodyMeasurements.observeMeasurements(kind: .weight, from: from, through: nil).forEachValue(
@@ -80,4 +102,12 @@ final class TodayModel {
         )
         try await environment.bodyMeasurements.save(measurement)
     }
+}
+
+struct WeekDayReps: Equatable, Identifiable {
+    let day: LocalDay
+    let date: Date
+    let reps: Int
+
+    var id: LocalDay { day }
 }

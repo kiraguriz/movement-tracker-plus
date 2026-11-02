@@ -11,6 +11,7 @@ struct LiveSetView: View {
     let model: LiveSetModel
     let onEnd: () -> Void
     let onClose: () -> Void
+    let onLogByHand: () -> Void
 
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
@@ -25,22 +26,26 @@ struct LiveSetView: View {
                 live
             case .cameraDenied:
                 unavailable(
-                    "Camera access is off", systemImage: "camera.fill", identifier: AccessibilityID.liveCameraDenied
+                    "Camera access is off", message: String(localized: "Reps are counted from the camera, on this phone."),
+                    identifier: AccessibilityID.liveCameraDenied
                 ) {
-                    Button("Open Settings") {
+                    Button {
                         if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+                    } label: {
+                        Text("Open Settings")
+                            .font(.title3.weight(.bold))
+                            .frame(maxWidth: .infinity, minHeight: 60)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
+                    .buttonStyle(.glassProminent)
+                    .tint(TraceTheme.cobalt)
                     .accessibilityIdentifier(AccessibilityID.liveOpenSettings)
                 }
             case .cameraRestricted:
                 unavailable(
-                    "The camera is restricted on this device", systemImage: "lock.fill",
-                    identifier: AccessibilityID.liveCameraRestricted
+                    "The camera is restricted on this device", identifier: AccessibilityID.liveCameraRestricted
                 ) { EmptyView() }
             case .failed(let message):
-                unavailable("Can’t start the camera", systemImage: "exclamationmark.triangle.fill", message: message, identifier: nil) {
+                unavailable("Can’t start the camera", message: message, identifier: nil) {
                     EmptyView()
                 }
             }
@@ -71,14 +76,7 @@ struct LiveSetView: View {
     private var live: some View {
         GeometryReader { proxy in
             if proxy.size.width > 900, proxy.size.width > proxy.size.height {
-                HStack(spacing: 0) {
-                    CameraIsland(model: model)
-                        .frame(width: proxy.size.width * 0.55)
-                        .ignoresSafeArea()
-                    tallLayout(height: proxy.size.height)
-                        .frame(maxWidth: .infinity)
-                        .background(TraceTheme.night)
-                }
+                bookLayout(size: proxy.size)
             } else {
                 ZStack {
                     CameraIsland(model: model).ignoresSafeArea()
@@ -86,7 +84,7 @@ struct LiveSetView: View {
                         .ignoresSafeArea()
                         .allowsHitTesting(false)
                     if proxy.size.width > proxy.size.height * 1.15 {
-                        wideLayout
+                        wideLayout(height: proxy.size.height)
                     } else {
                         tallLayout(height: proxy.size.height)
                     }
@@ -109,7 +107,7 @@ struct LiveSetView: View {
                     Spacer(minLength: 0)
                     title
                     Spacer(minLength: 0)
-                    sideButtons
+                    sideButtons()
                 }
             }
             hud
@@ -118,33 +116,68 @@ struct LiveSetView: View {
             counter(size: min(counterSize, height * 0.36))
                 .frame(maxWidth: .infinity, alignment: .leading)
             LiveMotionTrace(signal: model.signal).frame(height: 96)
-            endButton
+            endButton(height: 60)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
     }
 
-    private var wideLayout: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 8) {
-                title
-                prompts
-                Spacer(minLength: 0)
-                counter(size: min(counterSize, 150))
-                LiveMotionTrace(signal: model.signal).frame(height: 76)
+    /// Landscape on a phone, or the Duo's outer display folded into a tent: the person stands in the left of the
+    /// picture, the count sits beside them and the trace runs the full width under both.
+    private func wideLayout(height: CGFloat) -> some View {
+        VStack(spacing: 10) {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 8) {
+                    if height >= 500 { title }
+                    prompts
+                    Spacer(minLength: 0)
+                    counter(size: min(counterSize, height * 0.4), chipBeside: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(spacing: 10) {
+                    closeButton
+                    sideButtons(vertical: true)
+                    Spacer(minLength: 0)
+                    hud
+                }
             }
-            .frame(maxWidth: .infinity)
-            VStack(spacing: 12) {
-                closeButton
-                sideButtons
-                Spacer(minLength: 0)
-                hud
-                endButton.frame(width: 160)
-            }
-            .frame(width: 160)
+            LiveMotionTrace(signal: model.signal).frame(height: 76)
+            endButton(height: 48)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
+    }
+
+    /// The Duo opened like a book: the camera fills the left page and stops at the fold, the numbers take the right
+    /// page, and nothing sits across the hinge.
+    private func bookLayout(size: CGSize) -> some View {
+        HStack(spacing: 0) {
+            ZStack(alignment: .topLeading) {
+                CameraIsland(model: model).ignoresSafeArea()
+                title.padding(16)
+            }
+            .frame(width: size.width * 0.48)
+            HStack(alignment: .top, spacing: 16) {
+                VStack(alignment: .leading, spacing: 18) {
+                    hud
+                    prompts
+                    Spacer(minLength: 0)
+                    counter(size: min(counterSize, size.height * 0.4), chipBeside: true)
+                    LiveMotionTrace(signal: model.signal).frame(height: 88)
+                    endButton(height: 60)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(spacing: 10) {
+                    closeButton
+                    sideButtons(vertical: true)
+                }
+            }
+            .padding(.leading, 36)
+            .padding(.trailing, 16)
+            .padding(.vertical, 16)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(TraceTheme.night)
+        }
     }
 
     // MARK: Pieces
@@ -177,8 +210,9 @@ struct LiveSetView: View {
         .accessibilityIdentifier(AccessibilityID.liveClose)
     }
 
-    private var sideButtons: some View {
-        HStack(spacing: 8) {
+    private func sideButtons(vertical: Bool = false) -> some View {
+        let layout = vertical ? AnyLayout(VStackLayout(spacing: 8)) : AnyLayout(HStackLayout(spacing: 8))
+        return layout {
             if model.isRecording {
                 Image(systemName: "record.circle.fill")
                     .font(.title3)
@@ -246,8 +280,8 @@ struct LiveSetView: View {
         }
         // Only the banner coming and going is animated. One prompt replacing another is a plain swap: a cross-fade
         // would show both texts at once for a moment.
-        .animation(.snappy, value: prompt != nil)
-        .animation(.snappy, value: model.notice != nil)
+        .animation(TraceMotion.cue, value: prompt != nil)
+        .animation(TraceMotion.cue, value: model.notice != nil)
         .frame(maxWidth: 560)
     }
 
@@ -265,8 +299,11 @@ struct LiveSetView: View {
             .transition(.scale(scale: 0.9).combined(with: .opacity))
     }
 
-    private func counter(size: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+    private func counter(size: CGFloat, chipBeside: Bool = false) -> some View {
+        let layout = chipBeside
+            ? AnyLayout(HStackLayout(alignment: .lastTextBaseline, spacing: 16))
+            : AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+        return layout {
             Text(model.reps, format: .number)
                 .font(TraceTheme.numeral(size))
                 .monospacedDigit()
@@ -274,7 +311,7 @@ struct LiveSetView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.4)
                 .dynamicTypeSize(...DynamicTypeSize.accessibility1)
-                .animation(.snappy, value: model.reps)
+                .animation(TraceMotion.count, value: model.reps)
                 .accessibilityLabel("Reps")
                 .accessibilityValue("\(model.reps)")
                 .accessibilityIdentifier(AccessibilityID.liveRepCount)
@@ -299,11 +336,11 @@ struct LiveSetView: View {
         #endif
     }
 
-    private var endButton: some View {
+    private func endButton(height: CGFloat) -> some View {
         Button(action: onEnd) {
             Text("End set")
                 .font(.headline)
-                .frame(maxWidth: .infinity, minHeight: 60)
+                .frame(maxWidth: .infinity, minHeight: height)
         }
             .buttonStyle(.plain)
             .foregroundStyle(.white)
@@ -323,27 +360,101 @@ struct LiveSetView: View {
 
     // MARK: Unavailable
 
+    /// No camera picture: a faded trace where the reps would be drawn, why, and the ways on — Settings when it
+    /// can help, and logging the set by hand, which always can.
     private func unavailable<Actions: View>(
         _ title: LocalizedStringKey,
-        systemImage: String,
         message: String? = nil,
         identifier: String?,
-        @ViewBuilder actions: () -> Actions
+        @ViewBuilder actions: @escaping () -> Actions
     ) -> some View {
-        VStack(spacing: 0) {
-            HStack {
-                closeButton
-                Spacer()
-            }
-            .padding(16)
-            ContentUnavailableView {
-                Label(title, systemImage: systemImage)
-                    .accessibilityIdentifier(identifier ?? AccessibilityID.liveNotice)
-            } description: {
-                if let message { Text(message) }
-            } actions: {
-                actions()
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack {
+                        closeButton
+                        Spacer(minLength: 12)
+                        Text(ExerciseNames.name(of: model.exercise))
+                            .font(.headline)
+                            .lineLimit(1)
+                            .padding(.horizontal, 20)
+                            .frame(minHeight: 48)
+                            .glassEffect(.regular, in: .capsule)
+                        Spacer(minLength: 12)
+                        Color.clear.frame(width: 48, height: 48)
+                    }
+                    FadedTrace()
+                        .stroke(.white.opacity(0.22), style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                        .frame(height: 150)
+                        .overlay(alignment: .bottom) {
+                            Line()
+                                .stroke(TraceTheme.sky.opacity(0.35), style: StrokeStyle(lineWidth: 1.5, dash: [4, 5]))
+                                .frame(height: 1)
+                                .padding(.horizontal, -16)
+                        }
+                        .padding(.vertical, 40)
+                        .accessibilityHidden(true)
+                    Spacer(minLength: 0)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Image(systemName: "video.slash")
+                            .font(.title.weight(.medium))
+                            .foregroundStyle(TraceTheme.amber)
+                            .frame(width: 64, height: 64)
+                            .background(TraceTheme.amber.opacity(0.16), in: .circle)
+                            .accessibilityHidden(true)
+                        Text(title)
+                            .font(.title.bold())
+                            .accessibilityAddTraits(.isHeader)
+                            .accessibilityIdentifier(identifier ?? AccessibilityID.liveNotice)
+                        if let message {
+                            Text(message)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    Spacer(minLength: 24)
+                    VStack(spacing: 10) {
+                        actions()
+                        Button(action: onLogByHand) {
+                            Text("Log this set by hand")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity, minHeight: 56)
+                        }
+                        .buttonStyle(.glass)
+                        .accessibilityIdentifier(AccessibilityID.liveLogByHand)
+                    }
+                }
+                .foregroundStyle(.white)
+                .frame(minHeight: max(0, geometry.size.height - 32))
+                .padding(16)
+                .frame(maxWidth: 560)
+                .frame(maxWidth: .infinity)
             }
         }
+    }
+}
+
+/// One rep drawn, then dots where the next ones would be: the trace waiting for the camera.
+private struct FadedTrace: Shape {
+    nonisolated func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width, top = rect.minY, bottom = rect.maxY
+        path.move(to: CGPoint(x: 0, y: top))
+        path.addLine(to: CGPoint(x: w * 0.15, y: top))
+        path.addCurve(to: CGPoint(x: w * 0.32, y: bottom), control1: CGPoint(x: w * 0.22, y: top), control2: CGPoint(x: w * 0.23, y: bottom))
+        path.addCurve(to: CGPoint(x: w * 0.5, y: top), control1: CGPoint(x: w * 0.42, y: bottom), control2: CGPoint(x: w * 0.42, y: top))
+        var x = w * 0.5
+        while x < w {
+            x += 10
+            path.move(to: CGPoint(x: x, y: top))
+            path.addLine(to: CGPoint(x: x + 0.5, y: top))
+        }
+        return path
+    }
+}
+
+private struct Line: Shape {
+    nonisolated func path(in rect: CGRect) -> Path {
+        Path { $0.move(to: CGPoint(x: rect.minX, y: rect.midY)); $0.addLine(to: CGPoint(x: rect.maxX, y: rect.midY)) }
     }
 }

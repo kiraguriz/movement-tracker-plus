@@ -34,7 +34,7 @@ struct LiveMotionTrace: View {
     let signal: LiveSignal
 
     var body: some View {
-        MotionTraceView(trace: signal.snapshot, recentSamples: 420)
+        MotionTraceView(trace: signal.snapshot, recentSamples: 420, showsHead: true)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .background(.black.opacity(0.44), in: .rect(cornerRadius: 28))
@@ -46,6 +46,8 @@ struct MotionTraceView: View {
     let trace: LiveTraceSnapshot
     var recentSamples: Int? = nil
     var selectedRep: Int? = nil
+    /// Marks the newest sample: where the person is right now.
+    var showsHead = false
 
     private var samples: [LiveTraceSample] {
         if let recentSamples { Array(trace.samples.suffix(recentSamples)) } else { trace.samples }
@@ -66,7 +68,7 @@ struct MotionTraceView: View {
                     let y = ordinate(countingDepth, height: plotHeight)
                     threshold.move(to: CGPoint(x: 0, y: y))
                     threshold.addLine(to: CGPoint(x: width, y: y))
-                    context.stroke(threshold, with: .color(TraceTheme.sky), style: StrokeStyle(lineWidth: 1, dash: [4, 5]))
+                    context.stroke(threshold, with: .color(TraceTheme.blue), style: StrokeStyle(lineWidth: 1, dash: [4, 5]))
                     if let selectedRep,
                        let selected = trace.marks.first(where: { $0.number == selectedRep }), let sample = byID[selected.sampleID] {
                         let x = abscissa(sample.time, first: first, last: last, width: width)
@@ -83,6 +85,11 @@ struct MotionTraceView: View {
                         if offset == 0 { line.move(to: point) } else { line.addLine(to: point) }
                     }
                     context.stroke(line, with: .color(.white), style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+                }
+                if showsHead, let head = points.last, points.count > 1 {
+                    TraceHead(reps: trace.marks.count { $0.number != nil })
+                        .position(x: abscissa(head.time, first: first, last: last, width: width),
+                                  y: ordinate(head.depth, height: plotHeight))
                 }
                 ForEach(Array(trace.marks.enumerated()), id: \.offset) { _, mark in
                     if let sample = byID[mark.sampleID] {
@@ -115,5 +122,34 @@ struct MotionTraceView: View {
 
     private func ordinate(_ depth: Double, height: CGFloat) -> CGFloat {
         5 + CGFloat(min(1.15, max(0, depth))) / 1.15 * max(1, height - 10)
+    }
+}
+
+/// The live end of the trace. Each counted rep sends one ripple out from it; the ripple is a spring released from
+/// the head, and its fade is read from how far it has spread, so nothing here runs on a clock.
+private struct TraceHead: View {
+    let reps: Int
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Circle()
+            .fill(.white)
+            .frame(width: 14, height: 14)
+            .shadow(color: .white.opacity(0.8), radius: 6)
+            .background {
+                if !reduceMotion {
+                    Circle()
+                        .fill(.white)
+                        .keyframeAnimator(initialValue: 1.0, trigger: reps) { ring, spread in
+                            ring
+                                .scaleEffect(1 + 1.6 * spread)
+                                .opacity(0.85 * (1 - min(1, spread)))
+                        } keyframes: { _ in
+                            MoveKeyframe(0)
+                            SpringKeyframe(1, spring: TraceMotion.ripple)
+                        }
+                }
+            }
     }
 }

@@ -1,0 +1,135 @@
+{
+  "date": "2026-11-02",
+  "scope": "Every other screen · sheets, first run, states",
+  "device": "iPhone 17 Pro Max Simulator, iOS 27.0",
+  "package_tests_passed": 1185,
+  "proxy_tests_passed": 146,
+  "ui_cases_with_passing_results": 25,
+  "unresolved_extra_checks": [
+    "ProfileFlowUITests/testPrivacyScreenStatesWhatLeavesThePhone"
+  ],
+  "ui_cases": {
+    "AccessibilityUITests/testEatWorksAtTheLargestTextSize": {
+      "status": "passed",
+      "log": "/tmp/mt-other-screens-final-light-3.log"
+    },
+    "AccessibilityUITests/testMainControlsAreAtLeast44PointsTall": {
+      "status": "passed",
+      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+    },
+    "AccessibilityUITests/testOnboardingWorksAtTheLargestTextSize": {
+      "status": "passed",
+      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+    },
+    "OtherScreensUITests/testDeniedCameraLandscapeActionsRemainReachableAndManualFallbackWorks": {
+      "status": "passed",
+      "log": "/tmp/mt-other-screens-final-light-3.log"
+    },
+    "OtherScreensUITests/testExerciseSearchEmptyStateAndClearingSearchRestoresChoices": {
+      "status": "passed",
+      "log": "/tmp/mt-other-screens-retake.log"
+    },
+    "OtherScreensUITests/testManualSetLongValuesAndNudgesSaveAtLargestTextSize": {
+      "status": "passed",
+      "log": "/tmp/mt-other-screens-final-light-3.log"
+    },
+    "OtherScreensUITests/testWeightEntrySavesInLandscapeAtLargestTextSize": {
+      "status": "passed",
+      "log": "/tmp/mt-other-screens-weight-compact.log"
+    },
+    "ProfileFlowUITests/testChangingUnitsConvertsTheBodyValues": {
+      "status": "passed",
+      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+    },
+    "ProfileFlowUITests/testCoachSwitchAsksBeforeSendingData": {
+      "status": "passed",
+      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+    },
+    "ProfileFlowUITests/testDatabaseFailureOffersRetry": {
+      "status": "passed",
+      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+    },
+    "ProfileFlowUITests/testEditingTheGoalSetsANewActiveGoal": {
+      "status": "passed",
+      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+    },
+    "ProfileFlowUITests/testOnboardingLandsOnTodayWithPlannedTargets": {
+      "status": "passed",
+      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+    },
+    "ProfileFlowUITests/testPreferNotToSayAsksForTheEquation": {
+      "status": "passed",
+      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+    },
+    "ProfileFlowUITests/testPrivacyScreenStatesWhatLeavesThePhone": {
+      "status": "failed",
+      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+    },
+    "ProfileFlowUITests/testTrainingLevelIsEditableAndSaved": {
+      "status": "passed",
+      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+    },
+    "ProfileFlowUITests/testUnderSixteenIsRejectedAndUnderEighteenIsWarned": {
+      "status": "passed",
+      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+    },
+    "ProfileFlowUITests/testUnitsApplyEverywhereAndPrivacyScreenOpens": {
+      "status": "passed",
+      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+    },
+    "MealFlowUITests/testAddEditAndDeleteAMealChangesTodaysTotals": {
+      "status": "passed",
+      "log": "/tmp/mt-other-screens-meal-fix.log"
+    },
+    "MealFlowUITests/testAMealWithMissingValuesIsAllowed": {
+      "status": "passed",
+      "log": "/tmp/mt-other-screens-final-light-3.log"
+    },
+    "MealFlowUITests/testImplausibleNumbersCannotBeSaved": {
+      "status": "passed",
+      "log": "/tmp/mt-other-screens-final-light-3.log"
+    },
+    "OtherScreensUITests/testOnboardingWeightNudgeKeepsValidDomainRange": {
+      "status": "passed",
+      "log": "/tmp/mt-other-screens-retake.log"
+    },
+    "OtherScreensUITests/testReferenceSheetsChinese": {
+      "status": "passed",
+      "log": "/tmp/mt-other-screens-reference-final.log"
+    },
+    "OtherScreensUITests/testReferenceSheetsEnglish": {
+      "status": "passed",
+      "log": "/tmp/mt-other-screens-reference-final.log"
+    },
+    "ScreenshotUITests/testAdditionalOnboardingChineseLight": {
+      "status": "passed",
+      "log": "/tmp/mt-other-screens-final-light-3.log"
+    },
+    "ScreenshotUITests/testAdditionalOnboardingEnglishLight": {
+      "status": "passed",
+      "log": "/tmp/mt-other-screens-final-light-3.log"
+    },
+    "ScreenshotUITests/testAdditionalOnboardingEnglishDark": {
+      "status": "passed",
+      "log": "/tmp/mt-other-screens-dark-final.log"
+    }
+  },
+  "captures": [
+    "pte-onboarding-about-dark-en.png",
+    "pte-onboarding-about-light-zh.png",
+    "pte-onboarding-body-dark-en.png",
+    "pte-onboarding-body-light-en.png",
+    "pte-onboarding-goal-dark-en.png",
+    "pte-onboarding-goal-light-en.png",
+    "pte-other-camera-denied-ax5-landscape.png",
+    "pte-other-exercise-picker-zh-portrait.png",
+    "pte-other-exercise-search-empty.png",
+    "pte-other-manual-meal-zh-portrait.png",
+    "pte-other-manual-set-ax5-portrait.png",
+    "pte-other-manual-set-zh-portrait.png",
+    "pte-other-train-start-zh-portrait.png",
+    "pte-other-weight-ax5-landscape.png",
+    "pte-other-weight-zh-portrait.png"
+  ],
+  "runtime_data": "Seeded in-memory fixtures, local service stubs, simulated camera permissions"
+}

@@ -17,6 +17,22 @@
         }
       }
     },
+    "%@ since %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ since %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自%2$@以来 %1$@"
+          }
+        }
+      }
+    },
     "%lld meals" : {
       "localizations" : {
         "en" : {
@@ -231,6 +247,66 @@
         }
       }
     },
+    "A foot shorter" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "矮 1 英尺"
+          }
+        }
+      }
+    },
+    "A foot taller" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "高 1 英尺"
+          }
+        }
+      }
+    },
+    "A tenth less" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "减 0.1"
+          }
+        }
+      }
+    },
+    "A tenth more" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加 0.1"
+          }
+        }
+      }
+    },
+    "A year earlier" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "早一年"
+          }
+        }
+      }
+    },
+    "A year later" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "晚一年"
+          }
+        }
+      }
+    },
     "About you" : {
       "localizations" : {
         "en" : {
@@ -361,6 +437,22 @@
         }
       }
     },
+    "%lld yrs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld yrs"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 岁"
+          }
+        }
+      }
+    },
     "Age" : {
       "localizations" : {
         "en" : {
@@ -421,6 +513,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "份量"
+          }
+        }
+      }
+    },
+    "An inch shorter" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "矮 1 英寸"
+          }
+        }
+      }
+    },
+    "An inch taller" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "高 1 英寸"
           }
         }
       }
@@ -1968,6 +2080,16 @@
         }
       }
     },
+    "Heavier" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更重"
+          }
+        }
+      }
+    },
     "Height" : {
       "localizations" : {
         "en" : {
@@ -2128,6 +2250,16 @@
         }
       }
     },
+    "Lighter" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更轻"
+          }
+        }
+      }
+    },
     "Live set" : {
       "localizations" : {
         "en" : {
@@ -2172,6 +2304,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请先记录一组，再结束训练。"
+          }
+        }
+      }
+    },
+    "Log this set by hand" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手动记录这一组"
           }
         }
       }
@@ -2864,6 +3006,22 @@
         }
       }
     },
+    "No exercises found" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No exercises found"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到动作"
+          }
+        }
+      }
+    },
     "OK" : {
       "localizations" : {
         "en" : {
@@ -2876,6 +3034,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "好"
+          }
+        }
+      }
+    },
+    "One fewer workout" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "少一次训练"
+          }
+        }
+      }
+    },
+    "One more workout" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "多一次训练"
+          }
+        }
+      }
+    },
+    "One rep fewer" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "少一次"
+          }
+        }
+      }
+    },
+    "One rep more" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "多一次"
           }
         }
       }
@@ -2988,6 +3186,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "每 100 毫升。按 1 毫升 = 1 克保存。"
+          }
+        }
+      }
+    },
+    "per week" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每周"
           }
         }
       }
@@ -3493,6 +3701,16 @@
         }
       }
     },
+    "reps" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次"
+          }
+        }
+      }
+    },
     "Reps %@" : {
       "localizations" : {
         "en" : {
@@ -3505,6 +3723,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "第 %@ 次"
+          }
+        }
+      }
+    },
+    "Reps are counted from the camera, on this phone." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次数由这台手机上的摄像头计数。"
           }
         }
       }
@@ -3813,6 +4041,22 @@
         }
       }
     },
+    "Set %lld of %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set %1$lld of %2$lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第 %1$lld 组，共 %2$lld 组"
+          }
+        }
+      }
+    },
     "Set not found" : {
       "localizations" : {
         "en" : {
@@ -3845,6 +4089,22 @@
         }
       }
     },
+    "See my plan" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See my plan"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看我的计划"
+          }
+        }
+      }
+    },
     "Sex" : {
       "localizations" : {
         "en" : {
@@ -3873,6 +4133,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "与 Muse 共享"
+          }
+        }
+      }
+    },
+    "Shorter" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "矮一些"
           }
         }
       }
@@ -3989,6 +4259,16 @@
         }
       }
     },
+    "Starts a workout" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始一次训练"
+          }
+        }
+      }
+    },
     "Stick figures of your best and worst reps" : {
       "localizations" : {
         "en" : {
@@ -4081,6 +4361,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "拍照"
+          }
+        }
+      }
+    },
+    "Taller" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "高一些"
           }
         }
       }
@@ -4321,6 +4611,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这台设备没有摄像头。"
+          }
+        }
+      }
+    },
+    "This week" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This week"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本周"
           }
         }
       }
@@ -4673,6 +4979,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "训练"
+          }
+        }
+      }
+    },
+    "Workout in progress" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout in progress"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练进行中"
+          }
+        }
+      }
+    },
+    "Workout time" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout time"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练时长"
           }
         }
       }

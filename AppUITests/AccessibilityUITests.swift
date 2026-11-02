@@ -36,7 +36,7 @@ final class AccessibilityUITests: AppUITestCase {
         XCTAssertTrue(app.navigationBars["Goal"].waitForExistence(timeout: 10))
         tapReachable(ID.onboardingNext, in: app)
 
-        XCTAssertTrue(app.navigationBars["Your plan"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Your plan"].waitForExistence(timeout: 10))
         XCTAssertTrue(element(ID.planKcal, in: app).waitForExistence(timeout: 10))
         tapReachable(ID.onboardingFinish, in: app)
         XCTAssertTrue(element(ID.screens[0], in: app).waitForExistence(timeout: 15), "Today did not appear")

@@ -5,6 +5,8 @@ import Foundation
 public struct RestPeriod: Equatable, Sendable, Identifiable {
     public let id: EntityID
     public let deadline: Date
+    /// The full length of this rest, in seconds.
+    public let seconds: Int
 
     public init?(workout: Workout) {
         let candidates = workout.exercises.flatMap { exercise in
@@ -16,6 +18,7 @@ public struct RestPeriod: Equatable, Sendable, Identifiable {
         guard workout.session.status == .draft,
               let latest = candidates.max(by: { ($0.1, $0.0.rawValue) < ($1.1, $1.0.rawValue) }) else { return nil }
         id = latest.0
+        seconds = latest.2
         deadline = latest.1.addingTimeInterval(Double(latest.2))
     }
 

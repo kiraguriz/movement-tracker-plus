@@ -12,6 +12,7 @@ struct RootView: View {
     /// Bumped when Train may be out of date: it is selected, the app becomes active, or the coach closes (the coach
     /// can start a workout while Train stays on screen behind it).
     @State private var trainRefresh = 0
+    @State private var activeWorkout: ActiveWorkoutModel?
 
     init(startTab: AppTab? = nil) {
         _selection = State(initialValue: startTab ?? .today)
@@ -23,34 +24,39 @@ struct RootView: View {
                 NavigationStack {
                     TodayView(environment: environment, openTrain: { selection = .train }, openEat: { selection = .eat })
                 }
-                .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 8) { coachButton }
+                .safeAreaInset(edge: .bottom, spacing: 8) { bottomBar(showsWorkout: true) }
             } label: {
                 Label("Today", systemImage: "sun.max")
             }
             .accessibilityIdentifier(AccessibilityID.tabToday)
             Tab(value: AppTab.train) {
                 NavigationStack { TrainView(refresh: trainRefresh) }
-                    .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 8) { coachButton }
+                    .safeAreaInset(edge: .bottom, spacing: 8) { bottomBar(showsWorkout: false) }
             } label: {
                 Label("Train", systemImage: "dumbbell")
             }
             .accessibilityIdentifier(AccessibilityID.tabTrain)
             Tab(value: AppTab.eat) {
                 NavigationStack { EatView(environment: environment) }
-                    .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 8) { coachButton }
+                    .safeAreaInset(edge: .bottom, spacing: 8) { bottomBar(showsWorkout: true) }
             } label: {
                 Label("Eat", systemImage: "fork.knife")
             }
             .accessibilityIdentifier(AccessibilityID.tabEat)
             Tab(value: AppTab.me) {
                 NavigationStack { MeView(environment: environment) }
-                    .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 8) { coachButton }
+                    .safeAreaInset(edge: .bottom, spacing: 8) { bottomBar(showsWorkout: true) }
             } label: {
                 Label("Me", systemImage: "person")
             }
             .accessibilityIdentifier(AccessibilityID.tabMe)
         }
         .background(TraceTheme.paper)
+        .task {
+            let model = ActiveWorkoutModel(environment: environment)
+            activeWorkout = model
+            await model.run()
+        }
         .onChange(of: selection) { _, tab in
             if tab == .train { trainRefresh += 1 }
         }
@@ -60,6 +66,20 @@ struct RootView: View {
         .sheet(isPresented: $isCoachPresented, onDismiss: { trainRefresh += 1 }) {
             CoachSheet(environment: environment, openTrain: { selection = .train })
         }
+    }
+
+    /// Train shows its own rest card, so the running workout appears here only on the other tabs.
+    private func bottomBar(showsWorkout: Bool) -> some View {
+        HStack(spacing: 8) {
+            if showsWorkout, let workout = activeWorkout?.workout {
+                ActiveWorkoutPill(workout: workout, exerciseName: activeWorkout?.exerciseName) { selection = .train }
+                    .layoutPriority(-1)
+            }
+            Spacer(minLength: 0)
+            coachButton
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
     }
 
     private var coachButton: some View {
@@ -80,8 +100,6 @@ struct RootView: View {
         .glassEffect(.regular.interactive(), in: .capsule)
         .accessibilityLabel("Ask Coach")
         .accessibilityIdentifier(AccessibilityID.askCoach)
-        .padding(.horizontal, 16)
-        .padding(.bottom, 8)
     }
 }
 

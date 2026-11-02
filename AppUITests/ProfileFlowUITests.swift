@@ -15,11 +15,11 @@ final class ProfileFlowUITests: AppUITestCase {
 
         XCTAssertTrue(app.navigationBars["Goal"].waitForExistence(timeout: 10))
         app.buttons["\(ID.workoutsPerWeek)-Increment"].tap()
-        app.segmentedControls[ID.goalPicker].buttons["Maintain"].tap()
+        choose("Maintain", fromPicker: ID.goalPicker, in: app)
         attachScreenshot("onboarding-goal")
         tapContinue(in: app)
 
-        XCTAssertTrue(app.navigationBars["Your plan"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Your plan"].waitForExistence(timeout: 10))
         let planKcal = element(ID.planKcal, in: app)
         XCTAssertTrue(planKcal.waitForExistence(timeout: 10))
         XCTAssertEqual(planKcal.label, "2,759")
@@ -51,7 +51,7 @@ final class ProfileFlowUITests: AppUITestCase {
         enter("60", into: app.textFields[ID.weight])
         tapContinue(in: app)
         tapContinue(in: app)
-        XCTAssertTrue(app.navigationBars["Your plan"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Your plan"].waitForExistence(timeout: 10))
         XCTAssertTrue(
             element("plan.warning.planner.warning.underEighteen", in: app).waitForExistence(timeout: 5),
             "no under-18 warning on the plan"

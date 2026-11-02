@@ -23,7 +23,7 @@ struct DateStrip: View {
                 }
                 .onAppear { proxy.scrollTo(selection, anchor: .center) }
                 .onChange(of: selection) {
-                    withAnimation(.smooth) { proxy.scrollTo(selection, anchor: .center) }
+                    withAnimation(TraceMotion.scroll) { proxy.scrollTo(selection, anchor: .center) }
                 }
             }
             .frame(height: 70)

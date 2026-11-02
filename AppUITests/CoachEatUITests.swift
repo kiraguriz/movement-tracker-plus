@@ -315,7 +315,7 @@ final class CoachEatUITests: AppUITestCase {
         // A liquid starts at 100 ml and keeps its volume unit when saved.
         XCTAssertTrue(element(ID.mealEditor, in: app).waitForExistence(timeout: 10), "the confirm sheet did not open")
         XCTAssertEqual(element(ID.mealGrams, in: app).value as? String, "100")
-        XCTAssertTrue(app.staticTexts["mL"].exists, "the amount is not in ml")
+        XCTAssertTrue(app.buttons["mL"].isSelected, "the amount is not in ml")
         // 240 ml at 61 / 3.2 / 4.8 / 3.3 per 100 ml, away from a rounding tie.
         replaceText("240", into: app.textFields[ID.mealGrams])
         XCTAssertTrue(

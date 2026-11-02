@@ -38,6 +38,21 @@ final class ScreenshotUITests: AppUITestCase {
     // MARK: Scenarios
 
     @MainActor
+    func testAdditionalOnboardingEnglishLight() {
+        shootOnboarding(Self.english, appearanceTag: "light")
+    }
+
+    @MainActor
+    func testAdditionalOnboardingChineseLight() {
+        shootOnboarding(Self.chinese, appearanceTag: "light")
+    }
+
+    @MainActor
+    func testAdditionalOnboardingEnglishDark() {
+        shootOnboarding(Self.english, appearanceTag: "dark")
+    }
+
+    @MainActor
     func testEnglishLight() {
         shootOnboarding(Self.english, appearanceTag: "light")
         shootMain(Self.english, appearanceTag: "light", extras: true)
@@ -125,16 +140,20 @@ final class ScreenshotUITests: AppUITestCase {
         XCTAssertTrue(app.segmentedControls[ID.unitsPicker].waitForExistence(timeout: 10))
         XCTAssertEqual(screenIsDark(), appearanceTag == "dark", "the simulator's appearance is not \(appearanceTag)")
         app.segmentedControls[ID.unitsPicker].buttons[labels.metric].tap()
-        shoot("onboarding-about-\(suffix)")
         enter("\(Self.currentYear - 30)", into: app.textFields[ID.birthYear])
         choose(labels.male, fromPicker: ID.sexPicker, in: app)
+        shoot("onboarding-about-\(suffix)")
         app.buttons[ID.onboardingNext].tap()
         enter("180", into: app.textFields[ID.height])
         enter("80", into: app.textFields[ID.weight])
+        if app.keyboards.firstMatch.exists {
+            let done = app.toolbars.buttons["onboarding.keyboardDone"]
+            if done.exists { done.tap() } else { app.swipeDown() }
+        }
         shoot("onboarding-body-\(suffix)")
         app.buttons[ID.onboardingNext].tap()
-        app.segmentedControls[ID.goalPicker].buttons[labels.maintain].tap()
-        app.segmentedControls[ID.goalPicker].buttons.element(boundBy: 0).tap()
+        choose(labels.maintain, fromPicker: ID.goalPicker, in: app)
+        app.buttons["\(ID.goalPicker).lose"].tap()
         shoot("onboarding-goal-\(suffix)")
         app.buttons[ID.onboardingNext].tap()
         XCTAssertTrue(element(ID.planKcal, in: app).waitForExistence(timeout: 10))

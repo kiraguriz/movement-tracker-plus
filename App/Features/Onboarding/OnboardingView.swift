@@ -27,17 +27,17 @@ struct OnboardingView: View {
     var body: some View {
         NavigationStack(path: $path) {
             form("About you", canContinue: draft.isAboutValid, next: .body) {
-                AboutYouSections(draft: draft, birthYearFocus: $birthYearFocused, showsUnits: true)
+                OnboardingAboutStep(draft: draft, birthYearFocus: $birthYearFocused)
             }
             .navigationDestination(for: Step.self) { step in
                 switch step {
                 case .body:
                     form("Body", canContinue: draft.isBodyValid, next: .goal) {
-                        BodySection(draft: draft, heightFocus: $heightFocused, inchesFocus: $inchesFocused, weightFocus: $weightFocused)
+                        OnboardingBodyStep(draft: draft, heightFocus: $heightFocused, inchesFocus: $inchesFocused, weightFocus: $weightFocused)
                     }
                 case .goal:
                     form("Goal", canContinue: true, next: .plan) {
-                        GoalSections(draft: draft)
+                        OnboardingGoalStep(draft: draft)
                     }
                 case .plan:
                     planStep
@@ -60,18 +60,36 @@ struct OnboardingView: View {
         next: Step,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        Form { content() }
-            .scrollContentBackground(.hidden)
-            .background(TraceTheme.paper)
-            .scrollDismissesKeyboard(.interactively)
-            .navigationTitle(title)
-            .safeAreaInset(edge: .top) { progress }
-            .safeAreaInset(edge: .bottom) {
-                PrimaryButton(title: "Continue", isEnabled: canContinue) {
-                    path.append(next)
-                }
-                .accessibilityIdentifier(AccessibilityID.onboardingNext)
+        ScrollView {
+            VStack(spacing: 12) {
+                progress.padding(.horizontal, -16)
+                content()
             }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 8)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .background(TraceTheme.paper)
+        .scrollDismissesKeyboard(.interactively)
+        .navigationTitle(title)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") {
+                    birthYearFocused = false
+                    heightFocused = false
+                    inchesFocused = false
+                    weightFocused = false
+                }
+                .accessibilityIdentifier("onboarding.keyboardDone")
+            }
+        }
+        .safeAreaInset(edge: .bottom) {
+            PrimaryButton(title: next == .plan ? "See my plan" : "Continue", isEnabled: canContinue) {
+                path.append(next)
+            }
+            .accessibilityIdentifier(AccessibilityID.onboardingNext)
+        }
     }
 
     private var planStep: some View {

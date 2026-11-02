@@ -33,6 +33,8 @@ private enum TrainError: Error {
 final class TrainModel {
     private(set) var workout: Workout?
     private(set) var catalog: [ExerciseID: Exercise] = [:]
+    /// The last completed workout, for starting the next one from it.
+    private(set) var lastWorkout: Workout?
     private(set) var isLoaded = false
     var errorMessage: String?
 
@@ -46,6 +48,7 @@ final class TrainModel {
     @ObservationIgnored private let reducer: WorkoutSessionReducer
     @ObservationIgnored private var queue: Task<Void, Never> = Task {}
     @ObservationIgnored private var showsSummaryAfterCover = false
+    @ObservationIgnored private var manualEntryAfterCover: EntityID?
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -55,8 +58,21 @@ final class TrainModel {
     /// Loads the exercise catalog and the unfinished workout, then follows the catalog until cancelled.
     func run() async {
         async let catalogUpdates: Void = watchCatalog()
+        async let historyUpdates: Void = watchLastWorkout()
         await resumeDraft()
-        await catalogUpdates
+        _ = await (catalogUpdates, historyUpdates)
+    }
+
+    private func watchLastWorkout() async {
+        do {
+            for try await summaries in environment.workouts.observeHistory(WorkoutHistoryQuery(statuses: [.completed], limit: 1)) {
+                lastWorkout = if let latest = summaries.first { try await environment.workouts.workout(id: latest.id) } else { nil }
+            }
+        } catch is CancellationError {
+            return
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     private func watchCatalog() async {
@@ -101,7 +117,8 @@ final class TrainModel {
 
     // MARK: Workout
 
-    func start() {
+    /// Starts a workout and asks for its first exercise, or adds `exerciseID` straight away.
+    func start(with exerciseID: ExerciseID? = nil) {
         perform {
             // A draft that is already stored (one the coach started that this screen has not picked up yet) is resumed,
             // never joined by a second one that would hide it.
@@ -110,7 +127,11 @@ final class TrainModel {
             let transition = self.reducer.start(at: self.environment.now(), in: self.environment.timeZone())
             try await self.environment.workouts.apply(transition.effects)
             self.workout = transition.workout
-            self.isPickingExercise = true
+            if let exerciseID {
+                try await self.apply(.addExercise(exerciseID))
+            } else {
+                self.isPickingExercise = true
+            }
         }
     }
 
@@ -219,7 +240,17 @@ final class TrainModel {
         liveSet = nil
     }
 
+    /// The camera is off: close the cover, then offer the same set typed in by hand once it has gone.
+    func logByHandFromLiveSet(entryID: EntityID) {
+        manualEntryAfterCover = entryID
+        liveSet = nil
+    }
+
     func liveSetDismissed() {
+        if let entryID = manualEntryAfterCover {
+            manualEntryAfterCover = nil
+            manualSetEntry = workout?.exercises.first { $0.entry.id == entryID }?.entry
+        }
         guard showsSummaryAfterCover else { return }
         showsSummaryAfterCover = false
         prepareSummary()

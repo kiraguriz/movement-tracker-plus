@@ -182,7 +182,7 @@ class AppUITestCase: XCTestCase {
         for _ in 0..<3 {
             let window = app.windows.firstMatch.frame
             var formBottom = keyboard.exists ? keyboard.frame.minY - 64 : window.maxY - 80
-            for id in [ID.onboardingNext, ID.onboardingFinish] {
+            for id in [ID.onboardingNext, ID.onboardingFinish, "onboarding.keyboardDone", "meal.keyboardDone"] {
                 let action = app.buttons[id]
                 if action.exists {
                     let actionFrame = action.frame
@@ -301,7 +301,7 @@ class AppUITestCase: XCTestCase {
         }
     }
 
-    /// Picks an option in the native segmented or menu presentation of a picker.
+    /// Picks an option from a segmented picker, a group of first-run choice tiles, or a menu picker.
     @MainActor
     func choose(_ option: String, fromPicker id: String, in app: XCUIApplication) {
         let picker = element(id, in: app)
@@ -312,6 +312,17 @@ class AppUITestCase: XCTestCase {
             XCTAssertTrue(item.waitForExistence(timeout: 10), "option \(option) not found in picker \(id)")
             item.tap()
             XCTAssertTrue(waitUntil { item.isSelected }, "option \(option) was not selected in picker \(id)")
+            return
+        }
+        let choice = picker.buttons[option]
+        if choice.exists {
+            let keyboardDone = app.buttons["onboarding.keyboardDone"]
+            if app.keyboards.firstMatch.exists, keyboardDone.exists, keyboardDone.isHittable {
+                keyboardDone.tap()
+            }
+            scrollClearOfBottomBars(choice, in: app)
+            choice.tap()
+            XCTAssertTrue(waitUntil { choice.isSelected }, "option \(option) was not selected in picker \(id)")
             return
         }
         picker.tap()
