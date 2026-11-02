@@ -47,23 +47,40 @@ struct WeightTrendView: View {
     }
 
     private func header(latest: BodyMeasurement) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(UnitFormatter.number(units.massValue(Mass(kilograms: latest.value)), digits: 0...1))
-                    .font(TraceTheme.numeral(min(weightSize, 80)))
-                    .lineLimit(1).minimumScaleFactor(0.6)
-                Text(units.massSymbol).font(TraceTheme.label).foregroundStyle(TraceTheme.secondary)
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                weightValue(latest)
+                change(latest)
             }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Weight")
-            .accessibilityValue(units.bodyMass(Mass(kilograms: latest.value)))
-            .accessibilityIdentifier(AccessibilityID.latestWeight)
-            if let first = measurements.first, first.id != latest.id, let change = changeText(from: first, to: latest) {
-                Text("\(change) · 8 wk")
-                    .font(.subheadline)
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
+            .fixedSize(horizontal: true, vertical: false)
+            VStack(alignment: .leading, spacing: 6) {
+                weightValue(latest)
+                change(latest)
             }
+        }
+    }
+
+    private func weightValue(_ latest: BodyMeasurement) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text(UnitFormatter.number(units.massValue(Mass(kilograms: latest.value)), digits: 0...1))
+                .font(TraceTheme.numeral(min(weightSize, 80)))
+                .lineLimit(1).minimumScaleFactor(0.6)
+            Text(units.massSymbol).traceMetricLabel().foregroundStyle(TraceTheme.secondary)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Weight")
+        .accessibilityValue(units.bodyMass(Mass(kilograms: latest.value)))
+        .accessibilityIdentifier(AccessibilityID.latestWeight)
+    }
+
+    @ViewBuilder
+    private func change(_ latest: BodyMeasurement) -> some View {
+        if let first = measurements.first, first.id != latest.id, let change = changeText(from: first, to: latest) {
+            Text("\(change) · 8 wk")
+                .font(.subheadline)
+                .monospacedDigit()
+                .foregroundStyle(TraceTheme.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -76,7 +93,19 @@ struct WeightTrendView: View {
     }
 
     private var chart: some View {
-        Chart(measurements) { measurement in
+        let values = measurements.map { units.massValue(Mass(kilograms: $0.value)) }
+        let low = values.min() ?? 0
+        let high = values.max() ?? low
+        let padding = max((high - low) * 0.06, 0.1)
+        return Chart(measurements) { measurement in
+            AreaMark(
+                x: .value("Date", measurement.measuredAt),
+                yStart: .value("Weight", low - padding),
+                yEnd: .value("Weight", units.massValue(Mass(kilograms: measurement.value)))
+            )
+            .interpolationMethod(.monotone)
+            .foregroundStyle(TraceTheme.blue.opacity(0.08))
+            .accessibilityHidden(true)
             LineMark(
                 x: .value("Date", measurement.measuredAt),
                 y: .value("Weight", units.massValue(Mass(kilograms: measurement.value)))
@@ -92,7 +121,7 @@ struct WeightTrendView: View {
                 .foregroundStyle(TraceTheme.blue)
             }
         }
-        .chartYScale(domain: .automatic(includesZero: false))
+        .chartYScale(domain: (low - padding)...(high + padding))
         .chartPlotStyle { $0.padding(.horizontal, 8) }
         .chartXAxis(.hidden)
         .chartYAxis(.hidden)

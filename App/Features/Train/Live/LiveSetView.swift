@@ -15,7 +15,7 @@ struct LiveSetView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
     @State private var isConfirmingClose = false
-    @ScaledMetric(relativeTo: .largeTitle) private var counterSize = 220.0
+    @ScaledMetric(relativeTo: .largeTitle) private var counterSize = 270.0
 
     var body: some View {
         ZStack {
@@ -103,12 +103,14 @@ struct LiveSetView: View {
 
     private func tallLayout(height: CGFloat) -> some View {
         VStack(spacing: 12) {
-            HStack(spacing: 12) {
-                closeButton
-                Spacer(minLength: 0)
-                title
-                Spacer(minLength: 0)
-                sideButtons
+            GlassEffectContainer(spacing: 8) {
+                HStack(spacing: 12) {
+                    closeButton
+                    Spacer(minLength: 0)
+                    title
+                    Spacer(minLength: 0)
+                    sideButtons
+                }
             }
             hud
             prompts
@@ -153,7 +155,7 @@ struct LiveSetView: View {
             .lineLimit(1)
             .minimumScaleFactor(0.7)
             .padding(.horizontal, 16)
-            .frame(minHeight: 44)
+            .frame(minHeight: 48)
             .glassEffect(.regular, in: .capsule)
     }
 
@@ -167,10 +169,10 @@ struct LiveSetView: View {
         } label: {
             Image(systemName: "xmark")
                 .font(.title3.weight(.semibold))
-                .frame(width: 44, height: 44)
+                .frame(width: 48, height: 48)
         }
-        .buttonStyle(.glass)
-        .buttonBorderShape(.circle)
+        .buttonStyle(.plain)
+        .glassEffect(.regular.interactive(), in: .circle)
         .accessibilityLabel("Close")
         .accessibilityIdentifier(AccessibilityID.liveClose)
     }
@@ -181,7 +183,7 @@ struct LiveSetView: View {
                 Image(systemName: "record.circle.fill")
                     .font(.title3)
                     .foregroundStyle(.red)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 48, height: 48)
                     .accessibilityLabel("Recording poses")
                     .accessibilityIdentifier(AccessibilityID.liveRecording)
             }
@@ -191,10 +193,10 @@ struct LiveSetView: View {
                 } label: {
                     Image(systemName: "camera.rotate")
                         .font(.title3.weight(.semibold))
-                        .frame(width: 44, height: 44)
+                        .frame(width: 48, height: 48)
                 }
-                .buttonStyle(.glass)
-                .buttonBorderShape(.circle)
+                .buttonStyle(.plain)
+                .glassEffect(.regular.interactive(), in: .circle)
                 .accessibilityLabel("Switch camera")
                 .accessibilityIdentifier(AccessibilityID.liveSwitchCamera)
             }
@@ -301,10 +303,11 @@ struct LiveSetView: View {
         Button(action: onEnd) {
             Text("End set")
                 .font(.headline)
-                .frame(maxWidth: .infinity, minHeight: 54)
+                .frame(maxWidth: .infinity, minHeight: 60)
         }
-            .buttonStyle(.glassProminent)
-            .tint(TraceTheme.cobalt)
+            .buttonStyle(.plain)
+            .foregroundStyle(.white)
+            .glassEffect(.regular.tint(TraceTheme.cobalt).interactive(), in: .capsule)
             .accessibilityIdentifier(AccessibilityID.liveEnd)
     }
 

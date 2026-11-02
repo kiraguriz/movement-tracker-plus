@@ -212,7 +212,7 @@ struct EatView: View {
         let known = entries.compactMap { $0.nutrients.energy?.kilocalories }
         return HStack {
             Text(slot.title)
-                .font(TraceTheme.label)
+                .traceMetricLabel()
             Spacer()
             if !known.isEmpty {
                 Text(verbatim: (known.count < entries.count ? "≥ " : "") + UnitFormatter.number(known.reduce(0, +)))

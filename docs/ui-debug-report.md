@@ -132,3 +132,39 @@ the native glass bars and remains scrollable.
 Runtime data is synthetic, the Coach/USDA/Health services are local stubs, and motion is fixture replay.
 This redesign does not establish new physical-device motion accuracy, real-photo inference quality,
 live-service availability or iPhone Duo hardware acceptance.
+
+## Attachment visual alignment — 2026-11-01
+
+Aligned the existing native UI with **Movement Tracker+ Redesign.html**. Changes are confined to
+SwiftUI presentation: compressed numeral proportions, expanded uppercase metric labels, separated
+number/unit styling, card density, the trailing Coach glass capsule, live controls, compact rep chips,
+Review button hierarchy, and a single blue Summary card with a black save action. The plan page now
+owns its visible heading instead of depending on an empty native large-title area.
+
+Training entry, navigation destinations, rest timing, counting, Coach requests, meal confirmation order,
+models, persistence, launch options, string catalog, and dependencies retain their baseline behavior.
+Summary ticks use saved rep counts; the reference's generated example waveforms are not substituted
+for measured data. No app deployment is included in this change.
+
+Validation passed:
+
+- 1,185 package tests, 146 proxy tests, 8 fixture-import tests, and the proxy dry-run build.
+- Debug Simulator build and launch; Release Simulator and unsigned generic iOS builds.
+- 16 successful UI test executions, including English/Simplified Chinese, light/dark, landscape,
+  maximum Dynamic Type, minimum touch sizes, and the existing manual-set save flow. Final retakes
+  cover the last button-sizing and accessibility-layout changes.
+- Screenshot inspection caught overlapping Review action text at maximum Dynamic Type; actions now
+  stack vertically there. Metric values scale with text size, Summary set previews use one column,
+  and the weight-change label wraps when the horizontal header cannot fit.
+
+Raw screenshots and batch results: [results.json](ui-evidence/attachment-alignment/results.json).
+Representative views: [Today](ui-evidence/attachment-alignment/today-zh.png),
+[plan](ui-evidence/attachment-alignment/plan-zh.png), [Me](ui-evidence/attachment-alignment/me-zh.png),
+[live landscape](ui-evidence/attachment-alignment/live-landscape.png),
+[Review landscape](ui-evidence/attachment-alignment/review-landscape.png),
+[dark Review](ui-evidence/attachment-alignment/review-dark.png),
+[dark Summary](ui-evidence/attachment-alignment/summary-dark.png), and
+[maximum-text Review](ui-evidence/attachment-alignment/review-largest-text.png).
+
+These captures use seeded in-memory data, a local Coach stub, and recorded pose replay on an
+iPhone 17 Pro Max Simulator. Physical-device motion and audio acceptance were not repeated.

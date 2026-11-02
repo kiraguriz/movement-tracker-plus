@@ -206,9 +206,14 @@ private struct TrainScreen: View {
                     Text(sets.count + 1, format: .number)
                         .font(TraceTheme.numeral(22))
                         .frame(width: 22, alignment: .leading)
-                    Rectangle()
-                        .fill(TraceTheme.line)
-                        .frame(height: 1)
+                    GeometryReader { geometry in
+                        Path { path in
+                            path.move(to: CGPoint(x: 0, y: 0.75))
+                            path.addLine(to: CGPoint(x: geometry.size.width, y: 0.75))
+                        }
+                        .stroke(TraceTheme.line, style: StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                    }
+                    .frame(height: 1.5)
                     Text("\(target.reps) reps")
                         .font(TraceTheme.numeral(28))
                 }

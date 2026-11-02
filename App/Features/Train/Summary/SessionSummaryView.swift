@@ -5,6 +5,9 @@ import SwiftUI
 /// The finished workout before it is saved: what was done, then Muse's debrief if the user asked for it.
 struct SessionSummaryView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @ScaledMetric(relativeTo: .title) private var summaryMetricSize = 40.0
+    @ScaledMetric(relativeTo: .body) private var setNumberSize = 20.0
     @Environment(UserSession.self) private var session
     @State private var model: SessionSummaryModel
 
@@ -47,10 +50,7 @@ struct SessionSummaryView: View {
                 }
             }
             .safeAreaInset(edge: .bottom) {
-                PrimaryButton(title: "Save workout", isBusy: model.isSaving) {
-                    Task { await model.save() }
-                }
-                .accessibilityIdentifier(AccessibilityID.summarySave)
+                saveButton
             }
         }
         .task { model.start() }
@@ -63,55 +63,51 @@ struct SessionSummaryView: View {
     // MARK: Sets
 
     private var sets: some View {
-        VStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 18) {
-                ViewThatFits(in: .horizontal) {
-                    HStack(alignment: .firstTextBaseline, spacing: 24) {
-                        repTotal
-                        summaryMetrics
-                    }
-                    VStack(alignment: .leading, spacing: 12) {
-                        repTotal
-                        summaryMetrics
-                    }
+        VStack(alignment: .leading, spacing: 18) {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .bottom, spacing: 18) {
+                    repTotal
+                    summaryMetrics.padding(.bottom, 6)
                 }
-                TraceTally(count: model.workout.totalReps, color: .white.opacity(0.85))
+                VStack(alignment: .leading, spacing: 12) {
+                    repTotal
+                    summaryMetrics
+                }
             }
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .foregroundStyle(.white)
-            .background(TraceTheme.cobalt, in: .rect(cornerRadius: 28))
             ForEach(exercises) { workoutExercise in
                 exerciseBlock(workoutExercise)
             }
         }
+        .padding(.horizontal, 18)
+        .padding(.top, 20)
+        .padding(.bottom, 22)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .foregroundStyle(.white)
+        .background(TraceTheme.cobalt, in: .rect(cornerRadius: 30))
     }
 
     private var repTotal: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(model.workout.totalReps, format: .number)
-                .font(TraceTheme.numeral(104))
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
-            Text("Reps").font(TraceTheme.label)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Reps")
-        .accessibilityValue("\(model.workout.totalReps)")
-        .accessibilityIdentifier(AccessibilityID.summaryReps)
+        Text(model.workout.totalReps, format: .number)
+            .font(TraceTheme.numeral(132))
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Reps")
+            .accessibilityValue("\(model.workout.totalReps)")
+            .accessibilityIdentifier(AccessibilityID.summaryReps)
     }
 
     private var summaryMetrics: some View {
         HStack(alignment: .top, spacing: 20) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(model.workout.setCount, format: .number).font(TraceTheme.numeral(40))
-                Text("Sets").font(TraceTheme.label)
+                Text(model.workout.setCount, format: .number).font(TraceTheme.numeral(summaryMetricSize))
+                Text("Sets").traceMetricLabel()
             }
             if let duration = model.duration {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(duration.formatted(.units(allowed: [.hours, .minutes, .seconds], width: .narrow, maximumUnitCount: 2)))
-                        .font(TraceTheme.numeral(32))
-                    Text("Time").font(TraceTheme.label)
+                        .font(TraceTheme.numeral(summaryMetricSize))
+                    Text("Time").traceMetricLabel()
                 }
             }
         }
@@ -127,16 +123,80 @@ struct SessionSummaryView: View {
         let id = workoutExercise.entry.exerciseID
         let name = ExerciseNames.name(id: id, fallback: model.exerciseName(for: id))
         let ordered = workoutExercise.sets.sorted { $0.set.position < $1.set.position }
-        return VStack(alignment: .leading, spacing: 12) {
+        return VStack(alignment: .leading, spacing: 8) {
             Text(name)
-                .font(.headline)
-            ForEach(Array(ordered.enumerated()), id: \.element.id) { offset, logged in
-                SetRow(number: offset + 1, logged: logged, units: session.units)
+                .font(.footnote.weight(.semibold))
+            LazyVGrid(columns: dynamicTypeSize.isAccessibilitySize ? [GridItem(.flexible(), alignment: .leading)] : [GridItem(.adaptive(minimum: 90), alignment: .leading)], alignment: .leading, spacing: 10) {
+                ForEach(Array(ordered.enumerated()), id: \.element.id) { offset, logged in
+                    setPreview(logged, number: offset + 1)
+                }
             }
         }
-        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(TraceTheme.card, in: .rect(cornerRadius: 28))
+    }
+
+    private func setPreview(_ logged: LoggedSet, number: Int) -> some View {
+        let set = logged.set
+        return VStack(alignment: .leading, spacing: 6) {
+            TraceTally(count: set.reps ?? 0, color: .white.opacity(0.9))
+                .frame(height: 28)
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(set.reps.map { UnitFormatter.number(Double($0)) } ?? "–")
+                    .font(TraceTheme.numeral(setNumberSize))
+                if set.partialReps > 0 {
+                    Text(verbatim: "+\(set.partialReps)")
+                        .font(TraceTheme.numeral(setNumberSize * 0.85))
+                        .foregroundStyle(TraceTheme.amber)
+                }
+                Spacer(minLength: 0)
+                if let score = set.averageScore {
+                    Text(Int(score.rounded()), format: .number)
+                        .font(TraceTheme.numeral(setNumberSize * 0.85))
+                        .foregroundStyle(.white.opacity(0.75))
+                }
+            }
+            if let load = set.load {
+                Text(session.units.bodyMass(load, digits: 0...1))
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.75))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(String(localized: "Set \(number)"))
+        .accessibilityValue(setDescription(set))
+    }
+
+    private func setDescription(_ set: SetEntry) -> String {
+        var parts = [set.reps.map { String(localized: "\($0) reps") } ?? String(localized: "Reps not set")]
+        if let load = set.load { parts.append(session.units.bodyMass(load, digits: 0...1)) }
+        if set.partialReps > 0 { parts.append(String(localized: "\(set.partialReps) partial")) }
+        if let score = set.averageScore { parts.append(String(localized: "Score \(Int(score.rounded()))")) }
+        return parts.joined(separator: ", ")
+    }
+
+    private var saveButton: some View {
+        Button {
+            Task { await model.save() }
+        } label: {
+            Group {
+                if model.isSaving {
+                    ProgressView().tint(.white)
+                } else {
+                    Text("Save workout").font(.headline)
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: 54)
+            .foregroundStyle(.white)
+            .background(TraceTheme.night, in: .capsule)
+            .overlay { Capsule().strokeBorder(.white.opacity(0.18), lineWidth: 0.5) }
+            .contentShape(.capsule)
+        }
+        .buttonStyle(.plain)
+        .disabled(model.isSaving)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .accessibilityIdentifier(AccessibilityID.summarySave)
     }
 
     // MARK: Debrief

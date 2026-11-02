@@ -194,8 +194,8 @@ rep's measured bottom inside its time interval. The trace is bounded to 3,600 in
 available in the immediate set review. Saved history retains rep metrics, but does not invent a waveform
 or start a new Muse request when opened. Nutrition cards preserve unknown and partial totals.
 
-- `TabView`: **Today · Train · Eat · Me**, plus an "Ask Coach" bar as the iOS 26 tab-view bottom
-  accessory (verify modifier name `tabViewBottomAccessory`), opening the Coach sheet from anywhere.
+- `TabView`: **Today · Train · Eat · Me**, with the reference's trailing glass Coach capsule above
+  the native tab bar. Per-tab safe-area insets keep content scrollable above it; it opens the existing Coach sheet.
 - Train → choose exercise → **Live Set** (`fullScreenCover`, camera island) → **Set Review** sheet →
   next set / finish → **Session Summary** (Muse debrief) → saved; manual sets supported.
 - Eat → day list (date strip, any past day) → add via photo (Muse) or search (USDA via proxy) →

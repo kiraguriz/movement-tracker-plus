@@ -10,6 +10,8 @@ struct SetReviewView: View {
     let onFinish: () -> Void
     let onClose: () -> Void
     var isHistorical = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @ScaledMetric(relativeTo: .title) private var metricSize = 28.0
 
     var body: some View {
         NavigationStack {
@@ -58,7 +60,7 @@ struct SetReviewView: View {
         VStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 20) {
                 ViewThatFits(in: .horizontal) {
-                    HStack(alignment: .center, spacing: 20) {
+                    HStack(alignment: .bottom, spacing: 20) {
                         repTotal
                         reviewMetrics
                     }
@@ -86,7 +88,7 @@ struct SetReviewView: View {
 
     private var repTotal: some View {
         Text(model.set.reps ?? 0, format: .number)
-            .font(TraceTheme.numeral(104))
+            .font(TraceTheme.numeral(120))
             .lineLimit(1)
             .minimumScaleFactor(0.6)
             .accessibilityLabel("Reps")
@@ -95,20 +97,27 @@ struct SetReviewView: View {
     }
 
     private var reviewMetrics: some View {
-        HStack(alignment: .top, spacing: 12) {
-            reviewMetric("Partial", value: "\(model.set.partialReps)", identifier: AccessibilityID.reviewPartials)
+        VStack(alignment: .trailing, spacing: 8) {
+            reviewMetric("Partial", value: "\(model.set.partialReps)", identifier: AccessibilityID.reviewPartials, tint: TraceTheme.amber)
             reviewMetric("Score", value: scoreText, identifier: AccessibilityID.reviewScore)
             reviewMetric("Velocity loss", value: velocityLossText, identifier: AccessibilityID.reviewVelocityLoss)
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
-    private func reviewMetric(_ title: LocalizedStringKey, value: String, identifier: String) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(TraceTheme.label).foregroundStyle(.white.opacity(0.65))
-            Text(verbatim: value).font(TraceTheme.numeral(32)).lineLimit(1).minimumScaleFactor(0.6)
+    private func reviewMetric(_ title: LocalizedStringKey, value: String, identifier: String, tint: Color = .white) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(title)
+                .traceMetricLabel()
+                .foregroundStyle(.white.opacity(0.7))
+                .multilineTextAlignment(.trailing)
+            Text(verbatim: value)
+                .font(TraceTheme.numeral(metricSize))
+                .foregroundStyle(tint)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .trailing)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(title))
         .accessibilityValue(value)
@@ -123,12 +132,12 @@ struct SetReviewView: View {
         model.set.velocityLoss.map { $0.formatted(.percent.precision(.fractionLength(0))) } ?? "–"
     }
 
-    @ScaledMetric(relativeTo: .headline) private var chipMinimum = 60.0
+    @ScaledMetric(relativeTo: .headline) private var chipMinimum = 44.0
 
     private var repChips: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     ForEach(model.reps) { rep in
                         RepChip(rep: rep, isSelected: model.selectedRep == rep.index) {
                             model.selectedRep = model.selectedRep == rep.index ? nil : rep.index
@@ -166,32 +175,43 @@ struct SetReviewView: View {
     }
 
     private var actions: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 12) { nextSetButton; finishButton }
-            VStack(spacing: 12) { finishButton; nextSetButton }
+        GlassEffectContainer(spacing: 8) {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(spacing: 10) { finishButton; nextSetButton }
+            } else {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 10) { nextSetButton; finishButton }
+                    VStack(spacing: 10) { finishButton; nextSetButton }
+                }
+            }
         }
-        .controlSize(.large)
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 16)
         .padding(.vertical, 8)
     }
 
     private var nextSetButton: some View {
         Button(action: onNextSet) {
             Text("Next set")
+                .font(.headline)
                 .lineLimit(1)
-                .frame(maxWidth: .infinity, minHeight: 36)
+                .frame(maxWidth: .infinity, minHeight: 54)
+                .foregroundStyle(TraceTheme.ink)
         }
-        .buttonStyle(.glassProminent)
+        .buttonStyle(.plain)
+        .glassEffect(.regular.interactive(), in: .capsule)
         .accessibilityIdentifier(AccessibilityID.reviewNextSet)
     }
 
     private var finishButton: some View {
         Button(action: onFinish) {
             Text("Finish")
+                .font(.headline)
                 .lineLimit(1)
-                .frame(maxWidth: .infinity, minHeight: 36)
+                .frame(maxWidth: .infinity, minHeight: 54)
+                .foregroundStyle(.white)
         }
-        .buttonStyle(.glass)
+        .buttonStyle(.plain)
+        .glassEffect(.regular.tint(TraceTheme.cobalt).interactive(), in: .capsule)
         .accessibilityIdentifier(AccessibilityID.reviewFinish)
     }
 }
@@ -215,26 +235,29 @@ private struct RepChip: View {
     let isSelected: Bool
     let action: () -> Void
 
+    @Environment(\.colorScheme) private var colorScheme
+    @ScaledMetric(relativeTo: .headline) private var chipHeight = 52.0
+    @ScaledMetric(relativeTo: .headline) private var repSize = 20.0
+
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 5) {
-                TraceMark(status: rep.traceStatus)
+            VStack(spacing: 3) {
                 Text(rep.index, format: .number)
-                    .font(TraceTheme.numeral(28))
+                    .font(TraceTheme.numeral(repSize))
                     .monospacedDigit()
                 Text(rep.measurement.score, format: .number)
-                    .font(.caption)
+                    .font(.caption2.weight(.semibold))
                     .monospacedDigit()
-                    .foregroundStyle(isSelected ? .white.opacity(0.7) : TraceTheme.secondary)
+                    .foregroundStyle(ink)
             }
             .lineLimit(1)
             .minimumScaleFactor(0.6)
-            .frame(maxWidth: .infinity, minHeight: 84)
-            .foregroundStyle(isSelected ? .white : TraceTheme.ink)
-            .background(isSelected ? TraceTheme.night : TraceTheme.card, in: .rect(cornerRadius: 18))
+            .frame(maxWidth: .infinity, minHeight: chipHeight)
+            .foregroundStyle(ink)
+            .background(rep.tint.opacity(0.14), in: .rect(cornerRadius: 14))
             .overlay {
                 RoundedRectangle(cornerRadius: 14)
-                    .strokeBorder(isSelected ? rep.tint : .clear, lineWidth: 2)
+                    .strokeBorder(isSelected ? TraceTheme.ink : .clear, lineWidth: 2)
             }
             .contentShape(.rect(cornerRadius: 14))
         }
@@ -243,6 +266,13 @@ private struct RepChip: View {
         .accessibilityValue(value)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier(AccessibilityID.reviewRep(rep.index))
+    }
+
+    private var ink: Color {
+        if colorScheme == .dark { return rep.tint }
+        if rep.hasMajorIssue { return Color(red: 176 / 255, green: 42 / 255, blue: 12 / 255) }
+        if rep.hasIssue { return Color(red: 138 / 255, green: 90 / 255, blue: 0) }
+        return Color(red: 26 / 255, green: 51 / 255, blue: 201 / 255)
     }
 
     private var value: String {
@@ -426,7 +456,7 @@ struct MuseHeader: View {
     var body: some View {
         HStack(spacing: 8) {
             TraceCoachGlyph()
-            Text("Muse").font(TraceTheme.label)
+            Text("Muse").font(.subheadline.weight(.semibold))
             if isWorking {
                 ProgressView()
             }

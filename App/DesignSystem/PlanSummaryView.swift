@@ -7,7 +7,7 @@ struct PlanSummaryView: View {
     let units: UnitFormatter
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @ScaledMetric(relativeTo: .largeTitle) private var calorieSize = 112.0
+    @ScaledMetric(relativeTo: .largeTitle) private var calorieSize = 150.0
     @ScaledMetric(relativeTo: .title) private var macroSize = 40.0
 
     var body: some View {
@@ -62,7 +62,7 @@ struct PlanSummaryView: View {
                     .lineLimit(1)
                     .accessibilityIdentifier(AccessibilityID.planKcal)
                 Text("kcal a day")
-                    .font(TraceTheme.label)
+                    .traceMetricLabel()
             }
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 8) { pace; frequency }
@@ -165,8 +165,11 @@ struct PlanSummaryView: View {
 
     private func macroTile(_ macro: Macro, grams: Int) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(UnitFormatter.grams(Double(grams)))
-                .font(TraceTheme.numeral(macroSize))
+            TraceMeasurementValue(
+                original: UnitFormatter.grams(Double(grams)),
+                formatted: TraceMeasurementValue.format(Double(grams), unit: UnitMass.grams, digits: 0...0),
+                numberFont: TraceTheme.numeral(macroSize)
+            )
                 .monospacedDigit()
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
@@ -180,6 +183,41 @@ struct PlanSummaryView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("plan.\(macro.idString)")
+    }
+}
+
+/// Foundation identifies the unit runs without assuming where a locale puts spaces or unit names.
+struct TraceMeasurementValue: View {
+    let original: String
+    let formatted: AttributedString
+    let numberFont: Font
+
+    var body: some View {
+        Group {
+            if String(formatted.characters) == original {
+                Text(styled)
+            } else {
+                Text(verbatim: original).font(.body)
+            }
+        }
+        .accessibilityLabel(Text(verbatim: original))
+    }
+
+    private var styled: AttributedString {
+        var value = formatted
+        value.font = numberFont
+        for run in formatted.runs where run.measurement == .unit {
+            value[run.range].font = .caption
+            value[run.range].foregroundColor = TraceTheme.secondary
+        }
+        return value
+    }
+
+    static func format<Unit: Dimension>(_ value: Double, unit: Unit, digits: ClosedRange<Int>) -> AttributedString {
+        Measurement(value: value, unit: unit).formatted(
+            .measurement(width: .abbreviated, usage: .asProvided,
+                         numberFormatStyle: .number.precision(.fractionLength(digits))).attributed
+        )
     }
 }
 

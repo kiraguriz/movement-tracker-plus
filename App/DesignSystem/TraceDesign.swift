@@ -18,7 +18,15 @@ enum TraceTheme {
         .system(size: size, weight: .heavy).width(.compressed).monospacedDigit()
     }
 
-    static let label: Font = .caption.weight(.bold).width(.expanded)
+    static let label: Font = .caption2.weight(.bold).width(.expanded)
+}
+
+extension View {
+    func traceMetricLabel() -> some View {
+        font(TraceTheme.label)
+            .textCase(.uppercase)
+            .tracking(0.6)
+    }
 }
 
 enum TraceRepStatus {

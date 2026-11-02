@@ -168,7 +168,7 @@ struct WorkoutHistoryView: View {
                 .font(TraceTheme.numeral(56))
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
-            Text("Reps").font(TraceTheme.label)
+            Text("Reps").traceMetricLabel()
         }
         .accessibilityElement(children: .combine)
     }

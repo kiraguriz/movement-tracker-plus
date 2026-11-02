@@ -14,7 +14,7 @@ struct StatTile: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
             Text(title)
-                .font(TraceTheme.label)
+                .traceMetricLabel()
                 .foregroundStyle(TraceTheme.secondary)
                 .lineLimit(2)
         }

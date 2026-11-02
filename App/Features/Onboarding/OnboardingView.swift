@@ -12,6 +12,7 @@ struct OnboardingView: View {
     @State private var path: [Step] = []
     @State private var isSaving = false
     @State private var errorMessage: String?
+    @ScaledMetric(relativeTo: .body) private var startLabelSize = 18.0
     @FocusState private var birthYearFocused: Bool
     @FocusState private var heightFocused: Bool
     @FocusState private var inchesFocused: Bool
@@ -75,18 +76,40 @@ struct OnboardingView: View {
 
     private var planStep: some View {
         ScrollView {
-            if let plan = draft.plan {
-                PlanSummaryView(plan: plan, units: UnitFormatter(system: draft.unitSystem))
-                    .padding(16)
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Your plan")
+                    .font(.largeTitle.bold())
+                    .accessibilityAddTraits(.isHeader)
+                if let plan = draft.plan {
+                    PlanSummaryView(plan: plan, units: UnitFormatter(system: draft.unitSystem))
+                }
             }
+            .padding(16)
         }
         .background(TraceTheme.paper)
-        .navigationTitle("Your plan")
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .top) { progress }
         .safeAreaInset(edge: .bottom) {
-            PrimaryButton(title: "Start", isEnabled: draft.plan != nil, isBusy: isSaving) {
+            Button {
                 Task { await finish() }
+            } label: {
+                Group {
+                    if isSaving {
+                        ProgressView().tint(TraceTheme.paper)
+                    } else {
+                        Text("Start").font(.system(size: startLabelSize, weight: .semibold))
+                    }
+                }
+                .frame(maxWidth: .infinity, minHeight: 58)
             }
+            .buttonStyle(.plain)
+            .foregroundStyle(TraceTheme.paper)
+            .background(TraceTheme.ink, in: .capsule)
+            .disabled(draft.plan == nil || isSaving)
+            .opacity(draft.plan == nil ? 0.5 : 1)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
             .accessibilityIdentifier(AccessibilityID.onboardingFinish)
         }
     }

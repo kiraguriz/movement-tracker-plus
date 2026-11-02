@@ -8,7 +8,7 @@ struct NutritionSummaryView: View {
     let idPrefix: String
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @ScaledMetric(relativeTo: .largeTitle) private var energySize = 72.0
+    @ScaledMetric(relativeTo: .largeTitle) private var energySize = 76.0
     @ScaledMetric(relativeTo: .title) private var macroSize = 32.0
 
     private var hasEntries: Bool { (total?.entryCount ?? 0) > 0 }
@@ -50,7 +50,7 @@ struct NutritionSummaryView: View {
             }
             Spacer(minLength: 0)
             Text(UnitFormatter.symbol(UnitEnergy.kilocalories))
-                .font(TraceTheme.label)
+                .traceMetricLabel()
                 .foregroundStyle(TraceTheme.secondary)
                 .fixedSize()
         }

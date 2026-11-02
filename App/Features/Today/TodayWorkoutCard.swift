@@ -45,7 +45,7 @@ struct TodayWorkoutCard: View {
 
     private var details: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(summary.totalReps == 1 ? "Rep" : "Reps").font(TraceTheme.label)
+            Text(summary.totalReps == 1 ? "Rep" : "Reps").traceMetricLabel()
             HStack(spacing: 4) {
                 Text(summary.setCount, format: .number)
                 Text(summary.setCount == 1 ? "Set" : "Sets")

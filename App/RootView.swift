@@ -23,44 +23,34 @@ struct RootView: View {
                 NavigationStack {
                     TodayView(environment: environment, openTrain: { selection = .train }, openEat: { selection = .eat })
                 }
+                .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 8) { coachButton }
             } label: {
                 Label("Today", systemImage: "sun.max")
             }
             .accessibilityIdentifier(AccessibilityID.tabToday)
             Tab(value: AppTab.train) {
                 NavigationStack { TrainView(refresh: trainRefresh) }
+                    .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 8) { coachButton }
             } label: {
-                Label("Train", systemImage: "figure.strengthtraining.traditional")
+                Label("Train", systemImage: "dumbbell")
             }
             .accessibilityIdentifier(AccessibilityID.tabTrain)
             Tab(value: AppTab.eat) {
                 NavigationStack { EatView(environment: environment) }
+                    .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 8) { coachButton }
             } label: {
                 Label("Eat", systemImage: "fork.knife")
             }
             .accessibilityIdentifier(AccessibilityID.tabEat)
             Tab(value: AppTab.me) {
                 NavigationStack { MeView(environment: environment) }
+                    .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 8) { coachButton }
             } label: {
                 Label("Me", systemImage: "person")
             }
             .accessibilityIdentifier(AccessibilityID.tabMe)
         }
-        .tabViewBottomAccessory {
-            Button {
-                isCoachPresented = true
-            } label: {
-                HStack(spacing: 8) {
-                    TraceCoachGlyph()
-                    Text("Ask Coach").font(.subheadline.weight(.semibold))
-                }
-                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .contentShape(.rect)
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier(AccessibilityID.askCoach)
-        }
+        .background(TraceTheme.paper)
         .onChange(of: selection) { _, tab in
             if tab == .train { trainRefresh += 1 }
         }
@@ -70,6 +60,28 @@ struct RootView: View {
         .sheet(isPresented: $isCoachPresented, onDismiss: { trainRefresh += 1 }) {
             CoachSheet(environment: environment, openTrain: { selection = .train })
         }
+    }
+
+    private var coachButton: some View {
+        Button {
+            isCoachPresented = true
+        } label: {
+            HStack(spacing: 8) {
+                TraceCoachGlyph(size: 24)
+                Text("Coach").font(.subheadline.weight(.semibold))
+            }
+            .padding(.leading, 12)
+            .padding(.trailing, 18)
+            .frame(minHeight: 48)
+            .foregroundStyle(TraceTheme.ink)
+            .contentShape(.capsule)
+        }
+        .buttonStyle(.plain)
+        .glassEffect(.regular.interactive(), in: .capsule)
+        .accessibilityLabel("Ask Coach")
+        .accessibilityIdentifier(AccessibilityID.askCoach)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
     }
 }
 

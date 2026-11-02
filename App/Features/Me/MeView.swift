@@ -7,8 +7,9 @@ struct MeView: View {
     @State private var model: MeModel
     @State private var isEditing = false
     @State private var isConfirmingCoach = false
-    @ScaledMetric(relativeTo: .largeTitle) private var goalSize = 68.0
+    @ScaledMetric(relativeTo: .largeTitle) private var goalSize = 72.0
     @ScaledMetric(relativeTo: .title) private var metricSize = 32.0
+    @ScaledMetric(relativeTo: .title) private var bodyMetricSize = 34.0
 
     private let environment: AppEnvironment
 
@@ -23,8 +24,8 @@ struct MeView: View {
                 if let profile = session.profile {
                     goalCard
                     bodyCard(profile)
-                    Card {
-                        VStack(spacing: 6) {
+                    settingsGroup {
+                        VStack(spacing: 0) {
                             ViewThatFits(in: .horizontal) {
                                 HStack(spacing: 16) {
                                     Text("Units")
@@ -36,9 +37,10 @@ struct MeView: View {
                                     unitsPicker(profile)
                                 }
                             }
+                            .frame(minHeight: 56)
                             Divider()
                             Toggle("Voice cues", isOn: Binding(get: { model.voiceCues }, set: model.setVoiceCues))
-                                .frame(minHeight: 44)
+                                .frame(minHeight: 56)
                                 .accessibilityIdentifier(AccessibilityID.voiceCuesToggle)
                         }
                     }
@@ -166,7 +168,7 @@ struct MeView: View {
         let signedRate = (goal.kind == .lose ? "−" : "+") + UnitFormatter.number(session.units.massValue(goal.weeklyRate), digits: 0...1)
         return Text(verbatim: signedRate)
             .font(TraceTheme.numeral(goalSize))
-            .foregroundStyle(Color(red: 140 / 255, green: 157 / 255, blue: 1))
+            .foregroundStyle(.white)
             .monospacedDigit()
             .lineLimit(1)
             .minimumScaleFactor(0.6)
@@ -175,17 +177,41 @@ struct MeView: View {
     private func bodyCard(_ profile: Profile) -> some View {
         Card {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: dynamicTypeSize.isAccessibilitySize ? 180 : 88), alignment: .leading)], alignment: .leading, spacing: 14) {
-                if let height = profile.height { bodyMetric(session.units.height(height), title: "Height") }
-                if let weight = model.latestWeight?.weight { bodyMetric(session.units.bodyMass(weight), title: "Weight") }
+                if let height = profile.height {
+                    bodyMetric(session.units.height(height), formatted: formattedHeight(height), title: "Height")
+                }
+                if let weight = model.latestWeight?.weight {
+                    bodyMetric(
+                        session.units.bodyMass(weight),
+                        formatted: TraceMeasurementValue.format(session.units.massValue(weight), unit: session.units.massUnit, digits: 0...1),
+                        title: "Weight"
+                    )
+                }
                 if let age = profile.ageYears(on: environment.now(), in: environment.timeZone()) { bodyMetric(age.formatted(), title: "Age") }
             }
         }
     }
 
-    private func bodyMetric(_ value: String, title: LocalizedStringKey) -> some View {
+    private func formattedHeight(_ height: Length) -> AttributedString {
+        switch session.unitSystem {
+        case .metric:
+            TraceMeasurementValue.format(height.centimeters, unit: UnitLength.centimeters, digits: 0...0)
+        case .imperial:
+            TraceMeasurementValue.format(Double(height.feetAndInches.feet), unit: UnitLength.feet, digits: 0...0)
+            + AttributedString(" ")
+            + TraceMeasurementValue.format(Double(height.feetAndInches.inches), unit: UnitLength.inches, digits: 0...0)
+        }
+    }
+
+    private func bodyMetric(_ value: String, formatted: AttributedString? = nil, title: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(value)
-                .font(TraceTheme.numeral(metricSize))
+            Group {
+                if let formatted {
+                    TraceMeasurementValue(original: value, formatted: formatted, numberFont: TraceTheme.numeral(bodyMetricSize))
+                } else {
+                    Text(verbatim: value).font(TraceTheme.numeral(bodyMetricSize))
+                }
+            }
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
             Text(title).font(.caption).foregroundStyle(TraceTheme.secondary)
@@ -194,8 +220,8 @@ struct MeView: View {
     }
 
     private var settingsCard: some View {
-        Card {
-            VStack(spacing: 6) {
+        settingsGroup {
+            VStack(spacing: 0) {
                 Toggle(isOn: Binding(
                     get: { model.coachEnabled },
                     set: { isOn in
@@ -207,7 +233,7 @@ struct MeView: View {
                         Text("Coach")
                     }
                 }
-                .frame(minHeight: 44)
+                .frame(minHeight: 56)
                 .accessibilityIdentifier(AccessibilityID.coachToggle)
                 Divider()
                 NavigationLink {
@@ -219,7 +245,7 @@ struct MeView: View {
                         Spacer()
                         Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(TraceTheme.secondary)
                     }
-                    .frame(minHeight: 44)
+                    .frame(minHeight: 56)
                     .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
@@ -229,7 +255,7 @@ struct MeView: View {
                     Toggle(isOn: Binding(get: { model.healthEnabled }, set: model.setHealthEnabled)) {
                         Label("Apple Health", systemImage: "heart.fill")
                     }
-                    .frame(minHeight: 44)
+                    .frame(minHeight: 56)
                     .accessibilityIdentifier(AccessibilityID.healthToggle)
                     .alert("Health access is off", isPresented: $model.isHealthDenied) {
                         Button("OK", role: .cancel) {}
@@ -239,10 +265,17 @@ struct MeView: View {
                 }
                 Divider()
                 Toggle("Save pose recordings", isOn: Binding(get: { model.recordPoses }, set: model.setRecordPoses))
-                    .frame(minHeight: 44)
+                    .frame(minHeight: 56)
                     .accessibilityIdentifier(AccessibilityID.recordPosesToggle)
             }
         }
+    }
+
+    private func settingsGroup<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .padding(.horizontal, 18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(TraceTheme.card, in: .rect(cornerRadius: 24))
     }
 }
 

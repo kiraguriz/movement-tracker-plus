@@ -212,7 +212,7 @@ struct MealItemsForm<Header: View>: View {
             .lineLimit(1)
             .minimumScaleFactor(0.6)
             Text("kcal")
-                .font(TraceTheme.label)
+                .traceMetricLabel()
                 .foregroundStyle(TraceTheme.secondary)
             Spacer(minLength: 0)
         }
