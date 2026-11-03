@@ -15,6 +15,8 @@ struct ManualSetSheet: View {
     @ScaledMetric(relativeTo: .title) private var minimumCardWidth = 160.0
     @State private var repsText: String
     @State private var loadText: String
+    @FocusState private var repsFocused: Bool
+    @FocusState private var loadFocused: Bool
 
     init(
         exercise: Exercise, previous: LoggedSet?, prescribedReps: Int? = nil, earlier: [LoggedSet] = [],
@@ -30,40 +32,57 @@ struct ManualSetSheet: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    LazyVGrid(columns: fieldColumns, alignment: .leading, spacing: 10) {
-                        TraceSheetCard {
-                            TraceNumeralField(
-                                title: "Reps", text: $repsText, unit: String(localized: "reps"),
-                                range: 1...999, size: 88, allowsDecimals: false,
-                                isInvalid: reps == nil && !repsText.isEmpty, identifier: AccessibilityID.manualReps,
-                                lessLabel: "One rep fewer", moreLabel: "One rep more"
-                            )
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        LazyVGrid(columns: fieldColumns, alignment: .leading, spacing: 10) {
+                            TraceSheetCard {
+                                TraceNumeralField(
+                                    title: "Reps", text: $repsText, unit: String(localized: "reps"),
+                                    range: 1...999, size: 88, allowsDecimals: false,
+                                    isInvalid: reps == nil && !repsText.isEmpty, identifier: AccessibilityID.manualReps,
+                                    focus: $repsFocused, lessLabel: "One rep fewer", moreLabel: "One rep more"
+                                )
+                            }
+                            .id(AccessibilityID.manualReps)
+                            TraceSheetCard {
+                                TraceNumeralField(
+                                    title: "Load", text: $loadText, unit: units.massSymbol,
+                                    step: units.system == .metric ? 2.5 : 5, size: 88,
+                                    isInvalid: load.isInvalid, identifier: AccessibilityID.manualLoad,
+                                    focus: $loadFocused, lessLabel: "Lighter", moreLabel: "Heavier"
+                                )
+                            }
+                            .id(AccessibilityID.manualLoad)
                         }
-                        TraceSheetCard {
-                            TraceNumeralField(
-                                title: "Load", text: $loadText, unit: units.massSymbol,
-                                step: units.system == .metric ? 2.5 : 5, size: 88,
-                                isInvalid: load.isInvalid, identifier: AccessibilityID.manualLoad,
-                                lessLabel: "Lighter", moreLabel: "Heavier"
-                            )
+                        if !earlier.isEmpty {
+                            earlierSets
                         }
                     }
-                    if !earlier.isEmpty {
-                        earlierSets
-                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
+                .scrollBounceBehavior(.basedOnSize)
+                .scrollDismissesKeyboard(.interactively)
+                // The keyboard's Done bar floats over the sheet and takes the touches under it, so leave room to
+                // center the card being typed in, nudges included.
+                .contentMargins(.bottom, repsFocused || loadFocused ? 80 : 0, for: .scrollContent)
+                .onChange(of: [repsFocused, loadFocused]) { revealFocusedCard(in: proxy) }
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { _ in revealFocusedCard(in: proxy) }
             }
-            .scrollBounceBehavior(.basedOnSize)
-            .scrollDismissesKeyboard(.interactively)
             .background(TraceTheme.paper)
             .navigationTitle(ExerciseNames.name(of: exercise))
             .navigationSubtitle(earlier.isEmpty ? Text(verbatim: "") : Text("Set \(earlier.count + 1)"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        repsFocused = false
+                        loadFocused = false
+                    }
+                    .accessibilityIdentifier("manual.keyboardDone")
+                }
                 ToolbarItem(placement: .cancellationAction) {
                     Button(role: .cancel) { dismiss() }
                         .accessibilityIdentifier(AccessibilityID.manualCancel)
@@ -84,6 +103,11 @@ struct ManualSetSheet: View {
         .presentationDragIndicator(.visible)
         .presentationBackground(TraceTheme.paper)
         .testIdentifier(AccessibilityID.manualSet)
+    }
+
+    private func revealFocusedCard(in proxy: ScrollViewProxy) {
+        guard let card = repsFocused ? AccessibilityID.manualReps : loadFocused ? AccessibilityID.manualLoad : nil else { return }
+        withAnimation { proxy.scrollTo(card, anchor: .center) }
     }
 
     private var fieldColumns: [GridItem] {
