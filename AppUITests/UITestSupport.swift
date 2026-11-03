@@ -275,7 +275,8 @@ class AppUITestCase: XCTestCase {
     }
 
     /// Scrolls until the element exists (lists build their rows lazily) and is clear of the tab bar and the coach
-    /// button above it, which cover the bottom of a list.
+    /// button above it, which cover the bottom of a list. During setup the step's action and its 12-point margin
+    /// cover the bottom instead.
     @MainActor
     func scrollClearOfBottomBars(_ element: XCUIElement, in app: XCUIApplication) {
         for _ in 0..<4 where !element.exists {
@@ -284,7 +285,10 @@ class AppUITestCase: XCTestCase {
         }
         XCTAssertTrue(element.exists, "\(element) not found")
         let coach = app.buttons[ID.askCoach]
-        let limit = coach.exists ? coach.frame.minY : app.windows.firstMatch.frame.height * 0.84
+        let setupAction = app.buttons[ID.onboardingNext]
+        let limit = coach.exists ? coach.frame.minY
+            : setupAction.exists ? setupAction.frame.minY - 12
+            : app.windows.firstMatch.frame.height * 0.84
         for _ in 0..<4 where element.frame.maxY > limit {
             app.swipeUp()
             _ = waitUntil(timeout: 3) { element.frame.maxY <= limit }
