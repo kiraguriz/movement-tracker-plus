@@ -30,6 +30,10 @@ import Foundation
 /// - `-MTHealthStub`: Apple Health runs over an in-process fake that records what would be written or removed and
 ///   answers the access request without the system sheet; Me shows its counters. `-MTHealthStub denied` makes the
 ///   access request come back denied. The stub is not compiled into Release, and neither is this flag.
+/// - `-MTReadiness high|normal|low|limited|denied|none|unavailable`: Today's readiness reads a fake recovery source
+///   instead of Health. `high`, `normal` and `low` are good, typical and poor sleep, HRV and resting heart rate;
+///   `limited` shares only the last week; `denied` is turned on but empty; `none` has not been connected yet (Today
+///   offers it, and connecting gives no data); `unavailable` is a device without Health. Not compiled into Release.
 struct LaunchOptions: Equatable {
     enum Seed: String {
         case none, profile, sample
@@ -55,6 +59,7 @@ struct LaunchOptions: Equatable {
     var persistentTestDatabase = false
     var healthStub = false
     var healthStubDenies = false
+    var readiness: String?
     #endif
 
     init() {}
@@ -80,6 +85,7 @@ struct LaunchOptions: Equatable {
         persistentTestDatabase = arguments.contains("-MTPersistentTestDatabase") && !inMemoryDatabase
         healthStub = arguments.contains("-MTHealthStub")
         healthStubDenies = healthStub && Self.value(after: "-MTHealthStub", in: arguments) == "denied"
+        readiness = Self.value(after: "-MTReadiness", in: arguments)
         #endif
     }
 

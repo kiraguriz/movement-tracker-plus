@@ -79,6 +79,14 @@ enum AccessibilityID {
     static let weightEntry = "weightEntry.field"
     static let weightEntrySave = "weightEntry.save"
 
+    // Today's plan
+    static let todayPlan = "today.plan"
+    static let todayPlanStart = "today.plan.start"
+    static let todayPlanTrainAnyway = "today.plan.trainAnyway"
+    static let todayPlanConnect = "today.plan.connect"
+    static let todayPlanGauge = "today.plan.gauge"
+    static let todayPlanLifts = "today.plan.lifts"
+
     // Train
     static let trainStart = "train.start"
     static let trainAddExercise = "train.addExercise"

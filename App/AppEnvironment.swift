@@ -32,6 +32,9 @@ struct AppEnvironment: Sendable {
     var coachIsStub = false
     /// Sends finished workouts, meals and weights to Apple Health while the user has it turned on.
     var health: HealthSync
+    /// Sleep, HRV and resting heart rate for Today's readiness. Separate from `health` so its authorization never
+    /// touches the export's. `-MTReadiness` swaps in a fake in Debug builds.
+    var recovery: any RecoveryReading
     #if DEBUG
     /// What the fake Health bridge recorded; nil unless the app runs with `-MTHealthStub`. Not compiled into Release.
     var healthStub: HealthStubLog?
@@ -62,6 +65,15 @@ struct AppEnvironment: Sendable {
             bodyMeasurements: database.bodyMeasurements, settings: database.settings, bridge: healthBridge, now: now
         )
         self.health = health
+        #if DEBUG
+        if let scenario = launch.readiness.flatMap(RecoveryStub.Scenario.init(rawValue:)) {
+            recovery = RecoveryStub(scenario: scenario)
+        } else {
+            recovery = HealthKitRecoveryReader()
+        }
+        #else
+        recovery = HealthKitRecoveryReader()
+        #endif
         workouts = HealthSyncingWorkoutStore(base: database.workouts, health: health)
         exercises = database.exercises
         nutrition = HealthSyncingNutritionStore(base: database.nutrition, health: health)
@@ -160,6 +172,9 @@ extension AppEnvironment {
         }
         if launch.inMemoryDatabase && launch.aiOptIn {
             try await environment.settings.set(SettingKey.aiOptIn, to: true)
+        }
+        if launch.inMemoryDatabase, (environment.recovery as? RecoveryStub)?.startsConnected == true {
+            try await environment.settings.set(SettingKey.readinessEnabled, to: true)
         }
         #endif
         return environment
