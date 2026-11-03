@@ -92,7 +92,8 @@ struct TeachSessionTests {
     @Test("the learning can wait for the countdown to end")
     func analysisWaits() async throws {
         let frames = lunge().frames()
-        let session = TeachSession(analyzesFromStart: false)
+        let session = TeachSession()
+        await session.beginTake()
         for frame in frames.prefix(45) { await session.process(frame) }
         #expect(await session.provisionalCycleCount() == 0)
         await session.beginAnalysis()
@@ -134,6 +135,7 @@ struct TeachSessionTests {
     func fullTake() async throws {
         let figure = TeachFigure(movement: .lunge, reps: TeachFigure.reps(20), noise: .none)
         let session = TeachSession()
+        await session.beginTake(analyzesFromStart: true)
         for frame in figure.frames() { await session.process(frame) }
         #expect(await session.isFull)
         #expect(await session.frameCount <= Int(TeachAnalyzer.maxSeconds * 30) + 2)
@@ -151,5 +153,55 @@ struct TeachSessionTests {
         }
         let result = try teachResult(frames)
         #expect(result.view != .side, "two shoulders apart are not a side view")
+    }
+}
+
+@Suite("Teach session framing")
+struct TeachSessionFramingTests {
+    @Test("the framing state follows the person and nothing is kept before a take")
+    func framingBeforeTake() async throws {
+        let frames = TeachFigure(movement: .lunge, reps: [], noise: .vision, leadIn: 4).frames()
+        let session = TeachSession()
+        var states: [FramingState] = []
+        for frame in frames { states.append(await session.process(frame)) }
+        #expect(states.first == .noPerson || states.first == .holdStill)
+        #expect(states.last == .ready)
+        #expect(await session.frameCount == 0)
+        #expect(await session.provisionalCycleCount() == 0)
+        await #expect(throws: TeachError.tooLittleMotion) { try await session.finish() }
+    }
+
+    @Test("only the shoulder and the hip have to be in view to start")
+    func legsNotNeeded() async throws {
+        var figure = TeachFigure(movement: .curl, reps: [], noise: .vision, leadIn: 4)
+        figure.hidden = [.leftKnee, .rightKnee, .leftAnkle, .rightAnkle, .leftWrist, .rightWrist]
+        let session = TeachSession()
+        var last = FramingState.noPerson
+        for frame in figure.frames() { last = await session.process(frame) }
+        #expect(last == .ready)
+    }
+
+    @Test("nobody in view is not ready")
+    func nobody() async throws {
+        var frames = TeachFigure(movement: .curl, reps: [], leadIn: 3).frames()
+        for i in frames.indices { frames[i].joints = [:] }
+        let session = TeachSession()
+        var last = FramingState.ready
+        for frame in frames { last = await session.process(frame) }
+        #expect(last == .noPerson)
+    }
+
+    @Test("a new take starts empty and a take can be dropped")
+    func takes() async throws {
+        let frames = TeachFigure(movement: .lunge, reps: TeachFigure.reps(3)).frames()
+        let session = TeachSession()
+        await session.beginTake(analyzesFromStart: true)
+        for frame in frames.prefix(100) { await session.process(frame) }
+        #expect(await session.frameCount == 100)
+        await session.beginTake(analyzesFromStart: true)
+        #expect(await session.frameCount == 0)
+        await session.discardTake()
+        await session.process(frames[0])
+        #expect(await session.frameCount == 0)
     }
 }

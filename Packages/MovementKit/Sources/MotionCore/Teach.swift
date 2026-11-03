@@ -337,12 +337,14 @@ struct TeachAnalyzer: Sendable {
     }
 }
 
-/// Watches a demonstration frame by frame and learns the movement from it (plan teach-mode §3.2).
+/// Watches the camera while the user frames themselves and demonstrates, and learns the movement from the
+/// demonstration (plan teach-mode §3.2).
 ///
 /// ```swift
 /// let session = TeachSession()
-/// // countdown frames, then, with a second to go:
-/// await session.beginAnalysis()
+/// // while framing: let state = await session.process(frame)   // .ready lets the user start
+/// await session.beginTake()                                    // the countdown starts: frames are kept now
+/// // a second before it ends:  await session.beginAnalysis()
 /// // every frame while the user demonstrates: await session.process(frame)
 /// let dots = await session.provisionalCycleCount()
 /// let result = try await session.finish()
@@ -350,36 +352,65 @@ struct TeachAnalyzer: Sendable {
 /// let verdict = try TaughtVerifier.verify(spec: spec, take: result.take(confirming: 3))
 /// ```
 public actor TeachSession {
-    private var analyzer: TeachAnalyzer
+    /// Only the shoulder and the hip have to be in view to start: which other joints matter is learned from
+    /// the demonstration itself.
+    private static let framingSpec = ExerciseSpec(
+        id: "teach.framing", view: .any, requiredJoints: [.shoulder, .hip],
+        signal: .relativeHeight(of: .shoulder, to: .hip, scale: .torso),
+        rep: RepParameters(polarity: .down, topPrior: 1, bottomPrior: 0, minRom: 0.4)
+    )
 
-    /// With `analyzesFromStart` false, learning waits for `beginAnalysis()`; the frames before it are kept
-    /// for the replay all the same.
-    public init(config: MotionConfig = .default, analyzesFromStart: Bool = true) {
+    private let config: MotionConfig
+    private var framing: MotionPipeline
+    private var analyzer: TeachAnalyzer?
+
+    public init(config: MotionConfig = .default) {
+        self.config = config
+        // The framing spec is a constant that validates; failing here would be a programming error.
+        framing = try! MotionPipeline(spec: Self.framingSpec, config: config)
+    }
+
+    /// Feeds one frame. Returns the framing state, `.ready` once the person has been in view long enough to
+    /// start. During a take the frame is kept as well.
+    @discardableResult
+    public func process(_ frame: PoseFrame) -> FramingState {
+        _ = framing.process(frame)
+        analyzer?.process(frame)
+        return framing.framing
+    }
+
+    /// Starts keeping frames (the countdown is part of the take: it is what the replay starts from). A take
+    /// already in progress is dropped. Learning begins with `beginAnalysis()`, or at once with
+    /// `analyzesFromStart`.
+    public func beginTake(analyzesFromStart: Bool = false) {
         analyzer = TeachAnalyzer(config: config, analyzesFromStart: analyzesFromStart)
     }
 
-    public func process(_ frame: PoseFrame) {
-        analyzer.process(frame)
+    /// From the next frame on the movement is learned: the user has walked back into position.
+    public func beginAnalysis() {
+        analyzer?.beginAnalysis()
     }
 
-    public func beginAnalysis() {
-        analyzer.beginAnalysis()
+    /// Drops the take, for a retry.
+    public func discardTake() {
+        analyzer = nil
     }
 
     /// Frames kept so far.
-    public var frameCount: Int { analyzer.frames.count }
+    public var frameCount: Int { analyzer?.frames.count ?? 0 }
 
     /// The take is as long as it may get; the app ends the demonstration.
-    public var isFull: Bool { analyzer.isFull }
+    public var isFull: Bool { analyzer?.isFull ?? false }
 
     /// Cycles seen so far, for the dots on screen.
     public func provisionalCycleCount() -> Int {
-        analyzer.provisionalCycleCount()
+        analyzer?.provisionalCycleCount() ?? 0
     }
 
     /// Throws `TeachError`: `.tooLittleMotion` when the body hardly moved or the movement was not smooth,
     /// `.tooFewReps` when fewer than two cycles were seen.
     public func finish() throws -> TeachResult {
-        try analyzer.finish()
+        guard let analyzer else { throw TeachError.tooLittleMotion }
+        return try analyzer.finish()
     }
 }
