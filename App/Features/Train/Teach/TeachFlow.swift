@@ -133,7 +133,7 @@ private struct PaperStep<Body: View, Footer: View>: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 20) {
                     content
                 }
                 .frame(maxWidth: 560, alignment: .leading)
@@ -494,10 +494,12 @@ private struct SaveStep: View {
                 Spacer(minLength: 8)
                 Picker("teach.equipment", selection: $model.equipment) {
                     ForEach(Equipment.allCases, id: \.self) { equipment in
-                        Text(LocalizedStringKey("equipment.\(equipment.rawValue)")).tag(equipment)
+                        Text(verbatim: TeachText.string("equipment.\(equipment.rawValue)")).tag(equipment)
                     }
                 }
+                .labelsHidden()
                 .pickerStyle(.menu)
+                .accessibilityLabel("teach.equipment")
                 .accessibilityIdentifier(AccessibilityID.teachEquipment)
             }
             .frame(minHeight: 44)
@@ -518,7 +520,7 @@ private struct SaveStep: View {
                     PoseThumbnail(frame: bottom).accessibilityLabel("teach.pose.end")
                 }
             }
-            .frame(height: 220)
+            .frame(height: 150)
             Label {
                 Text("teach.verify.pass \(model.countedReps) \(model.confirmedReps)")
             } icon: {
@@ -540,7 +542,7 @@ private struct MuscleChips: View {
                 Button {
                     if isOn { selection.remove(muscle) } else { selection.insert(muscle) }
                 } label: {
-                    Text(LocalizedStringKey("muscle.\(muscle.rawValue)"))
+                    Text(verbatim: TeachText.string("muscle.\(muscle.rawValue)"))
                         .font(.subheadline.weight(.semibold))
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
@@ -702,5 +704,12 @@ struct TeachCameraIsland: UIViewRepresentable {
 
     static func dismantleUIView(_ view: CameraIslandView, coordinator: ()) {
         view.update(nil)
+    }
+}
+
+/// Strings whose key is built at run time, which `Text` would look up as an interpolation.
+private enum TeachText {
+    static func string(_ key: String) -> String {
+        Bundle.main.localizedString(forKey: key, value: key, table: nil)
     }
 }
