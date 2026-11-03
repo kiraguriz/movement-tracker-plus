@@ -14,6 +14,7 @@ public enum ExerciseMatcher {
         "row.barbell": ["barbell row", "bent-over row", "bent over row", "杠铃划船"],
         "pullup": ["pull-up", "pull up", "pullup", "引体向上"],
         "curl.dumbbell": ["dumbbell curl", "biceps curl", "bicep curl", "哑铃弯举"],
+        BuiltInCatalog.jumpingJack: ["jumping jack", "jumping jacks", "star jump", "star jumps", "开合跳"],
     ]
 
     public static func match(_ name: String, in catalog: [Exercise]) -> ExerciseID? {

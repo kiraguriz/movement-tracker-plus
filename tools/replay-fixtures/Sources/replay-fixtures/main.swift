@@ -69,6 +69,39 @@ let pushUp = Clip(
     notes: "Synthetic push-up set: 8 counted reps and 1 partial."
 )
 
+// Fifteen front-view jumping jacks and two partials. Reps 5 and 6 stop the arms at 130 degrees (the arms-high
+// rule fires), the partials stop at shoulder height, and the last reps get slower.
+let jumpingJack = Clip(
+    name: "jumpingjack",
+    spec: .jumpingJack,
+    motion: SyntheticMotion(
+        exercise: .jumpingJack,
+        actions: [
+            .rep(.jumpingJack()),
+            .rep(.jumpingJack()),
+            .rep(.jumpingJack()),
+            .rep(.jumpingJack()),
+            .rep(.jumpingJack(peak: 130)),
+            .rep(.jumpingJack(peak: 130)),
+            .rep(.partialJumpingJack()),
+            .rep(.jumpingJack()),
+            .rep(.jumpingJack()),
+            .rep(.jumpingJack()),
+            .rep(.partialJumpingJack()),
+            .rep(.jumpingJack()),
+            .rep(.jumpingJack(raise: 0.5, lower: 0.5)),
+            .rep(.jumpingJack(raise: 0.55, lower: 0.5)),
+            .rep(.jumpingJack(raise: 0.6, lower: 0.5)),
+            .rep(.jumpingJack(raise: 0.65, lower: 0.5)),
+            .rep(.jumpingJack(raise: 0.7, lower: 0.5)),
+        ],
+        facing: .right, noise: noise, seed: 4301
+    ),
+    reps: 15,
+    partials: 2,
+    notes: "Synthetic front-view jumping jack set: 15 counted reps and 2 partials."
+)
+
 func run() async -> Int32 {
     guard let directory = CommandLine.arguments.dropFirst().first else {
         FileHandle.standardError.write(Data("usage: replay-fixtures <output directory>\n".utf8))
@@ -83,7 +116,7 @@ func run() async -> Int32 {
     }
 
     var failed = false
-    for clip in [squat, pushUp] {
+    for clip in [squat, pushUp, jumpingJack] {
         let frames = clip.motion.frames()
         let header = PoseFixtureHeader(
             exerciseSpecID: clip.spec.rawValue,

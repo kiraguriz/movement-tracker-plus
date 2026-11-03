@@ -11,7 +11,7 @@ import Foundation
 /// - `-MTFailDatabase`: behave as if the database could not be opened.
 /// - `-MTCoachURL <url>`: talk to the coach proxy at this address (for example `wrangler dev`) instead of
 ///   `CoachEndpoint.deployed`.
-/// - `-MTReplayPoses <name>`: a live set replays the bundled pose recording `<name>` (`squat` or `pushup`) instead
+/// - `-MTReplayPoses <name>`: a live set replays the bundled pose recording `<name>` (`squat`, `pushup` or `jumpingjack`) instead
 ///   of using the camera. Without this argument replay also starts when the device has no camera.
 /// - `-MTReplaySpeed <factor>`: plays the replay faster (UI tests use 3); the engine runs on recorded time, so
 ///   the counts do not change.
@@ -27,6 +27,8 @@ import Foundation
 /// - `-MTNoCoach`: simulate an unconfigured coach, even when a deployed endpoint is configured.
 /// - `-MTAIOptIn`: with the in-memory database, start with the coach consent already given.
 /// - `-MTMealPhotoSample`: the meal photo sheet offers a generated sample photo (the Simulator has no camera).
+/// - `-MTExperimentalExercises`: shows the camera exercises that have not been checked on a person yet (see
+///   `ExperimentalExercises`) in the picker, the Train list and coach plans.
 /// - `-MTHealthStub`: Apple Health runs over an in-process fake that records what would be written or removed and
 ///   answers the access request without the system sheet; Me shows its counters. `-MTHealthStub denied` makes the
 ///   access request come back denied. The stub is not compiled into Release, and neither is this flag.
@@ -51,6 +53,7 @@ struct LaunchOptions: Equatable {
     var coachStubFailure: String?
     var aiOptIn = false
     var mealPhotoSample = false
+    var experimentalExercises = false
     #if DEBUG
     var persistentTestDatabase = false
     var healthStub = false
@@ -76,6 +79,7 @@ struct LaunchOptions: Equatable {
         coachStubFailure = Self.value(after: "-MTCoachStubFail", in: arguments)
         aiOptIn = arguments.contains("-MTAIOptIn")
         mealPhotoSample = arguments.contains("-MTMealPhotoSample")
+        experimentalExercises = arguments.contains("-MTExperimentalExercises")
         #if DEBUG
         persistentTestDatabase = arguments.contains("-MTPersistentTestDatabase") && !inMemoryDatabase
         healthStub = arguments.contains("-MTHealthStub")

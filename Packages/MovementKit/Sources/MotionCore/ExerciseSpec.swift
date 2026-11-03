@@ -336,6 +336,7 @@ public enum ExerciseSpecError: Error, Equatable, LocalizedError, Sendable {
 public enum BundledSpec: String, CaseIterable, Sendable {
     case squatBodyweight = "squat.bodyweight"
     case pushUp = "pushup"
+    case jumpingJack = "jumpingjack"
 }
 
 extension ExerciseSpec {

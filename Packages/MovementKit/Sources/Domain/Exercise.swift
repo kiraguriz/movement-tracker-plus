@@ -81,6 +81,11 @@ public struct StoredExerciseSpec: Equatable, Sendable, Identifiable {
 public enum BuiltInCatalog {
     public static let squatBodyweight: ExerciseID = "squat.bodyweight"
     public static let pushup: ExerciseID = "pushup"
+    public static let jumpingJack: ExerciseID = "jumpingjack"
+
+    /// Camera exercises whose spec passes only generated-motion tests. The app keeps them out of its pickers and
+    /// plans until real sets have been recorded and counted (see `ExperimentalExercises` in the app).
+    public static let experimental: Set<ExerciseID> = [jumpingJack]
 
     public static let exercises: [Exercise] = [
         // Camera-trackable; the slugs match the MotionCore spec ids.
@@ -88,6 +93,8 @@ public enum BuiltInCatalog {
                  equipment: .bodyweight, specID: "squat.bodyweight"),
         Exercise(id: pushup, name: "Push-up", primaryMuscles: [.chest, .triceps, .shoulders],
                  equipment: .bodyweight, specID: "pushup"),
+        Exercise(id: jumpingJack, name: "Jumping Jack", category: .cardio, primaryMuscles: [.shoulders, .calves, .quadriceps],
+                 equipment: .bodyweight, specID: "jumpingjack"),
         // Manual only.
         Exercise(id: "squat.barbell", name: "Barbell Back Squat", primaryMuscles: [.quadriceps, .glutes], equipment: .barbell),
         Exercise(id: "bench.press", name: "Bench Press", primaryMuscles: [.chest, .triceps, .shoulders], equipment: .barbell),

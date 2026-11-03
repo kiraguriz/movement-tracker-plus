@@ -17,6 +17,7 @@ struct RunResult {
 
 func squatSpec() throws -> ExerciseSpec { try ExerciseSpec.bundled(.squatBodyweight) }
 func pushUpSpec() throws -> ExerciseSpec { try ExerciseSpec.bundled(.pushUp) }
+func jumpingJackSpec() throws -> ExerciseSpec { try ExerciseSpec.bundled(.jumpingJack) }
 
 /// Runs frames through a fresh pipeline, finishing the stream at the end.
 func run(_ frames: [PoseFrame], spec: ExerciseSpec, config: MotionConfig = .default) throws -> RunResult {
@@ -28,6 +29,15 @@ func run(_ frames: [PoseFrame], spec: ExerciseSpec, config: MotionConfig = .defa
 }
 
 func run(_ motion: SyntheticMotion, spec: ExerciseSpec? = nil, config: MotionConfig = .default) throws -> RunResult {
-    let resolved = try spec ?? (motion.exercise == .squat ? squatSpec() : pushUpSpec())
+    let resolved: ExerciseSpec
+    if let spec {
+        resolved = spec
+    } else {
+        switch motion.exercise {
+        case .squat: resolved = try squatSpec()
+        case .pushUp: resolved = try pushUpSpec()
+        case .jumpingJack: resolved = try jumpingJackSpec()
+        }
+    }
     return try run(motion.frames(), spec: resolved, config: config)
 }

@@ -81,6 +81,8 @@ struct EvalFileNameTests {
         ("PushUps_12.MOV", "pushup", 12, nil),
         ("push-up_3_1.m4v", "pushup", 3, 1),
         ("squat.mov", "squat.bodyweight", nil, nil),
+        ("jumpingjack_20.jsonl", "jumpingjack", 20, nil),
+        ("Jumping-Jacks_16_4_front.mov", "jumpingjack", 16, 4),
         ("squat_x_3.mov", "squat.bodyweight", nil, nil),
         ("/some/dir/squat.bodyweight_7.mov", "squat.bodyweight", 7, nil),
     ] as [(String, String, Int?, Int?)])
@@ -209,7 +211,7 @@ struct MotionEvalRunTests {
         #expect(Set(cases.map(\.name)).count == cases.count)
         #expect(cases.contains { $0.expectedReps == 0 })                       // idle clips are part of the set
         #expect(cases.contains { $0.expectedPartials > 0 })
-        #expect(Set(cases.map(\.spec)) == [.squatBodyweight, .pushUp])
+        #expect(Set(cases.map(\.spec)) == [.squatBodyweight, .pushUp, .jumpingJack])
     }
 
     @Test func syntheticRunCountsRepsAccurately() async throws {

@@ -37,7 +37,7 @@ public struct SplitMix64: RandomNumberGenerator, Sendable {
     }
 }
 
-/// A kinematic stick figure that generates `PoseFrame` sequences for squats and push-ups.
+/// A kinematic stick figure that generates `PoseFrame` sequences for squats, push-ups and front-view jumping jacks.
 ///
 /// The figure has real segment lengths (thigh 0.44 m, shin 0.43 m, torso 0.50 m, upper arm 0.30 m,
 /// forearm 0.27 m) and pivots about a planted ankle (squat) or planted ankles and hands (push-up), so
@@ -50,7 +50,7 @@ public struct SplitMix64: RandomNumberGenerator, Sendable {
 /// use independent random streams, so changing the noise does not move the frame times.
 public struct SyntheticMotion: Sendable {
     public enum Exercise: Sendable, Equatable {
-        case squat, pushUp
+        case squat, pushUp, jumpingJack
     }
 
     /// The direction the figure faces in the image (and walks toward, for `walkOut`).
@@ -102,6 +102,19 @@ public struct SyntheticMotion: Sendable {
         /// A squat that stops well above parallel.
         public static func partialSquat(bottom: Double = 0.55, eccentric: Double = 1.0, concentric: Double = 0.9) -> Rep {
             Rep(bottom: bottom, eccentric: eccentric, concentric: concentric, pauseTop: 0.6)
+        }
+
+        /// A jumping jack seen from the front. The signal is the arm's angle from the torso in degrees, 12 with the
+        /// arms down. The first leg raises the arms (`eccentric` in the generator's own terms), the second lowers them.
+        public static func jumpingJack(
+            peak: Double = 165, raise: Double = 0.4, lower: Double = 0.4, pauseRest: Double = 0.15, top: Double? = nil
+        ) -> Rep {
+            Rep(bottom: peak, eccentric: raise, concentric: lower, pauseBottom: 0, pauseTop: pauseRest, top: top)
+        }
+
+        /// A jumping jack whose arms stop at about shoulder height.
+        public static func partialJumpingJack(peak: Double = 95, raise: Double = 0.35, lower: Double = 0.35) -> Rep {
+            jumpingJack(peak: peak, raise: raise, lower: lower)
         }
 
         /// A push-up to about 85 degrees of elbow flexion.
@@ -272,6 +285,8 @@ public struct SyntheticMotion: Sendable {
         switch exercise {
         case .squat: Camera()
         case .pushUp: Camera(imageAspect: 16.0 / 9)
+        // Almost square on to the camera, and far enough back that outstretched arms stay in the image.
+        case .jumpingJack: Camera(distance: 1.2, yawDegrees: 82)
         }
     }
 
@@ -285,11 +300,17 @@ public struct SyntheticMotion: Sendable {
         SyntheticMotion(exercise: .pushUp, actions: Array(repeating: .rep(rep), count: reps), seed: seed)
     }
 
+    /// `reps` identical front-view jumping jacks.
+    public static func jumpingJacks(reps: Int, rep: Rep = .jumpingJack(), seed: UInt64 = 1) -> SyntheticMotion {
+        SyntheticMotion(exercise: .jumpingJack, actions: Array(repeating: .rep(rep), count: reps), seed: seed)
+    }
+
     /// The signal value at the top of the movement in the exercise's units.
     public var topValue: Double {
         switch exercise {
         case .squat: 1.0
         case .pushUp: 170
+        case .jumpingJack: 12
         }
     }
 
@@ -352,6 +373,8 @@ public struct SyntheticMotion: Sendable {
                     bottom.lean = rep.torsoLeanDeg * min(1.15, max(0, 1 - rep.bottom))
                 case .pushUp:
                     bottom.sag = rep.hipSag
+                case .jumpingJack:
+                    break
                 }
                 add(rep.eccentric, to: bottom)
                 add(rep.pauseBottom, to: bottom)
@@ -432,8 +455,13 @@ public struct SyntheticMotion: Sendable {
         frames.reserveCapacity(times.count)
         let aspect = camera.imageAspect
         let frameHeight = 2.6 * camera.distance
-        let centreY = exercise == .squat ? 0.9 : 0.4
-        let anchorX = exercise == .squat ? 0.1 : 0.65
+        let centreY = exercise == .pushUp ? 0.4 : 0.9
+        let anchorX: Double
+        switch exercise {
+        case .squat: anchorX = 0.1
+        case .pushUp: anchorX = 0.65
+        case .jumpingJack: anchorX = 0
+        }
 
         for tau in times {
             while pieceIndex < pieces.count - 1, tau > pieces[pieceIndex].end { pieceIndex += 1 }
@@ -441,7 +469,12 @@ public struct SyntheticMotion: Sendable {
             let s = piece.end > piece.start ? min(1, max(0, (tau - piece.start) / (piece.end - piece.start))) : 1
             let pose = Pose.lerp(piece.from, piece.to, 0.5 - 0.5 * cos(.pi * s))
 
-            let world = exercise == .squat ? Self.squatJoints(pose) : Self.pushUpJoints(pose)
+            let world: [Joint: P3]
+            switch exercise {
+            case .squat: world = Self.squatJoints(pose)
+            case .pushUp: world = Self.pushUpJoints(pose)
+            case .jumpingJack: world = Self.jumpingJackJoints(pose)
+            }
             let yaw = pose.yaw * .pi / 180
             let cosYaw = cos(yaw)
             let sinYaw = sin(yaw)
@@ -587,6 +620,38 @@ public struct SyntheticMotion: Sendable {
         let p2 = (x: mx + h * dy / d, y: my - h * dx / d)
         if preferUpper { return p1.y >= p2.y ? p1 : p2 }
         return p1.x <= p2.x ? p1 : p2
+    }
+
+    /// A front-facing jumping jack, built directly in 3D (x forward, y up, z lateral with the left side positive).
+    /// The arms swing in the frontal plane by `pose.signal` degrees from the torso; the legs spread a little more
+    /// than a tenth of that, as the feet do when the arms go up.
+    private static func jumpingJackJoints(_ pose: Pose) -> [Joint: P3] {
+        let theta = pose.signal * .pi / 180
+        let rest = 12.0 * .pi / 180
+        let phi = 0.12 * (theta - rest)
+        let legLength = thigh + shin
+        let hipY = ankleHeight + legLength * cos(phi)
+        let shoulderY = hipY + torso
+        var out: [Joint: P3] = [:]
+        for (sign, isLeft) in [(1.0, true), (-1.0, false)] {
+            func side(_ left: Joint, _ right: Joint) -> Joint { isLeft ? left : right }
+            let hipZ = 0.11 * sign
+            let shoulderZ = 0.19 * sign
+            let elbowY = shoulderY - upperArm * cos(theta)
+            let elbowZ = shoulderZ + upperArm * sin(theta) * sign
+            out[side(.leftHip, .rightHip)] = P3(x: 0, y: hipY, z: hipZ)
+            out[side(.leftKnee, .rightKnee)] = P3(x: 0.02, y: ankleHeight + shin * cos(phi), z: hipZ + thigh * sin(phi) * sign)
+            out[side(.leftAnkle, .rightAnkle)] = P3(x: 0, y: ankleHeight, z: hipZ + legLength * sin(phi) * sign)
+            out[side(.leftShoulder, .rightShoulder)] = P3(x: 0, y: shoulderY, z: shoulderZ)
+            out[side(.leftElbow, .rightElbow)] = P3(x: 0, y: elbowY, z: elbowZ)
+            out[side(.leftWrist, .rightWrist)] = P3(x: 0, y: elbowY - forearm * cos(theta), z: elbowZ + forearm * sin(theta) * sign)
+            out[side(.leftEye, .rightEye)] = P3(x: 0.08, y: shoulderY + 0.28, z: 0.03 * sign)
+            out[side(.leftEar, .rightEar)] = P3(x: 0, y: shoulderY + 0.25, z: 0.075 * sign)
+        }
+        out[.nose] = P3(x: 0.1, y: shoulderY + 0.24, z: 0)
+        out[.neck] = P3(x: 0, y: shoulderY + 0.06, z: 0)
+        out[.root] = P3(x: 0, y: hipY, z: 0)
+        return out
     }
 
     private static let bodyLength = 1.37

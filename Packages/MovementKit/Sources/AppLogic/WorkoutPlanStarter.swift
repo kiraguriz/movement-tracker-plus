@@ -22,16 +22,22 @@ public struct WorkoutPlanStarter: Sendable {
     private let workouts: any WorkoutStore
     private let exercises: any ExerciseCatalogStore
     private let reducer: WorkoutSessionReducer
+    private let excluded: Set<ExerciseID>
 
-    public init(workouts: any WorkoutStore, exercises: any ExerciseCatalogStore, ids: any IDGenerating = UUIDv7Generator.shared) {
+    /// `excluding` names exercises a plan must not use, for example ones the app has not released yet.
+    public init(
+        workouts: any WorkoutStore, exercises: any ExerciseCatalogStore, excluding: Set<ExerciseID> = [],
+        ids: any IDGenerating = UUIDv7Generator.shared
+    ) {
         self.workouts = workouts
         self.exercises = exercises
+        excluded = excluding
         reducer = WorkoutSessionReducer(ids: ids)
     }
 
     public func start(title: String, exercises plan: [PlannedExercise], at date: Date, in timeZone: TimeZone) async throws -> Result {
         guard try await workouts.latestDraft() == nil else { return .busy }
-        let catalog = try await exercises.allExercises()
+        let catalog = try await exercises.allExercises().filter { !excluded.contains($0.id) }
         var transition = reducer.start(title: title, at: date, in: timeZone)
         var effects = transition.effects
         var missing: [String] = []
