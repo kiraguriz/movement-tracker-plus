@@ -39,9 +39,10 @@ public struct RepRecord: Equatable, Codable, Sendable {
     public var tLift: TimeInterval
     /// End of the ascent: the signal is back on the top plateau.
     public var tEnd: TimeInterval
-    /// Eccentric duration: `tBottom − tStart`.
+    /// Eccentric duration: `tBottom − tStart`, or `tEnd − tLift` when the spec is `liftFirst`.
     public var eccMs: Double
-    /// Concentric duration: `tEnd − tLift`, so a pause at the bottom is not counted as slow lifting.
+    /// Concentric duration: `tEnd − tLift`, so a pause at the bottom is not counted as slow lifting, or
+    /// `tBottom − tStart` when the spec is `liftFirst`.
     public var conMs: Double
     public var rom: Double
     public var bottomValue: Double

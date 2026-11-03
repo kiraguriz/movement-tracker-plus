@@ -213,11 +213,16 @@ public struct RepParameters: Equatable, Codable, Sendable {
     /// shallowest dip worth reporting as a partial rep is close to that line raises it, so that a little noise
     /// cannot hide the dip.
     public var topLeave: Double?
+    /// True when the working movement is the first leg of a rep: the signal leaves its rest plateau under
+    /// load and returns passively (curl, raise, jumping jack). The records then label the first leg
+    /// concentric and the second eccentric, and the velocity is read off the first leg. False (the default)
+    /// is the squat and push-up order, where the first leg is the lowering.
+    public var liftFirst: Bool
 
     public init(
         polarity: Polarity, topPrior: Double, bottomPrior: Double, minRom: Double,
         dwellMs: Double = 70, minPeriodMs: Double = 400, maxPeriodMs: Double = 12_000, idleSeconds: Double = 20,
-        topLeave: Double? = nil
+        topLeave: Double? = nil, liftFirst: Bool = false
     ) {
         self.polarity = polarity
         self.topPrior = topPrior
@@ -228,10 +233,12 @@ public struct RepParameters: Equatable, Codable, Sendable {
         self.maxPeriodMs = maxPeriodMs
         self.idleSeconds = idleSeconds
         self.topLeave = topLeave
+        self.liftFirst = liftFirst
     }
 
     private enum CodingKeys: String, CodingKey {
         case polarity, topPrior, bottomPrior, minRom, dwellMs, minPeriodMs, maxPeriodMs, idleSeconds, topLeave
+        case liftFirst
     }
 
     public init(from decoder: any Decoder) throws {
@@ -245,6 +252,7 @@ public struct RepParameters: Equatable, Codable, Sendable {
         maxPeriodMs = try c.decodeIfPresent(Double.self, forKey: .maxPeriodMs) ?? 12_000
         idleSeconds = try c.decodeIfPresent(Double.self, forKey: .idleSeconds) ?? 20
         topLeave = try c.decodeIfPresent(Double.self, forKey: .topLeave)
+        liftFirst = try c.decodeIfPresent(Bool.self, forKey: .liftFirst) ?? false
     }
 }
 
