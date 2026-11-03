@@ -5,50 +5,77 @@ import SwiftUI
 struct PlanSummaryView: View {
     let plan: GoalPlanner.Plan
     let units: UnitFormatter
+    var compact = false
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .largeTitle) private var calorieSize = 150.0
     @ScaledMetric(relativeTo: .title) private var macroSize = 40.0
 
     var body: some View {
-        VStack(spacing: 12) {
-            hero
-            Card {
-                VStack(spacing: 18) {
-                    macroBar
-                    if dynamicTypeSize.isAccessibilitySize {
-                        VStack(spacing: 16) { macros }
-                    } else {
-                        HStack(alignment: .top, spacing: 12) { macros }
-                    }
+        if compact {
+            Grid(alignment: .topLeading, horizontalSpacing: 20, verticalSpacing: 12) {
+                GridRow {
+                    hero.frame(maxHeight: .infinity)
+                    calculation.frame(maxHeight: .infinity)
+                }
+                GridRow {
+                    macroCard.frame(maxHeight: .infinity)
+                    rationaleCard.frame(maxHeight: .infinity)
+                }
+                if !plan.warnings.isEmpty { warnings.gridCellColumns(2) }
+            }
+        } else {
+            VStack(spacing: 12) {
+                hero
+                macroCard
+                calculation
+                warnings
+                rationaleCard
+            }
+        }
+    }
+
+    private var macroCard: some View {
+        Card {
+            VStack(spacing: compact ? 12 : 18) {
+                macroBar
+                if dynamicTypeSize.isAccessibilitySize {
+                    VStack(spacing: 16) { macros }
+                } else {
+                    HStack(alignment: .top, spacing: 12) { macros }
                 }
             }
-            calculation
-            if !plan.warnings.isEmpty {
-                VStack(spacing: 8) {
-                    ForEach(plan.warnings, id: \.self) { warning in
-                        Label(PlannerText.warning(warning), systemImage: "exclamationmark.triangle.fill")
+            .frame(maxHeight: .infinity, alignment: .top)
+        }
+    }
+
+    private var warnings: some View {
+        VStack(spacing: 8) {
+            ForEach(plan.warnings, id: \.self) { warning in
+                Label(PlannerText.warning(warning), systemImage: "exclamationmark.triangle.fill")
+                    .font(.subheadline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
+                    .background(TraceTheme.amber.opacity(0.15), in: .rect(cornerRadius: 20))
+                    .accessibilityIdentifier("plan.warning.\(warning.rawValue)")
+            }
+        }
+    }
+
+    private var rationaleCard: some View {
+        Card {
+            DisclosureGroup("Why these numbers") {
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(Array(plan.rationale.enumerated()), id: \.offset) { _, line in
+                        Text(PlannerText.rationale(line, units: units))
                             .font(.subheadline)
+                            .foregroundStyle(TraceTheme.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(16)
-                            .background(TraceTheme.amber.opacity(0.15), in: .rect(cornerRadius: 20))
-                            .accessibilityIdentifier("plan.warning.\(warning.rawValue)")
                     }
                 }
+                .padding(.top, 12)
             }
-            Card {
-                DisclosureGroup("Why these numbers") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        ForEach(Array(plan.rationale.enumerated()), id: \.offset) { _, line in
-                            Text(PlannerText.rationale(line, units: units))
-                                .font(.subheadline)
-                                .foregroundStyle(TraceTheme.secondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                    }
-                    .padding(.top, 12)
-                }
-            }
+            .frame(maxHeight: .infinity, alignment: .top)
         }
     }
 
@@ -56,7 +83,7 @@ struct PlanSummaryView: View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 0) {
                 Text(plan.kcal, format: .number)
-                    .font(TraceTheme.numeral(calorieSize))
+                    .font(TraceTheme.numeral(compact ? calorieSize * 0.64 : calorieSize))
                     .monospacedDigit()
                     .minimumScaleFactor(0.4)
                     .lineLimit(1)
@@ -70,8 +97,8 @@ struct PlanSummaryView: View {
             }
         }
         .foregroundStyle(.white)
-        .padding(24)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(compact ? 20 : 24)
+        .frame(maxWidth: .infinity, maxHeight: compact ? .infinity : nil, alignment: .leading)
         .background(TraceTheme.cobalt, in: .rect(cornerRadius: 32))
     }
 
@@ -121,7 +148,7 @@ struct PlanSummaryView: View {
 
     private var calculation: some View {
         Card {
-            VStack(spacing: 12) {
+            VStack(spacing: compact ? 8 : 12) {
                 calculationRow(plan.bmrKcal.formatted(), title: Text("Burn at rest"))
                 calculationRow("× " + plan.palFactor.formatted(.number.precision(.fractionLength(0...3))),
                                title: Text("\(plan.workoutsPerWeek) workouts per week"))
@@ -130,6 +157,7 @@ struct PlanSummaryView: View {
                 Divider().overlay(TraceTheme.ink)
                 calculationRow(plan.kcal.formatted(), title: Text("kcal"), isTotal: true)
             }
+            .frame(maxHeight: compact ? .infinity : nil)
         }
     }
 
@@ -137,7 +165,7 @@ struct PlanSummaryView: View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .firstTextBaseline, spacing: 16) {
                 Text(value).frame(minWidth: 96, alignment: .trailing)
-                    .font(TraceTheme.numeral(28))
+                    .font(TraceTheme.numeral(compact ? 24 : 28))
                     .foregroundStyle(isTotal ? TraceTheme.blue : TraceTheme.ink)
                 title.font(.subheadline).foregroundStyle(TraceTheme.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)

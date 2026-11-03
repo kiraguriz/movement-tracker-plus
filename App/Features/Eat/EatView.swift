@@ -4,7 +4,7 @@ import SwiftUI
 
 struct EatView: View {
     @Environment(UserSession.self) private var session
-    @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.scenePhase) private var scenePhase
     @State private var model: EatModel
     @State private var addRoute: EatAddRoute?
@@ -43,6 +43,16 @@ struct EatView: View {
                     .accessibilityLabel("Choose date")
                     .accessibilityIdentifier(AccessibilityID.eatCalendar)
                 }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        model.refreshToday()
+                        model.select(model.today)
+                    } label: {
+                        Image(systemName: "calendar.badge.clock")
+                    }
+                    .accessibilityLabel("Today")
+                    .accessibilityIdentifier("eat.today")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     addControl
                 }
@@ -75,10 +85,7 @@ struct EatView: View {
     // MARK: Title and actions
 
     private var title: Text {
-        let day = model.selectedDay
-        if day == model.today { return Text("Today") }
-        if day == model.today.adding(days: -1) { return Text("Yesterday") }
-        return Text(day.date(in: model.timeZone), format: .dateTime.weekday(.abbreviated).month(.abbreviated).day())
+        Text(model.selectedDay.date(in: model.timeZone), format: .dateTime.month(.wide).year())
     }
 
     @ViewBuilder
@@ -118,23 +125,25 @@ struct EatView: View {
 
     @ViewBuilder
     private var content: some View {
-        if sizeClass == .regular {
-            HStack(alignment: .top, spacing: 0) {
-                ScrollView {
-                    summaryCard.padding(16)
+        GeometryReader { geometry in
+            if geometry.size.width >= 700 && !dynamicTypeSize.isAccessibilitySize {
+                HStack(alignment: .top, spacing: 0) {
+                    ScrollView {
+                        summaryCard.padding(20)
+                    }
+                    .frame(width: geometry.size.width * 0.46)
+                    mealList(includesSummary: false)
                 }
-                .frame(maxWidth: 380)
-                mealList(includesSummary: false)
+                .background(TraceTheme.paper)
+            } else {
+                mealList(includesSummary: true)
             }
-            .background(TraceTheme.paper)
-        } else {
-            mealList(includesSummary: true)
         }
     }
 
     private var summaryCard: some View {
         Card {
-            NutritionSummaryView(total: model.total.value ?? nil, goal: session.goal, idPrefix: "eat")
+            NutritionSummaryView(total: model.total.value ?? nil, goal: session.goal, idPrefix: "eat", compact: true)
         }
     }
 
@@ -151,7 +160,7 @@ struct EatView: View {
             if model.meals.isLoaded && meals.isEmpty {
                 Section {
                     emptyDay
-                        .listRowBackground(Color.clear)
+                        .listRowBackground(TraceTheme.card)
                 }
             }
             ForEach(MealSlot.allCases, id: \.self) { slot in
@@ -193,18 +202,23 @@ struct EatView: View {
     }
 
     private var emptyDay: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "fork.knife")
-                .font(.largeTitle)
-                .foregroundStyle(.secondary)
-                .accessibilityHidden(true)
-            Text("No meals")
-                .font(.headline)
-                .foregroundStyle(.secondary)
+        Button { addRoute = .search } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "plus.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(TraceTheme.blue)
+                Text("Add meal")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(TraceTheme.ink)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(TraceTheme.secondary)
+            }
+            .frame(maxWidth: .infinity, minHeight: 52)
+            .contentShape(.rect)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 24)
-        .accessibilityElement(children: .combine)
+        .buttonStyle(.plain)
         .accessibilityIdentifier(AccessibilityID.eatEmpty)
     }
 

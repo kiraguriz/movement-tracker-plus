@@ -1,40 +1,74 @@
 import Domain
 import SwiftUI
 
-/// This week at a glance: one bar per day, filled by the reps trained that day relative to the week's best day.
+/// The trailing seven days of completed training, scaled to the longest day's session duration.
 struct WeekStrip: View {
-    let days: [WeekDayReps]
+    let days: [WeekDayTraining]
     let today: LocalDay
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
-        let most = max(1, days.map(\.reps).max() ?? 1)
-        HStack(spacing: 6) {
+        let most = max(1, days.compactMap(\.minutes).max() ?? 1)
+        HStack(alignment: .bottom, spacing: 8) {
             ForEach(days) { day in
-                let isToday = day.day == today
-                VStack(spacing: 3) {
+                dayColumn(day, maximum: most)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Training time over the last 7 days")
+        .accessibilityHint("Workout history")
+    }
+
+    private func dayColumn(_ day: WeekDayTraining, maximum: Double) -> some View {
+        let isToday = day.day == today
+        let fraction = min(1, max(0, (day.minutes ?? 0) / maximum))
+        return VStack(spacing: 6) {
+            Group {
+                if let minutes = day.minutes, minutes > 0 {
+                    Text(minutes, format: .number.precision(.fractionLength(0...1)))
+                } else {
+                    Text(verbatim: "—")
+                }
+            }
+            .font(.caption.weight(.semibold))
+            .monospacedDigit()
+            .foregroundStyle(TraceTheme.ink)
+            .lineLimit(1)
+
+            ZStack(alignment: .bottom) {
+                if fraction > 0 {
                     Capsule()
-                        .fill(TraceTheme.line)
-                        .overlay(alignment: .bottom) {
-                            GeometryReader { proxy in
-                                Capsule()
-                                    .fill(isToday ? TraceTheme.blue : TraceTheme.ink)
-                                    .frame(height: proxy.size.height * CGFloat(day.reps) / CGFloat(most))
-                                    .frame(maxHeight: .infinity, alignment: .bottom)
-                            }
-                        }
-                        .clipShape(.capsule)
-                        .overlay { if isToday { Capsule().strokeBorder(TraceTheme.blue, lineWidth: 1.5) } }
-                        .frame(width: 12, height: 24)
-                    Text(day.date, format: .dateTime.weekday(.narrow))
-                        .font(.system(size: 10, weight: isToday ? .bold : .semibold))
-                        .foregroundStyle(isToday ? TraceTheme.blue : TraceTheme.secondary)
+                        .fill(TraceTheme.sky.mix(with: TraceTheme.cobalt, by: fraction))
+                        .frame(height: max(4, 86 * fraction))
+                }
+            }
+            .frame(width: dynamicTypeSize.isAccessibilitySize ? 20 : 28, height: 86)
+
+            VStack(spacing: 2) {
+                Text(day.date, format: .dateTime.weekday(.abbreviated))
+                Text(day.date, format: .dateTime.day())
+                    .monospacedDigit()
+            }
+            .font(.caption.weight(isToday ? .bold : .medium))
+            .foregroundStyle(isToday ? TraceTheme.blue : TraceTheme.secondary)
+            .padding(.horizontal, 3)
+            .padding(.vertical, 4)
+            .overlay {
+                if isToday {
+                    RoundedRectangle(cornerRadius: 8).strokeBorder(TraceTheme.blue, lineWidth: 1)
                 }
             }
         }
-        .frame(minHeight: 44)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("This week")
-        .accessibilityValue(Text(days.filter { $0.reps > 0 }.map { $0.date.formatted(.dateTime.weekday(.wide)) }.formatted()))
-        .accessibilityHint("Workout history")
+        .accessibilityLabel(Text(day.date, format: .dateTime.weekday(.wide).month().day()))
+        .accessibilityValue(spokenDuration(day))
+        .accessibilityAddTraits(isToday ? [.isSelected] : [])
+    }
+
+    private func spokenDuration(_ day: WeekDayTraining) -> Text {
+        guard let seconds = day.durationSeconds else { return Text("Training duration unavailable") }
+        return Text(Duration.seconds(seconds), format: .units(allowed: [.minutes, .seconds], width: .wide))
     }
 }

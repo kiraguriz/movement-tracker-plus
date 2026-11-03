@@ -19,37 +19,55 @@ struct RootView: View {
     }
 
     var body: some View {
-        TabView(selection: $selection) {
-            Tab(value: AppTab.today) {
-                NavigationStack {
-                    TodayView(environment: environment, openTrain: { selection = .train }, openEat: { selection = .eat })
+        GeometryReader { geometry in
+            let wide = geometry.size.width >= 700
+            TabView(selection: $selection) {
+                Tab(value: AppTab.today) {
+                    NavigationStack {
+                        TodayView(environment: environment, openTrain: { selection = .train }, openEat: { selection = .eat }, openCoach: { isCoachPresented = true })
+                    }
+                    .safeAreaInset(edge: .bottom, spacing: 8) { bottomBar(showsWorkout: true, showsCoach: !wide) }
+                } label: {
+                    Label("Today", systemImage: "sun.max")
                 }
-                .safeAreaInset(edge: .bottom, spacing: 8) { bottomBar(showsWorkout: true) }
-            } label: {
-                Label("Today", systemImage: "sun.max")
+                .accessibilityIdentifier(AccessibilityID.tabToday)
+                Tab(value: AppTab.train) {
+                    NavigationStack { TrainView(refresh: trainRefresh) }
+                        .safeAreaInset(edge: .bottom, spacing: 8) { bottomBar(showsWorkout: false, showsCoach: !wide) }
+                } label: {
+                    Label("Train", systemImage: "dumbbell")
+                }
+                .accessibilityIdentifier(AccessibilityID.tabTrain)
+                Tab(value: AppTab.eat) {
+                    NavigationStack { EatView(environment: environment) }
+                        .safeAreaInset(edge: .bottom, spacing: 8) { bottomBar(showsWorkout: true, showsCoach: !wide) }
+                } label: {
+                    Label("Eat", systemImage: "fork.knife")
+                }
+                .accessibilityIdentifier(AccessibilityID.tabEat)
+                Tab(value: AppTab.me) {
+                    NavigationStack { MeView(environment: environment) }
+                        .safeAreaInset(edge: .bottom, spacing: 8) { bottomBar(showsWorkout: true, showsCoach: !wide) }
+                } label: {
+                    Label("Me", systemImage: "person")
+                }
+                .accessibilityIdentifier(AccessibilityID.tabMe)
             }
-            .accessibilityIdentifier(AccessibilityID.tabToday)
-            Tab(value: AppTab.train) {
-                NavigationStack { TrainView(refresh: trainRefresh) }
-                    .safeAreaInset(edge: .bottom, spacing: 8) { bottomBar(showsWorkout: false) }
-            } label: {
-                Label("Train", systemImage: "dumbbell")
+            .overlay(alignment: .bottomTrailing) {
+                if wide {
+                    Button { isCoachPresented = true } label: {
+                        TraceCoachGlyph(size: 28)
+                            .frame(minWidth: 48, minHeight: 48)
+                    }
+                    .buttonStyle(.plain)
+                    .glassEffect(.regular.interactive(), in: .circle)
+                    .padding(.trailing, 24)
+                    .padding(.bottom, 212)
+                    .offset(x: geometry.safeAreaInsets.trailing)
+                    .accessibilityLabel("Ask Coach")
+                    .accessibilityIdentifier(AccessibilityID.askCoach)
+                }
             }
-            .accessibilityIdentifier(AccessibilityID.tabTrain)
-            Tab(value: AppTab.eat) {
-                NavigationStack { EatView(environment: environment) }
-                    .safeAreaInset(edge: .bottom, spacing: 8) { bottomBar(showsWorkout: true) }
-            } label: {
-                Label("Eat", systemImage: "fork.knife")
-            }
-            .accessibilityIdentifier(AccessibilityID.tabEat)
-            Tab(value: AppTab.me) {
-                NavigationStack { MeView(environment: environment) }
-                    .safeAreaInset(edge: .bottom, spacing: 8) { bottomBar(showsWorkout: true) }
-            } label: {
-                Label("Me", systemImage: "person")
-            }
-            .accessibilityIdentifier(AccessibilityID.tabMe)
         }
         .background(TraceTheme.paper)
         .task {
@@ -69,17 +87,20 @@ struct RootView: View {
     }
 
     /// Train shows its own rest card, so the running workout appears here only on the other tabs.
-    private func bottomBar(showsWorkout: Bool) -> some View {
-        HStack(spacing: 8) {
-            if showsWorkout, let workout = activeWorkout?.workout {
-                ActiveWorkoutPill(workout: workout, exerciseName: activeWorkout?.exerciseName) { selection = .train }
-                    .layoutPriority(-1)
+    @ViewBuilder
+    private func bottomBar(showsWorkout: Bool, showsCoach: Bool) -> some View {
+        if showsCoach || (showsWorkout && activeWorkout?.workout != nil) {
+            HStack(spacing: 8) {
+                if showsWorkout, let workout = activeWorkout?.workout {
+                    ActiveWorkoutPill(workout: workout, exerciseName: activeWorkout?.exerciseName) { selection = .train }
+                        .layoutPriority(-1)
+                }
+                Spacer(minLength: 0)
+                if showsCoach { coachButton }
             }
-            Spacer(minLength: 0)
-            coachButton
+            .padding(.horizontal, 16)
+            .padding(.bottom, 8)
         }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 8)
     }
 
     private var coachButton: some View {

@@ -12,8 +12,8 @@ final class TodayModel {
     private(set) var latestWorkout = Loadable<WorkoutSummary?>.loading
     private(set) var latestSetCounts: [Int] = []
     private(set) var weights = Loadable<[BodyMeasurement]>.loading
-    /// Reps of completed workouts on each day of this calendar week, first weekday first.
-    private(set) var week: [WeekDayReps] = []
+    /// Completed-session minutes over the trailing seven local days, oldest first.
+    private(set) var week: [WeekDayTraining] = []
     var errorMessage: String?
 
     private let environment: AppEnvironment
@@ -69,19 +69,14 @@ final class TodayModel {
 
     private func watchWeek() async {
         let timeZone = environment.timeZone()
-        var calendar = Calendar.current
-        calendar.timeZone = timeZone
-        let weekday = calendar.component(.weekday, from: day.date(in: timeZone))
-        let start = day.adding(days: -((weekday - calendar.firstWeekday + 7) % 7))
-        let days = (0..<7).map { start.adding(days: $0) }
-        let query = WorkoutHistoryQuery(statuses: [.completed], from: start, through: days[6], limit: 200)
+        let start = day.adding(days: -6)
+        let end = day
+        // The query is already bounded to seven days; do not silently drop sessions at an arbitrary limit.
+        let query = WorkoutHistoryQuery(statuses: [.completed], from: start, through: end, limit: .max)
         await environment.workouts.observeHistory(query).forEachValue(
             onFailure: { errorMessage = $0.localizedDescription },
             { summaries in
-                week = days.map { day in
-                    WeekDayReps(day: day, date: day.date(in: timeZone),
-                                reps: summaries.filter { $0.session.localDay == day }.reduce(0) { $0 + $1.totalReps })
-                }
+                week = WeekDayTraining.lastSevenDays(ending: end, timeZone: timeZone, summaries: summaries)
             }
         )
     }
@@ -104,10 +99,40 @@ final class TodayModel {
     }
 }
 
-struct WeekDayReps: Equatable, Identifiable {
+/// Session elapsed time, including rests, matching the duration shown in workout history.
+/// A missing or invalid end time is unknown rather than a fabricated zero-minute session.
+struct WeekDayTraining: Equatable, Identifiable {
     let day: LocalDay
     let date: Date
-    let reps: Int
+    let durationSeconds: TimeInterval?
 
     var id: LocalDay { day }
+    var minutes: Double? { durationSeconds.map { $0 / 60 } }
+
+    static func lastSevenDays(
+        ending today: LocalDay, timeZone: TimeZone, summaries: [WorkoutSummary]
+    ) -> [Self] {
+        let days = (-6...0).map { today.adding(days: $0) }
+        let includedDays = Set(days)
+        var secondsByDay: [LocalDay: TimeInterval] = [:]
+        var unknownDays: Set<LocalDay> = []
+        for summary in summaries where summary.session.status == .completed {
+            let session = summary.session
+            guard includedDays.contains(session.localDay) else { continue }
+            guard let end = session.endedAt else {
+                unknownDays.insert(session.localDay)
+                continue
+            }
+            let seconds = end.timeIntervalSince(session.startedAt)
+            guard seconds.isFinite, seconds >= 0 else {
+                unknownDays.insert(session.localDay)
+                continue
+            }
+            secondsByDay[session.localDay, default: 0] += seconds
+        }
+        return days.map { day in
+            Self(day: day, date: day.date(in: timeZone),
+                 durationSeconds: unknownDays.contains(day) ? nil : secondsByDay[day, default: 0])
+        }
+    }
 }

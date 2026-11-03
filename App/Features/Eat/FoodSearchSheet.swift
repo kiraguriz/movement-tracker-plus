@@ -37,6 +37,7 @@ final class FoodSearchModel {
             phase = .idle
             return
         }
+        phase = .searching
         do {
             try await Task.sleep(for: .milliseconds(350))
         } catch {
@@ -90,6 +91,7 @@ struct FoodSearchSheet: View {
     let onSaved: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var model: FoodSearchModel
     @State private var editing: MealDraft?
     @FocusState private var isSearching: Bool
@@ -102,7 +104,9 @@ struct FoodSearchSheet: View {
 
     var body: some View {
         NavigationStack {
-            content
+            GeometryReader { geometry in
+                content(wide: geometry.size.width >= 640 && !dynamicTypeSize.isAccessibilitySize)
+            }
                 .background(TraceTheme.paper)
                 .navigationTitle("Search food")
                 .navigationBarTitleDisplayMode(.inline)
@@ -117,8 +121,10 @@ struct FoodSearchSheet: View {
                     }
                 }
                 .task(id: model.query) { await model.search() }
-                .task { await model.loadRecents() }
-                .onAppear { isSearching = true }
+                .task {
+                    await model.loadRecents()
+                    isSearching = model.recents.isEmpty
+                }
                 .sheet(item: $editing) { draft in
                     MealEditorSheet(draft: draft, day: context.day, environment: context.environment) { meal in
                         try await context.log([meal], draft.food.map { [$0] } ?? [])
@@ -126,13 +132,15 @@ struct FoodSearchSheet: View {
                     }
                 }
         }
+        .presentationSizing(.page)
+        .presentationBackground(TraceTheme.paper)
         .testIdentifier(AccessibilityID.foodSearch)
     }
 
     // MARK: Content
 
     @ViewBuilder
-    private var content: some View {
+    private func content(wide: Bool) -> some View {
         switch model.phase {
         case .failed(let failure):
             ContentUnavailableView {
@@ -146,7 +154,7 @@ struct FoodSearchSheet: View {
                 }
             }
         case .idle:
-            recents
+            recents(wide: wide)
         case .searching where model.results.isEmpty:
             ProgressView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -155,49 +163,109 @@ struct FoodSearchSheet: View {
                 ContentUnavailableView.search(text: model.trimmedQuery)
                     .accessibilityIdentifier(AccessibilityID.foodSearchEmpty)
             } else {
-                resultList
+                resultList(wide: wide)
             }
         }
     }
 
-    private var resultList: some View {
-        List(model.results) { item in
-            Button {
-                editing = model.draft(for: item, slot: context.suggestedSlot)
-            } label: {
-                FoodResultRow(item: item)
-            }
-            .foregroundStyle(.primary)
-            .accessibilityIdentifier(AccessibilityID.foodResult(item.fdcId))
+    private func resultButton(_ item: FoodSearchItem) -> some View {
+        Button {
+            isSearching = false
+            editing = model.draft(for: item, slot: context.suggestedSlot)
+        } label: {
+            FoodResultRow(item: item)
         }
-        .scrollContentBackground(.hidden)
+        .foregroundStyle(.primary)
+        .accessibilityIdentifier(AccessibilityID.foodResult(item.fdcId))
+    }
+
+    private func recentButton(_ meal: MealEntry) -> some View {
+        Button {
+            isSearching = false
+            Task { editing = await model.draft(reusing: meal, slot: context.suggestedSlot) }
+        } label: {
+            RecentMealRow(meal: meal)
+        }
+        .foregroundStyle(.primary)
+        .accessibilityIdentifier(AccessibilityID.foodRecent(meal.label))
+    }
+
+    private func resultList(wide: Bool) -> some View {
+        Group {
+            if wide {
+                ScrollView {
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 0) {
+                        ForEach(model.results) { item in
+                            searchCell { resultButton(item) }
+                        }
+                    }
+                    .background(TraceTheme.card, in: .rect(cornerRadius: 24))
+                    .padding(20)
+                }
+            } else {
+                List(model.results) { item in
+                    resultButton(item)
+                        .listRowBackground(TraceTheme.card)
+                }
+                .scrollContentBackground(.hidden)
+            }
+        }
+        .scrollDismissesKeyboard(.interactively)
         .background(TraceTheme.paper)
+        .disabled(model.phase == .searching)
         .opacity(model.phase == .searching ? 0.5 : 1)
+        .overlay(alignment: .topTrailing) {
+            if model.phase == .searching { ProgressView().padding(20) }
+        }
         .accessibilityIdentifier(AccessibilityID.foodSearchResults)
     }
 
     @ViewBuilder
-    private var recents: some View {
+    private func recents(wide: Bool) -> some View {
         if model.recents.isEmpty {
-            Color.clear
+            ContentUnavailableView("Search foods", systemImage: "magnifyingglass")
+        } else if wide {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Recent")
+                        .font(.headline)
+                        .padding(.horizontal, 4)
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 0) {
+                        ForEach(model.recents) { meal in
+                            searchCell { recentButton(meal) }
+                        }
+                    }
+                    .background(TraceTheme.card, in: .rect(cornerRadius: 24))
+                }
+                .padding(20)
+            }
+            .scrollDismissesKeyboard(.interactively)
         } else {
             List {
                 Section("Recent") {
                     ForEach(model.recents) { meal in
-                        Button {
-                            Task { editing = await model.draft(reusing: meal, slot: context.suggestedSlot) }
-                        } label: {
-                            RecentMealRow(meal: meal)
-                        }
-                        .foregroundStyle(.primary)
-                        .accessibilityIdentifier(AccessibilityID.foodRecent(meal.label))
+                        recentButton(meal)
+                            .listRowBackground(TraceTheme.card)
                     }
                 }
             }
             .scrollContentBackground(.hidden)
+            .scrollDismissesKeyboard(.interactively)
             .background(TraceTheme.paper)
         }
     }
+
+    private func searchCell<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(spacing: 0) {
+            content()
+                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+            Divider().padding(.horizontal, 16)
+        }
+    }
+
 }
 
 // MARK: - Rows

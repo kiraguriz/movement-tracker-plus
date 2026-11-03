@@ -4,6 +4,7 @@ import SwiftUI
 struct TodayWorkoutCard: View {
     let summary: WorkoutSummary
     let setCounts: [Int]
+    var showsTally = true
     @ScaledMetric(relativeTo: .largeTitle) private var repSize = 92.0
 
     var body: some View {
@@ -24,7 +25,7 @@ struct TodayWorkoutCard: View {
                     details
                 }
             }
-            HStack(spacing: 6) {
+            if showsTally { HStack(spacing: 6) {
                 ForEach(Array(setCounts.enumerated()), id: \.offset) { _, count in
                     if count > 0 {
                         TraceTally(count: count, color: .white.opacity(0.9))
@@ -33,6 +34,7 @@ struct TodayWorkoutCard: View {
                 }
             }
             .accessibilityHidden(true)
+            }
         }
         .foregroundStyle(.white)
     }

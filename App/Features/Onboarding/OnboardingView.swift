@@ -1,18 +1,18 @@
 import Domain
 import SwiftUI
 
-/// First launch: units and who you are, your body, your goal, then the plan the goal planner makes of it.
+/// The welcome introduces the motion loop; the four setup steps share one draft until it is saved.
 struct OnboardingView: View {
-    private enum Step: Hashable {
-        case body, goal, plan
+    private enum Step: Int, Hashable {
+        case about = 1, body, goal, plan
     }
 
     let environment: AppEnvironment
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var draft: ProfileDraft
     @State private var path: [Step] = []
     @State private var isSaving = false
     @State private var errorMessage: String?
-    @ScaledMetric(relativeTo: .body) private var startLabelSize = 18.0
     @FocusState private var birthYearFocused: Bool
     @FocusState private var heightFocused: Bool
     @FocusState private var inchesFocused: Bool
@@ -25,128 +25,162 @@ struct OnboardingView: View {
     }
 
     var body: some View {
-        NavigationStack(path: $path) {
-            form("About you", canContinue: draft.isAboutValid, next: .body) {
-                OnboardingAboutStep(draft: draft, birthYearFocus: $birthYearFocused)
-            }
-            .navigationDestination(for: Step.self) { step in
-                switch step {
-                case .body:
-                    form("Body", canContinue: draft.isBodyValid, next: .goal) {
-                        OnboardingBodyStep(draft: draft, heightFocus: $heightFocused, inchesFocus: $inchesFocused, weightFocus: $weightFocused)
+        GeometryReader { geometry in
+            NavigationStack(path: $path) {
+                OnboardingWelcomeView { path.append(.about) }
+                    .navigationTitle("Welcome")
+                    .toolbar(.hidden, for: .navigationBar)
+                    .navigationDestination(for: Step.self) { step in
+                        setup(step, wide: geometry.size.width >= 700 && !dynamicTypeSize.isAccessibilitySize)
+                            .toolbar(.visible, for: .navigationBar)
                     }
-                case .goal:
-                    form("Goal", canContinue: true, next: .plan) {
-                        OnboardingGoalStep(draft: draft)
-                    }
-                case .plan:
-                    planStep
-                }
             }
+            .environment(\.onboardingWide, geometry.size.width >= 700 && !dynamicTypeSize.isAccessibilitySize)
         }
-        .onChange(of: path) {
-            birthYearFocused = false
-            heightFocused = false
-            inchesFocused = false
-            weightFocused = false
-        }
+        .onChange(of: path) { dismissKeyboard() }
         .errorAlert($errorMessage)
         .testIdentifier(AccessibilityID.onboarding)
     }
 
+    @ViewBuilder private func setup(_ step: Step, wide: Bool) -> some View {
+        switch step {
+        case .about:
+            form("About you", step: step, canContinue: draft.isAboutValid, next: .body) {
+                OnboardingAboutStep(draft: draft, birthYearFocus: $birthYearFocused)
+            }
+        case .body:
+            form("Body", step: step, canContinue: draft.isBodyValid, next: .goal) {
+                OnboardingBodyStep(draft: draft, heightFocus: $heightFocused, inchesFocus: $inchesFocused, weightFocus: $weightFocused)
+            }
+        case .goal:
+            form("Goal", step: step, canContinue: true, next: .plan) {
+                OnboardingGoalStep(draft: draft)
+            }
+        case .plan:
+            planStep(wide: wide)
+        }
+    }
+
     private func form<Content: View>(
         _ title: LocalizedStringKey,
+        step: Step,
         canContinue: Bool,
         next: Step,
         @ViewBuilder content: () -> Content
     ) -> some View {
         ScrollView {
-            VStack(spacing: 12) {
-                progress.padding(.horizontal, -16)
+            VStack(spacing: 20) {
+                OnboardingProgress(step: step.rawValue)
                 content()
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 8)
+            .frame(maxWidth: 1040)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+            .padding(.bottom, 20)
         }
         .scrollBounceBehavior(.basedOnSize)
         .background(TraceTheme.paper)
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
-                Button("Done") {
-                    birthYearFocused = false
-                    heightFocused = false
-                    inchesFocused = false
-                    weightFocused = false
-                }
-                .accessibilityIdentifier("onboarding.keyboardDone")
+                Button("Done") { dismissKeyboard() }
+                    .accessibilityIdentifier("onboarding.keyboardDone")
             }
         }
-        .safeAreaInset(edge: .bottom) {
-            PrimaryButton(title: next == .plan ? "See my plan" : "Continue", isEnabled: canContinue) {
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            OnboardingAction(title: next == .plan ? "See my plan" : "Continue", isEnabled: canContinue) {
+                dismissKeyboard()
                 path.append(next)
             }
             .accessibilityIdentifier(AccessibilityID.onboardingNext)
+            .frame(maxWidth: 480)
+            .frame(maxWidth: .infinity)
+            .frame(maxWidth: 1040)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(TraceTheme.paper)
         }
     }
 
-    private var planStep: some View {
+    private func planStep(wide: Bool) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Text("Your plan")
-                    .font(.largeTitle.bold())
-                    .accessibilityAddTraits(.isHeader)
+                OnboardingProgress(step: Step.plan.rawValue)
+                if !wide { planGoalRow }
                 if let plan = draft.plan {
-                    PlanSummaryView(plan: plan, units: UnitFormatter(system: draft.unitSystem))
+                    PlanSummaryView(plan: plan, units: UnitFormatter(system: draft.unitSystem), compact: wide)
                 }
             }
-            .padding(16)
+            .frame(maxWidth: 1040)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+            .padding(.bottom, 20)
         }
+        .scrollBounceBehavior(.basedOnSize)
         .background(TraceTheme.paper)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
-        .safeAreaInset(edge: .top) { progress }
-        .safeAreaInset(edge: .bottom) {
-            Button {
-                Task { await finish() }
-            } label: {
-                Group {
-                    if isSaving {
-                        ProgressView().tint(TraceTheme.paper)
-                    } else {
-                        Text("Start").font(.system(size: startLabelSize, weight: .semibold))
+        .navigationTitle("Your plan")
+        .navigationBarTitleDisplayMode(wide ? .inline : .large)
+        .toolbar {
+            if wide {
+                ToolbarItem(placement: .principal) {
+                    HStack(spacing: 20) {
+                        Text("Your plan").font(.title2.bold())
+                        planGoalRow
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity, minHeight: 58)
             }
-            .buttonStyle(.plain)
-            .foregroundStyle(TraceTheme.paper)
-            .background(TraceTheme.ink, in: .capsule)
-            .disabled(draft.plan == nil || isSaving)
-            .opacity(draft.plan == nil ? 0.5 : 1)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .accessibilityIdentifier(AccessibilityID.onboardingFinish)
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            VStack(spacing: 12) {
+                OnboardingAction(title: "Start", isEnabled: draft.plan != nil, isBusy: isSaving) {
+                    Task { await finish() }
+                }
+                .accessibilityIdentifier(AccessibilityID.onboardingFinish)
+                .frame(maxWidth: wide ? 480 : .infinity)
+                .frame(maxWidth: .infinity)
+                Text("You can change your plan in Me.")
+                    .font(.footnote)
+                    .foregroundStyle(TraceTheme.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: 1040)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(TraceTheme.paper)
         }
     }
 
-    private var progress: some View {
-        HStack(spacing: 6) {
-            ForEach(0..<4) { step in
-                Capsule().fill(step <= path.count ? TraceTheme.blue : TraceTheme.line)
-                    .frame(height: 4)
-            }
+    private var planGoalRow: some View {
+        HStack(spacing: 16) {
+            Text(draft.goalKind.summaryTitle)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(TraceTheme.secondary)
+            Spacer(minLength: 8)
+            Button("Edit goal") { path.removeLast() }
+                .font(.subheadline.weight(.semibold))
+                .frame(minHeight: 44)
+                .accessibilityIdentifier(AccessibilityID.onboardingEditGoal)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 8)
-        .background(TraceTheme.paper)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Step \(path.count + 1) of 4")
+    }
+
+    private func dismissKeyboard() {
+        birthYearFocused = false
+        heightFocused = false
+        inchesFocused = false
+        weightFocused = false
     }
 
     private func finish() async {
+        guard !isSaving else { return }
         isSaving = true
         defer { isSaving = false }
         do {

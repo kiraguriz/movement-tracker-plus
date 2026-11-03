@@ -15,6 +15,7 @@ struct TrainView: View {
 
 private struct TrainScreen: View {
     @Environment(UserSession.self) private var session
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var model: TrainModel
     @State private var isConfirmingDiscard = false
     @State private var skippedRest: EntityID?
@@ -31,13 +32,16 @@ private struct TrainScreen: View {
     }
 
     var body: some View {
-        Group {
-            if !model.isLoaded {
-                TraceTheme.paper
-            } else if model.workout == nil {
-                idle
-            } else {
-                workoutList
+        GeometryReader { geometry in
+            let wide = geometry.size.width >= 720 && !dynamicTypeSize.isAccessibilitySize
+            Group {
+                if !model.isLoaded {
+                    TraceTheme.paper
+                } else if model.workout == nil {
+                    idle(wide: wide)
+                } else {
+                    workoutList(wide: wide)
+                }
             }
         }
         .background(TraceTheme.paper)
@@ -82,21 +86,64 @@ private struct TrainScreen: View {
 
     // MARK: Idle
 
-    private var idle: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                startHero
+    private func idle(wide: Bool) -> some View {
+        let layout = wide ? AnyLayout(HStackLayout(alignment: .top, spacing: 20)) : AnyLayout(VStackLayout(spacing: 12))
+        return ScrollView {
+            layout {
+                VStack(spacing: 12) {
+                    startHero
+                    if let last = model.lastWorkout { recentWorkoutLink(last) }
+                }
+                .frame(maxWidth: .infinity, alignment: .top)
                 if let last = model.lastWorkout {
-                    NavigationLink { WorkoutHistoryView(environment: environment) } label: {
-                        recentWorkoutCard(last)
-                    }
-                    .buttonStyle(.plain)
                     recentExercises(last)
+                        .frame(maxWidth: .infinity, alignment: .top)
+                } else if wide {
+                    availableExercises
+                        .frame(maxWidth: .infinity, alignment: .top)
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 20)
             .padding(.bottom, 24)
         }
+    }
+
+    private func recentWorkoutLink(_ last: Workout) -> some View {
+        NavigationLink { WorkoutHistoryView(environment: environment) } label: {
+            recentWorkoutCard(last)
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// A first workout still has useful choices beside the start action; no invented templates.
+    private var availableExercises: some View {
+        VStack(spacing: 0) {
+            ForEach(Array(model.catalog.values.sorted { $0.id.rawValue < $1.id.rawValue }.enumerated()), id: \.element.id) { index, exercise in
+                if index > 0 { Divider().padding(.leading, 72) }
+                Button { model.start(with: exercise.id) } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: exercise.supportsCameraTracking ? "camera.fill" : "dumbbell.fill")
+                            .foregroundStyle(exercise.supportsCameraTracking ? TraceTheme.blue : TraceTheme.secondary)
+                            .frame(width: 40, height: 40)
+                            .background(TraceTheme.paper, in: .circle)
+                            .accessibilityHidden(true)
+                        Text(ExerciseNames.name(of: exercise))
+                            .foregroundStyle(TraceTheme.ink)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Image(systemName: "play.fill")
+                            .foregroundStyle(TraceTheme.blue)
+                            .accessibilityHidden(true)
+                    }
+                    .padding(.horizontal, 16)
+                    .frame(minHeight: 64)
+                    .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Starts a workout")
+            }
+        }
+        .padding(.vertical, 4)
+        .background(TraceTheme.card, in: .rect(cornerRadius: 28))
     }
 
     private func recentWorkoutCard(_ workout: Workout) -> some View {
@@ -232,53 +279,96 @@ private struct TrainScreen: View {
 
     // MARK: Workout
 
-    private var workoutList: some View {
+    private func workoutList(wide: Bool) -> some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
-            List {
-                if let workout = model.workout {
-                    WorkoutClock(workout: workout, now: context.date)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
+            if wide {
+                HStack(alignment: .top, spacing: 20) {
+                    ScrollView {
+                        VStack(spacing: 12) {
+                            if let workout = model.workout {
+                                VStack(alignment: .leading, spacing: 20) {
+                                    WorkoutClock(workout: workout, now: context.date)
+                                    recentReps(workout.totalReps)
+                                }
+                                .padding(20)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(TraceTheme.card, in: .rect(cornerRadius: 28))
+                            }
+                            rest(now: context.date)
+                            if let last = model.lastWorkout { recentWorkoutLink(last) }
+                        }
+                        .padding(.bottom, 24)
+                    }
+                    .frame(maxWidth: .infinity)
+                    exerciseList
+                        .contentMargins(.horizontal, 0, for: .scrollContent)
+                        .contentMargins(.top, 0, for: .scrollContent)
+                        .frame(maxWidth: .infinity)
                 }
-                if let workout = model.workout, let rest = RestPeriod(workout: workout), skippedRest != rest.id {
-                    let seconds = rest.remaining(at: context.date)
-                    if seconds > 0 {
-                        restCard(seconds: seconds, total: rest.seconds, restID: rest.id)
-                            .listRowInsets(EdgeInsets())
+                .padding(.horizontal, 20)
+            } else {
+                List {
+                    if let workout = model.workout {
+                        WorkoutClock(workout: workout, now: context.date)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
                     }
+                    rest(now: context.date)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                    exerciseRows
                 }
-                ForEach(model.exerciseEntries) { workoutExercise in
-                    exerciseSection(workoutExercise)
-                }
-                Section {
-                    Button {
-                        model.isPickingExercise = true
-                    } label: {
-                        Label("Add exercise", systemImage: "plus")
-                            .font(.headline)
-                            .foregroundStyle(TraceTheme.ink)
-                            .frame(maxWidth: .infinity, minHeight: 52)
-                            .contentShape(.capsule)
-                    }
-                    .buttonStyle(.plain)
-                    .overlay {
-                        Capsule().strokeBorder(TraceTheme.secondary.opacity(0.35), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
-                    }
-                    .accessibilityIdentifier(AccessibilityID.trainAddExercise)
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets())
-                }
+                .listStyle(.insetGrouped)
+                .listSectionSpacing(12)
+                .scrollContentBackground(.hidden)
             }
+        }
+        .background(TraceTheme.paper)
+    }
+
+    private var exerciseList: some View {
+        List { exerciseRows }
             .listStyle(.insetGrouped)
             .listSectionSpacing(12)
             .scrollContentBackground(.hidden)
-            .background(TraceTheme.paper)
+    }
+
+    @ViewBuilder
+    private func rest(now: Date) -> some View {
+        if let workout = model.workout, let rest = RestPeriod(workout: workout), skippedRest != rest.id {
+            let seconds = rest.remaining(at: now)
+            if seconds > 0 { restCard(seconds: seconds, total: rest.seconds, restID: rest.id) }
         }
     }
+
+    @ViewBuilder
+    private var exerciseRows: some View {
+        ForEach(model.exerciseEntries) { workoutExercise in
+            exerciseSection(workoutExercise)
+        }
+        Section {
+            Button {
+                model.isPickingExercise = true
+            } label: {
+                Label("Add exercise", systemImage: "plus")
+                    .font(.headline)
+                    .foregroundStyle(TraceTheme.ink)
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .contentShape(.capsule)
+            }
+            .buttonStyle(.plain)
+            .overlay {
+                Capsule().strokeBorder(TraceTheme.secondary.opacity(0.35), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+            }
+            .accessibilityIdentifier(AccessibilityID.trainAddExercise)
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets())
+        }
+    }
+
 
     private func restCard(seconds: Int, total: Int, restID: EntityID) -> some View {
         HStack(spacing: 14) {

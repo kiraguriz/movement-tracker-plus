@@ -51,6 +51,9 @@ enum AccessibilityID {
 
     // Onboarding and the profile form
     static let onboarding = "onboarding"
+    static let onboardingWelcome = "onboarding.welcome"
+    static let onboardingBegin = "onboarding.begin"
+    static let onboardingEditGoal = "onboarding.editGoal"
     static let onboardingNext = "onboarding.next"
     static let onboardingFinish = "onboarding.finish"
     static let unitsPicker = "profile.units"

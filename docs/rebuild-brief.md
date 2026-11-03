@@ -189,13 +189,35 @@ paper surfaces, ink/ultramarine hero cards, SF Pro compressed heavy numerals, ex
 and shape-coded rep marks. Use native tabs, glass actions, Dynamic Type and the en/zh-Hans catalog.
 The HTML's numerical examples and generated curves are reference content, not application data.
 
+Wide content (700 pt and up, except accessibility text sizes) uses paired onboarding cards and a
+two-column Me screen: goal/body on the left, preferences on the right, with independent scrolling.
+Body rulers stay visible before entry and accept horizontal drags; imperial height adjusts total inches.
+Today follows the approved November 2 dashboard image: brand and Coach insight header, then an
+aligned 2×2 grid (720 pt content width and up): date/training minutes, nutrition, latest workout,
+and weight trend. Compact widths stack the same cards. The trailing seven days use completed
+session elapsed time, with bar height and blue intensity scaled to the longest day. Missing
+durations stay unknown. Start workout opens Train; Log meal opens Eat.
+The insight header shows only an existing, same-locale genuine Muse workout debrief with consent;
+it otherwise shows an honest Coach state. It does not yet generate a new daily summary.
+Train uses two columns at 720 pt and up: start/session summary on the left, exercises on the
+right. Eat uses a month/year heading and a Today return action; empty days offer an Add meal
+card in the meal-list column. Eat summary margins match the 20 pt dashboard inset. Meal editing
+and food search use adaptive page sheets, with two-column content at 640 pt and up and a single
+column for compact or accessibility sizes. Recent foods stay visible without automatic keyboard focus.
+
+First launch opens with a labelled squat-counting example, followed by About you → Body → Goal →
+Your plan. Setup uses ink capsule actions and keeps the same draft when navigating back or editing
+the goal from the plan preview. Only Start saves the profile and calculated plan. Camera, Health,
+and Muse permissions stay in their existing feature flows; onboarding requests none of them.
+
 Live Trace samples carry capture timestamps from MotionCore; review markers anchor to the matching
 rep's measured bottom inside its time interval. The trace is bounded to 3,600 in-memory samples and is
 available in the immediate set review. Saved history retains rep metrics, but does not invent a waveform
 or start a new Muse request when opened. Nutrition cards preserve unknown and partial totals.
 
 - `TabView`: **Today · Train · Eat · Me**, with the reference's trailing glass Coach capsule above
-  the native tab bar. Per-tab safe-area insets keep content scrollable above it; it opens the existing Coach sheet.
+  the native tab bar on narrow screens. On wide screens Coach is a separate circular button above the native navigation rail and opens
+  the same sheet. Per-tab safe-area insets keep content clear of the compact-screen capsule.
 - Train → choose exercise → **Live Set** (`fullScreenCover`, camera island) → **Set Review** sheet →
   next set / finish → **Session Summary** (Muse debrief) → saved; manual sets supported.
 - Eat → day list (date strip, any past day) → add via photo (Muse) or search (USDA via proxy) →

@@ -6,6 +6,7 @@ struct NutritionSummaryView: View {
     let total: NutritionDayTotal?
     let goal: Goal?
     let idPrefix: String
+    var compact = false
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .largeTitle) private var energySize = 76.0
@@ -15,7 +16,7 @@ struct NutritionSummaryView: View {
     private var kcalEaten: Double? { total?.nutrients.energy?.kilocalories }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: compact ? 12 : 18) {
             energy
             energyBar
             if dynamicTypeSize.isAccessibilitySize {
@@ -36,7 +37,7 @@ struct NutritionSummaryView: View {
         let marker = (total?.entriesMissingEnergy ?? 0) > 0 && kcalEaten != nil
         return HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(verbatim: (marker ? "≥ " : "") + eatenText)
-                .font(TraceTheme.numeral(min(energySize, 100)))
+                .font(TraceTheme.numeral(compact ? 64 : min(energySize, 100)))
                 .minimumScaleFactor(0.45)
                 .lineLimit(1)
                 .layoutPriority(1)
@@ -111,7 +112,7 @@ struct NutritionSummaryView: View {
     }
 
     private func macroAmount(_ value: String) -> some View {
-        Text(verbatim: value).font(TraceTheme.numeral(min(macroSize, 48)))
+        Text(verbatim: value).font(TraceTheme.numeral(compact ? 28 : min(macroSize, 48)))
             .lineLimit(1).minimumScaleFactor(0.7)
     }
 

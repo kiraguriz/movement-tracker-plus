@@ -36,26 +36,36 @@ struct MealEditorSheet: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
-                    TextField("Name", text: $draft.name, axis: .vertical)
-                        .font(.title.bold())
-                        .lineLimit(1...3)
-                        .frame(minHeight: 44)
-                        .padding(.horizontal, 4)
-                        .accessibilityIdentifier(AccessibilityID.mealName)
-                    mealPicker
-                    energyCard
-                    amountCard
-                    if onDelete != nil {
-                        Button("Delete", role: .destructive) { isConfirmingDelete = true }
-                            .frame(maxWidth: .infinity, minHeight: 44)
-                            .padding(.top, 8)
-                            .accessibilityIdentifier(AccessibilityID.mealDelete)
+            GeometryReader { geometry in
+                ScrollView {
+                    Group {
+                        if geometry.size.width >= 640 && !dynamicTypeSize.isAccessibilitySize {
+                            HStack(alignment: .top, spacing: 20) {
+                                energyCard
+                                    .frame(maxWidth: .infinity)
+                                VStack(alignment: .leading, spacing: 16) {
+                                    nameField
+                                    mealPicker
+                                    amountCard
+                                    deleteButton
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                        } else {
+                            VStack(alignment: .leading, spacing: 12) {
+                                nameField
+                                mealPicker
+                                energyCard
+                                amountCard
+                                deleteButton
+                            }
+                        }
                     }
+                    .padding(.horizontal, geometry.size.width >= 640 ? 24 : 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 24)
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 24)
+                .scrollBounceBehavior(.basedOnSize)
             }
             .background(TraceTheme.paper)
             .scrollDismissesKeyboard(.interactively)
@@ -84,9 +94,29 @@ struct MealEditorSheet: View {
             }
             .errorAlert($errorMessage)
         }
+        .presentationSizing(.page)
         .presentationBackground(TraceTheme.paper)
         .interactiveDismissDisabled(isSaving)
         .testIdentifier(AccessibilityID.mealEditor)
+    }
+
+    private var nameField: some View {
+        TextField("Name", text: $draft.name, axis: .vertical)
+            .font(.title.bold())
+            .lineLimit(1...3)
+            .frame(minHeight: 44)
+            .padding(.horizontal, 4)
+            .accessibilityIdentifier(AccessibilityID.mealName)
+    }
+
+    @ViewBuilder
+    private var deleteButton: some View {
+        if onDelete != nil {
+            Button("Delete", role: .destructive) { isConfirmingDelete = true }
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .padding(.top, 8)
+                .accessibilityIdentifier(AccessibilityID.mealDelete)
+        }
     }
 
     @ViewBuilder

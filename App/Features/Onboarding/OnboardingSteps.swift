@@ -26,66 +26,71 @@ struct OnboardingAboutStep: View {
             .labelsHidden()
             .accessibilityIdentifier(AccessibilityID.unitsPicker)
 
-            TraceSheetCard(radius: 32) {
-                VStack(alignment: .leading, spacing: 18) {
-                    Text("Birth year")
-                        .traceMetricLabel()
-                        .foregroundStyle(TraceTheme.secondary)
-                        .accessibilityHidden(true)
-                    OnboardingNumber(
-                        title: "Birth year", text: $draft.birthYearText,
-                        range: Double(currentYear - 100)...Double(currentYear), start: Double(currentYear - 30),
-                        size: yearSize, allowsDecimals: false, centered: true,
-                        isInvalid: draft.ageCheck == .aboveMaximum, identifier: AccessibilityID.birthYear,
-                        focus: birthYearFocus, lessLabel: "A year earlier", moreLabel: "A year later"
-                    )
-                    if case .ok(let age) = draft.ageCheck {
-                        Text("\(age) yrs")
-                            .font(TraceTheme.numeral(26))
+            OnboardingColumns {
+                TraceSheetCard(radius: 32) {
+                    VStack(alignment: .leading, spacing: 18) {
+                        Text("Birth year")
+                            .traceMetricLabel()
                             .foregroundStyle(TraceTheme.secondary)
-                            .frame(maxWidth: .infinity)
-                    }
-                    if draft.ageCheck == .belowMinimum {
-                        Label("You must be 16 or older", systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(TraceTheme.vermilion)
-                            .font(.subheadline)
-                            .accessibilityIdentifier(AccessibilityID.ageRejected)
-                    }
-                }
-            }
-
-            VStack(spacing: 12) {
-                let columns = dynamicTypeSize.isAccessibilitySize ? 1 : 2
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), alignment: .leading), count: columns), spacing: 12) {
-                    sexTile(.female)
-                    sexTile(.male)
-                }
-                OnboardingChoice(
-                    title: Sex.preferNotToSay.title, isSelected: draft.sex == .preferNotToSay,
-                    identifier: "\(AccessibilityID.sexPicker).\(Sex.preferNotToSay.rawValue)"
-                ) { draft.sex = .preferNotToSay; birthYearFocus?.wrappedValue = false }
-            }
-            .accessibilityElement(children: .contain)
-            .accessibilityLabel("Sex")
-            .accessibilityIdentifier(AccessibilityID.sexPicker)
-
-            if draft.sex == .preferNotToSay {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Calorie estimate")
-                        .traceMetricLabel()
-                        .foregroundStyle(TraceTheme.secondary)
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: dynamicTypeSize.isAccessibilitySize ? 1 : 2), spacing: 8) {
-                        ForEach(BMREquation.allCases, id: \.self) { equation in
-                            OnboardingChoice(
-                                title: equation.title, isSelected: draft.equation == equation,
-                                identifier: "\(AccessibilityID.equationPicker).\(equation.rawValue)", selectedColor: TraceTheme.blue
-                            ) { draft.equation = equation }
+                            .accessibilityHidden(true)
+                        OnboardingNumber(
+                            title: "Birth year", text: $draft.birthYearText,
+                            range: Double(currentYear - 100)...Double(currentYear), start: Double(currentYear - 30),
+                            size: yearSize, allowsDecimals: false, centered: true,
+                            isInvalid: draft.ageCheck == .aboveMaximum, identifier: AccessibilityID.birthYear,
+                            focus: birthYearFocus, lessLabel: "A year earlier", moreLabel: "A year later"
+                        )
+                        if case .ok(let age) = draft.ageCheck {
+                            Text("\(age) yrs")
+                                .font(TraceTheme.numeral(26))
+                                .foregroundStyle(TraceTheme.secondary)
+                                .frame(maxWidth: .infinity)
+                        }
+                        if draft.ageCheck == .belowMinimum {
+                            Label("You must be 16 or older", systemImage: "exclamationmark.triangle.fill")
+                                .foregroundStyle(TraceTheme.vermilion)
+                                .font(.subheadline)
+                                .accessibilityIdentifier(AccessibilityID.ageRejected)
                         }
                     }
                 }
-                .accessibilityElement(children: .contain)
-                .accessibilityLabel("Calorie estimate")
-                .accessibilityIdentifier(AccessibilityID.equationPicker)
+
+                VStack(spacing: 12) {
+                    VStack(spacing: 12) {
+                        let columns = dynamicTypeSize.isAccessibilitySize ? 1 : 2
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), alignment: .leading), count: columns), spacing: 12) {
+                            sexTile(.female)
+                            sexTile(.male)
+                        }
+                        OnboardingChoice(
+                            title: Sex.preferNotToSay.title, isSelected: draft.sex == .preferNotToSay,
+                            identifier: "\(AccessibilityID.sexPicker).\(Sex.preferNotToSay.rawValue)"
+                        ) { draft.sex = .preferNotToSay; birthYearFocus?.wrappedValue = false }
+                    }
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("Sex")
+                    .accessibilityIdentifier(AccessibilityID.sexPicker)
+
+                    if draft.sex == .preferNotToSay {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Calorie estimate")
+                                .traceMetricLabel()
+                                .foregroundStyle(TraceTheme.secondary)
+                            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: dynamicTypeSize.isAccessibilitySize ? 1 : 2), spacing: 8) {
+                                ForEach(BMREquation.allCases, id: \.self) { equation in
+                                    OnboardingChoice(
+                                        title: equation.title, isSelected: draft.equation == equation,
+                                        identifier: "\(AccessibilityID.equationPicker).\(equation.rawValue)", selectedColor: TraceTheme.blue
+                                    ) { draft.equation = equation }
+                                }
+                            }
+                        }
+                        .accessibilityElement(children: .contain)
+                        .accessibilityLabel("Calorie estimate")
+                        .accessibilityIdentifier(AccessibilityID.equationPicker)
+                    }
+                }
+                .frame(maxWidth: .infinity)
             }
         }
         .animation(TraceMotion.cue, value: draft.sex)
@@ -137,11 +142,32 @@ struct OnboardingBodyStep: View {
         return lower...upper
     }
 
+    private var heightValue: Binding<Double?> {
+        Binding(get: {
+            guard let height = NumberInput(draft.heightText).value else { return nil }
+            if metric { return height }
+            return height * 12 + (NumberInput(draft.heightInchesText).value ?? 0)
+        }, set: { value in
+            guard let value else { return }
+            if metric {
+                draft.heightText = NumberInput.text(value, maxFractionDigits: 0)
+            } else {
+                let inches = Int(value.rounded())
+                draft.heightText = String(inches / 12)
+                draft.heightInchesText = String(inches % 12)
+            }
+        })
+    }
+
 
     var body: some View {
-        VStack(spacing: 12) {
+        OnboardingColumns {
             TraceSheetCard(radius: 32) {
                 VStack(alignment: .leading, spacing: 14) {
+                    Text("Height")
+                        .traceMetricLabel()
+                        .foregroundStyle(TraceTheme.secondary)
+                        .accessibilityHidden(true)
                     if metric {
                         OnboardingNumber(
                             title: "Height", text: $draft.heightText, unit: UnitFormatter.symbol(UnitLength.centimeters),
@@ -163,18 +189,30 @@ struct OnboardingBodyStep: View {
                             lessLabel: "An inch shorter", moreLabel: "An inch taller"
                         )
                     }
-                    OnboardingRuler(value: NumberInput(draft.heightText).value, step: 1)
+                    OnboardingRuler(
+                        value: heightValue, step: 1, range: metric ? 100...250 : 40...98,
+                        start: metric ? 170 : 66, title: "Height", unit: metric ? UnitFormatter.symbol(UnitLength.centimeters) : UnitFormatter.symbol(UnitLength.inches),
+                        identifier: "onboarding.heightRuler"
+                    ) { heightFocus?.wrappedValue = false; inchesFocus?.wrappedValue = false }
                 }
             }
             TraceSheetCard(radius: 32) {
                 VStack(alignment: .leading, spacing: 14) {
+                    Text("Weight")
+                        .traceMetricLabel()
+                        .foregroundStyle(TraceTheme.secondary)
+                        .accessibilityHidden(true)
                     OnboardingNumber(
                         title: "Weight", text: $draft.weightText, unit: units.massSymbol,
                         step: metric ? 0.1 : 1, range: weightRange, start: metric ? 70 : 155,
                         size: numberSize, isInvalid: draft.isWeightInvalid, identifier: AccessibilityID.weight,
                         focus: weightFocus, lessLabel: "Lighter", moreLabel: "Heavier"
                     )
-                    OnboardingRuler(value: NumberInput(draft.weightText).value, step: metric ? 0.1 : 1)
+                    OnboardingRuler(
+                        value: Binding(get: { NumberInput(draft.weightText).value }, set: { draft.weightText = $0.map { NumberInput.text($0, maxFractionDigits: metric ? 1 : 0) } ?? "" }),
+                        step: metric ? 0.1 : 1, range: weightRange, start: metric ? 70 : 155,
+                        title: "Weight", unit: units.massSymbol, identifier: "onboarding.weightRuler"
+                    ) { weightFocus?.wrappedValue = false }
                 }
             }
         }
@@ -201,54 +239,56 @@ struct OnboardingGoalStep: View {
             .accessibilityLabel("Goal")
             .accessibilityIdentifier(AccessibilityID.goalPicker)
 
-            if draft.goalKind != .maintain {
+            OnboardingColumns {
+                if draft.goalKind != .maintain {
+                    TraceSheetCard(radius: 32) {
+                        VStack(alignment: .leading, spacing: 16) {
+                            if let change = draft.weeklyChange(forRate: draft.ratePercent) {
+                                ViewThatFits(in: .horizontal) {
+                                    HStack(alignment: .lastTextBaseline, spacing: 8) { pace(change) }
+                                    VStack(alignment: .leading, spacing: 6) { pace(change) }
+                                }
+                            }
+                            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: dynamicTypeSize.isAccessibilitySize ? 2 : 4), spacing: 8) {
+                                ForEach(ProfileDraft.rateSteps, id: \.self) { step in
+                                    Button {
+                                        draft.ratePercent = step
+                                    } label: {
+                                        Text(step / 100, format: .percent.precision(.fractionLength(0...2)))
+                                            .font(.subheadline.weight(.semibold))
+                                            .padding(.horizontal, 4)
+                                            .padding(.vertical, 10)
+                                            .frame(maxWidth: .infinity, minHeight: 44)
+                                            .background(draft.ratePercent == step ? TraceTheme.ink : TraceTheme.paper, in: .capsule)
+                                            .foregroundStyle(draft.ratePercent == step ? TraceTheme.paper : TraceTheme.ink)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityAddTraits(draft.ratePercent == step ? [.isSelected] : [])
+                                    .accessibilityIdentifier("\(AccessibilityID.ratePicker).\(step)")
+                                }
+                            }
+                            .accessibilityElement(children: .contain)
+                            .accessibilityLabel("Pace")
+                            .accessibilityIdentifier(AccessibilityID.ratePicker)
+                        }
+                    }
+                }
+
                 TraceSheetCard(radius: 32) {
                     VStack(alignment: .leading, spacing: 16) {
-                        if let change = draft.weeklyChange(forRate: draft.ratePercent) {
-                            ViewThatFits(in: .horizontal) {
-                                HStack(alignment: .lastTextBaseline, spacing: 8) { pace(change) }
-                                VStack(alignment: .leading, spacing: 6) { pace(change) }
-                            }
-                        }
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: dynamicTypeSize.isAccessibilitySize ? 2 : 4), spacing: 8) {
-                            ForEach(ProfileDraft.rateSteps, id: \.self) { step in
-                                Button {
-                                    draft.ratePercent = step
-                                } label: {
-                                    Text(step / 100, format: .percent.precision(.fractionLength(0...2)))
-                                        .font(.subheadline.weight(.semibold))
-                                        .padding(.horizontal, 4)
-                                        .padding(.vertical, 10)
-                                        .frame(maxWidth: .infinity, minHeight: 44)
-                                        .background(draft.ratePercent == step ? TraceTheme.ink : TraceTheme.paper, in: .capsule)
-                                        .foregroundStyle(draft.ratePercent == step ? TraceTheme.paper : TraceTheme.ink)
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityAddTraits(draft.ratePercent == step ? [.isSelected] : [])
-                                .accessibilityIdentifier("\(AccessibilityID.ratePicker).\(step)")
+                        WorkoutsPerWeek(count: $draft.workoutsPerWeek)
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: dynamicTypeSize.isAccessibilitySize ? 1 : 3), spacing: 8) {
+                            ForEach(ActivityLevel.allCases, id: \.self) { level in
+                                OnboardingChoice(
+                                    title: level.title, isSelected: draft.activityLevel == level,
+                                    identifier: "\(AccessibilityID.trainingLevel).\(level.rawValue)", background: TraceTheme.paper
+                                ) { draft.activityLevel = level }
                             }
                         }
                         .accessibilityElement(children: .contain)
-                        .accessibilityLabel("Pace")
-                        .accessibilityIdentifier(AccessibilityID.ratePicker)
+                        .accessibilityLabel("Training level")
+                        .accessibilityIdentifier(AccessibilityID.trainingLevel)
                     }
-                }
-            }
-
-            TraceSheetCard(radius: 32) {
-                VStack(alignment: .leading, spacing: 16) {
-                    WorkoutsPerWeek(count: $draft.workoutsPerWeek)
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: dynamicTypeSize.isAccessibilitySize ? 1 : 3), spacing: 8) {
-                        ForEach(ActivityLevel.allCases, id: \.self) { level in
-                            OnboardingChoice(
-                                title: level.title, isSelected: draft.activityLevel == level,
-                                identifier: "\(AccessibilityID.trainingLevel).\(level.rawValue)", background: TraceTheme.paper
-                            ) { draft.activityLevel = level }
-                        }
-                    }
-                    .accessibilityElement(children: .contain)
-                    .accessibilityLabel("Training level")
-                    .accessibilityIdentifier(AccessibilityID.trainingLevel)
                 }
             }
         }
@@ -412,33 +452,69 @@ private struct OnboardingNumber: View {
     }
 }
 
-/// The ruler moves with the entered measurement; empty inputs do not display invented measurements.
+/// Empty fields retain their placeholders until the user drags or adjusts the ruler.
 private struct OnboardingRuler: View {
-    let value: Double?
+    @Binding var value: Double?
     let step: Double
+    let range: ClosedRange<Double>
+    let start: Double
+    let title: LocalizedStringResource
+    let unit: String
+    let identifier: String
+    let beginEditing: () -> Void
+    @State private var dragStart: Double?
+
+    private var displayedValue: Double { min(max(value ?? start, range.lowerBound), range.upperBound) }
 
     var body: some View {
         Canvas { context, size in
-            guard let value,
-                  let center = Int(exactly: (value / step).rounded().truncatingRemainder(dividingBy: 10)) else { return }
-            let spacing = size.width / 40
-            for index in -20...20 {
+            let center = Int((displayedValue / step).rounded().truncatingRemainder(dividingBy: 10))
+            let spacing: CGFloat = 10
+            let count = Int(size.width / spacing / 2) + 1
+            for index in -count...count {
                 let major = (center + index).isMultiple(of: 10)
                 let height: CGFloat = major ? 30 : 16
-                let opacity = (major ? 0.55 : 0.22) * (1 - Double(abs(index)) / 22)
+                let opacity = (major ? 0.65 : 0.35) * max(0.15, 1 - Double(abs(index)) / Double(count + 1))
                 let x = size.width / 2 + CGFloat(index) * spacing
                 var tick = Path()
-                tick.move(to: CGPoint(x: x, y: 4))
-                tick.addLine(to: CGPoint(x: x, y: height + 4))
+                tick.move(to: CGPoint(x: x, y: 8))
+                tick.addLine(to: CGPoint(x: x, y: height + 8))
                 context.stroke(tick, with: .color(TraceTheme.ink.opacity(opacity)), style: StrokeStyle(lineWidth: 2, lineCap: .round))
             }
             var marker = Path()
-            marker.move(to: CGPoint(x: size.width / 2, y: 2))
-            marker.addLine(to: CGPoint(x: size.width / 2, y: size.height - 2))
+            marker.move(to: CGPoint(x: size.width / 2, y: 4))
+            marker.addLine(to: CGPoint(x: size.width / 2, y: size.height - 4))
             context.stroke(marker, with: .color(TraceTheme.blue), style: StrokeStyle(lineWidth: 4, lineCap: .round))
         }
-        .frame(height: 46)
-        .accessibilityHidden(true)
+        .frame(height: 52)
+        .contentShape(.rect)
+        .gesture(DragGesture(minimumDistance: 10)
+            .onChanged { gesture in
+                if dragStart == nil {
+                    guard abs(gesture.translation.width) > abs(gesture.translation.height) else { return }
+                    dragStart = displayedValue
+                    beginEditing()
+                }
+                guard let dragStart else { return }
+                setValue(dragStart - Double(gesture.translation.width / 10).rounded() * step)
+            }
+            .onEnded { _ in dragStart = nil })
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(title))
+        .accessibilityValue(Text(verbatim: NumberInput.text(displayedValue) + " " + unit))
+        .accessibilityAdjustableAction { direction in
+            beginEditing()
+            switch direction {
+            case .increment: setValue(displayedValue + step)
+            case .decrement: setValue(displayedValue - step)
+            @unknown default: break
+            }
+        }
+        .accessibilityIdentifier(identifier)
+    }
+
+    private func setValue(_ newValue: Double) {
+        value = min(max(newValue, range.lowerBound), range.upperBound)
     }
 }
 

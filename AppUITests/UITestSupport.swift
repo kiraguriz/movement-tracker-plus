@@ -11,6 +11,7 @@ class AppUITestCase: XCTestCase {
         static let coachClose = "coach.close"
 
         static let onboarding = "onboarding"
+        static let onboardingBegin = "onboarding.begin"
         static let onboardingNext = "onboarding.next"
         static let onboardingFinish = "onboarding.finish"
         static let unitsPicker = "profile.units"
@@ -84,6 +85,7 @@ class AppUITestCase: XCTestCase {
         locale: String = "en_US",
         orientation: UIDeviceOrientation = .portrait,
         startTab: String? = nil,
+        showWelcome: Bool = false,
         extraArguments: [String] = []
     ) -> XCUIApplication {
         XCUIDevice.shared.orientation = orientation
@@ -100,6 +102,12 @@ class AppUITestCase: XCTestCase {
         app.launch()
         if seed == .none {
             XCTAssertTrue(element(ID.onboarding, in: app).waitForExistence(timeout: 20), "onboarding did not appear")
+            let begin = app.buttons[ID.onboardingBegin]
+            XCTAssertTrue(begin.waitForExistence(timeout: 10), "the welcome did not appear")
+            if !showWelcome {
+                begin.tap()
+                XCTAssertTrue(app.textFields[ID.birthYear].waitForExistence(timeout: 10), "profile setup did not open")
+            }
         } else {
             XCTAssertTrue(waitUntil(timeout: 20) {
                 app.tabBars.firstMatch.exists || ID.tabs.allSatisfy { app.cells[$0].exists }
@@ -127,6 +135,7 @@ class AppUITestCase: XCTestCase {
             let barFrame = bar.frame
             let rail = (0..<toolbar.count).map { toolbar.element(boundBy: $0) }
                 .filter { barFrame.contains(CGPoint(x: $0.frame.midX, y: $0.frame.midY)) }
+                .filter { $0.identifier != ID.askCoach && !["Coach", "教练"].contains($0.label) }
                 .sorted { $0.frame.minY < $1.frame.minY }
                 .suffix(ID.tabs.count)
             if index < rail.count {

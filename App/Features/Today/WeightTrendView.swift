@@ -7,6 +7,7 @@ import SwiftUI
 struct WeightTrendView: View {
     let measurements: [BodyMeasurement]
     let units: UnitFormatter
+    var expanded = false
     let onAdd: () -> Void
     @ScaledMetric(relativeTo: .largeTitle) private var weightSize = 56.0
 
@@ -30,6 +31,13 @@ struct WeightTrendView: View {
             }
             if !measurements.isEmpty {
                 chart
+                if expanded, let first = measurements.first, let last = measurements.last {
+                    HStack {
+                        Text(first.measuredAt, format: .dateTime.month(.abbreviated).day())
+                        Spacer()
+                        Text(last.measuredAt, format: .dateTime.month(.abbreviated).day())
+                    }.font(.caption).foregroundStyle(TraceTheme.secondary)
+                }
             } else {
                 VStack(spacing: 12) {
                     Image(systemName: "scalemass")
@@ -125,7 +133,7 @@ struct WeightTrendView: View {
         .chartPlotStyle { $0.padding(.horizontal, 8) }
         .chartXAxis(.hidden)
         .chartYAxis(.hidden)
-        .frame(height: 76)
+        .frame(height: expanded ? 116 : 76)
         .accessibilityLabel("Weight over the last 8 weeks")
         .accessibilityIdentifier(AccessibilityID.weightChart)
     }

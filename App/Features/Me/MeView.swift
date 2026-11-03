@@ -19,37 +19,34 @@ struct MeView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                if let profile = session.profile {
-                    goalCard
-                    bodyCard(profile)
-                    settingsGroup {
-                        VStack(spacing: 0) {
-                            ViewThatFits(in: .horizontal) {
-                                HStack(spacing: 16) {
-                                    Text("Units")
-                                    Spacer(minLength: 8)
-                                    unitsPicker(profile).frame(maxWidth: 240)
-                                }
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("Units")
-                                    unitsPicker(profile)
-                                }
-                            }
-                            .frame(minHeight: 56)
-                            Divider()
-                            Toggle("Voice cues", isOn: Binding(get: { model.voiceCues }, set: model.setVoiceCues))
-                                .frame(minHeight: 56)
-                                .accessibilityIdentifier(AccessibilityID.voiceCuesToggle)
-                        }
+        GeometryReader { geometry in
+            if geometry.size.width >= 700 && !dynamicTypeSize.isAccessibilitySize {
+                HStack(alignment: .top, spacing: 20) {
+                    ScrollView {
+                        profileCards
+                            .padding(16)
                     }
+                    .frame(maxWidth: .infinity)
+                    .accessibilityIdentifier("me.summaryColumn")
+                    ScrollView {
+                        preferences
+                            .padding(16)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .accessibilityIdentifier("me.settingsColumn")
                 }
-                settingsCard
+                .scrollBounceBehavior(.basedOnSize)
+            } else {
+                ScrollView {
+                    VStack(spacing: 12) {
+                        profileCards
+                        preferences
+                    }
+                    .frame(maxWidth: 760)
+                    .padding(16)
+                    .frame(maxWidth: .infinity)
+                }
             }
-            .frame(maxWidth: 760)
-            .padding(16)
-            .frame(maxWidth: .infinity)
         }
         .background(TraceTheme.paper)
         .foregroundStyle(TraceTheme.ink)
@@ -86,6 +83,45 @@ struct MeView: View {
         .safeAreaInset(edge: .bottom) { HealthStubReadout() }
         #endif
         .testIdentifier(AccessibilityID.screenMe)
+    }
+
+    private var profileCards: some View {
+        VStack(spacing: 12) {
+            if let profile = session.profile {
+                goalCard
+                bodyCard(profile)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var preferences: some View {
+        VStack(spacing: 12) {
+            if let profile = session.profile {
+                settingsGroup {
+                    VStack(spacing: 0) {
+                        ViewThatFits(in: .horizontal) {
+                            HStack(spacing: 16) {
+                                Text("Units")
+                                Spacer(minLength: 8)
+                                unitsPicker(profile).frame(maxWidth: 240)
+                            }
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Units")
+                                unitsPicker(profile)
+                            }
+                        }
+                        .frame(minHeight: 56)
+                        Divider()
+                        Toggle("Voice cues", isOn: Binding(get: { model.voiceCues }, set: model.setVoiceCues))
+                            .frame(minHeight: 56)
+                            .accessibilityIdentifier(AccessibilityID.voiceCuesToggle)
+                    }
+                }
+            }
+            settingsCard
+        }
+        .frame(maxWidth: .infinity)
     }
 
     private func unitsPicker(_ profile: Profile) -> some View {

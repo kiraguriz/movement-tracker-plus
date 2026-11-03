@@ -11,6 +11,7 @@ final class ProfileFlowUITests: AppUITestCase {
         XCTAssertTrue(app.navigationBars["Body"].waitForExistence(timeout: 10))
         enter("180", into: app.textFields[ID.height])
         enter("80", into: app.textFields[ID.weight])
+        attachScreenshot("onboarding-body")
         tapContinue(in: app)
 
         XCTAssertTrue(app.navigationBars["Goal"].waitForExistence(timeout: 10))
@@ -26,6 +27,14 @@ final class ProfileFlowUITests: AppUITestCase {
         XCTAssertTrue(element("plan.protein", in: app).label.contains("144"), "protein 1.8 g/kg × 80 kg")
         XCTAssertTrue(element("plan.fat", in: app).label.contains("64"), "fat 0.8 g/kg × 80 kg")
         XCTAssertTrue(element("plan.carbs", in: app).label.contains("401"), "the remaining kcal as carbs")
+        tap("onboarding.editGoal", in: app)
+        choose("Lose", fromPicker: ID.goalPicker, in: app)
+        tapContinue(in: app)
+        XCTAssertNotEqual(element(ID.planKcal, in: app).label, "2,759", "editing the goal must recalculate the preview")
+        tap("onboarding.editGoal", in: app)
+        choose("Maintain", fromPicker: ID.goalPicker, in: app)
+        tapContinue(in: app)
+        XCTAssertEqual(element(ID.planKcal, in: app).label, "2,759", "returning to maintain preserves the entered body values")
         attachScreenshot("onboarding-plan")
         tap(ID.onboardingFinish, in: app)
 

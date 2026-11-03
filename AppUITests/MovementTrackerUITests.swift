@@ -11,7 +11,7 @@ final class MovementTrackerUITests: AppUITestCase {
         calories.tap()
         XCTAssertTrue(element(ID.screens[2], in: app).waitForExistence(timeout: 10))
         openTab(0, in: app)
-        let workout = element("today.workout", in: app)
+        let workout = element("today.workoutHistory", in: app)
         XCTAssertTrue(workout.waitForExistence(timeout: 10))
         workout.tap()
         XCTAssertTrue(app.navigationBars["Workout history"].waitForExistence(timeout: 10))
