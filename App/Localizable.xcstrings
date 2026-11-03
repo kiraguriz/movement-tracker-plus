@@ -6070,6 +6070,70 @@
           }
         }
       }
+    },
+    "Start a set" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start a set"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始一组"
+          }
+        }
+      }
+    },
+    "Start a set of ${exercise}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start a set of ${exercise}"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始一组${exercise}"
+          }
+        }
+      }
+    },
+    "Log weight ${weight}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log weight ${weight}"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "记录体重 ${weight}"
+          }
+        }
+      }
+    },
+    "That weight doesn't look right." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That weight doesn't look right."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这个体重数值看起来不对。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

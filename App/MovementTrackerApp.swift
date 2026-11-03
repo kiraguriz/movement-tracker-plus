@@ -11,6 +11,7 @@ struct MovementTrackerApp: App {
         let router = AppRouter()
         _router = State(initialValue: router)
         _notifications = State(initialValue: NotificationCoordinator(router: router))
+        IntentRouting.shared.attach(router)
     }
 
     var body: some Scene {
