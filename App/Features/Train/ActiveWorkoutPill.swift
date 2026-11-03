@@ -9,6 +9,8 @@ final class ActiveWorkoutModel {
     private(set) var exerciseName: String?
 
     private let environment: AppEnvironment
+    @ObservationIgnored private let restAlerts = RestAlertScheduler()
+    @ObservationIgnored private var hasSeenDraftState = false
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -20,14 +22,36 @@ final class ActiveWorkoutModel {
                 guard let id = drafts.first?.id, let draft = try await environment.workouts.workout(id: id) else {
                     workout = nil
                     exerciseName = nil
+                    hasSeenDraftState = true
+                    restAlerts.cancel()
                     continue
                 }
+                // A draft that appears after the app has seen there was none is a workout the user just started.
+                let began = hasSeenDraftState && workout == nil
                 workout = draft
+                hasSeenDraftState = true
                 exerciseName = try await currentExerciseName(in: draft)
+                if began, environment.launch.allowsNotificationPrompt { await restAlerts.requestAuthorizationIfNeeded() }
+                await syncRestAlert(for: draft)
             }
         } catch {
             // The pill is a shortcut; Train reports workout errors where they can be acted on.
         }
+    }
+
+    /// Keeps the pending "rest over" notification in step with the rest that is running.
+    private func syncRestAlert(for draft: Workout) async {
+        guard let reminder = RestReminder(workout: draft, now: environment.now()),
+              let name = try? await displayName(of: reminder.exerciseID) else {
+            restAlerts.cancel()
+            return
+        }
+        await restAlerts.sync(reminder, exerciseName: name)
+    }
+
+    private func displayName(of id: ExerciseID) async throws -> String {
+        if let exercise = try await environment.exercises.exercise(id: id) { return ExerciseNames.name(of: exercise) }
+        return ExerciseNames.name(id: id)
     }
 
     /// The exercise of the latest set, else the last exercise added.

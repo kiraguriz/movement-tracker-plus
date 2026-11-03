@@ -27,6 +27,8 @@ import Foundation
 /// - `-MTNoCoach`: simulate an unconfigured coach, even when a deployed endpoint is configured.
 /// - `-MTAIOptIn`: with the in-memory database, start with the coach consent already given.
 /// - `-MTMealPhotoSample`: the meal photo sheet offers a generated sample photo (the Simulator has no camera).
+/// - `-MTNotificationPrompt`: with the in-memory database the first workout does not ask for notification
+///   permission (a system alert would block UI tests); this flag lets it.
 /// - `-MTHealthStub`: Apple Health runs over an in-process fake that records what would be written or removed and
 ///   answers the access request without the system sheet; Me shows its counters. `-MTHealthStub denied` makes the
 ///   access request come back denied. The stub is not compiled into Release, and neither is this flag.
@@ -55,6 +57,7 @@ struct LaunchOptions: Equatable {
     var persistentTestDatabase = false
     var healthStub = false
     var healthStubDenies = false
+    var notificationPrompt = false
     #endif
 
     init() {}
@@ -80,6 +83,16 @@ struct LaunchOptions: Equatable {
         persistentTestDatabase = arguments.contains("-MTPersistentTestDatabase") && !inMemoryDatabase
         healthStub = arguments.contains("-MTHealthStub")
         healthStubDenies = healthStub && Self.value(after: "-MTHealthStub", in: arguments) == "denied"
+        notificationPrompt = arguments.contains("-MTNotificationPrompt")
+        #endif
+    }
+
+    /// Whether the first workout may show the system's notification permission alert.
+    var allowsNotificationPrompt: Bool {
+        #if DEBUG
+        notificationPrompt || !inMemoryDatabase
+        #else
+        true
         #endif
     }
 
