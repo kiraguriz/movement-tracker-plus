@@ -44,6 +44,8 @@ public enum TaughtVerifier {
     public static let minRomRatio = 0.7
     /// Largest share of the demonstration in which counting may be paused for lack of joints.
     public static let maxMissingShare = 0.2
+    /// With a count below the user's, this much hidden time is blamed for it.
+    static let shortCountMissingShare = 0.04
 
     /// Throws `ExerciseSpecError` only for an invalid spec; a demonstration that does not hold up is a
     /// `failure` in the result.
@@ -84,6 +86,9 @@ public enum TaughtVerifier {
         counted: Int, partials: Int, roms: [Double], expected: Int, missingShare: Double, wasReady: Bool
     ) -> TaughtFailure? {
         if !wasReady || missingShare > maxMissingShare { return .jointsUnreliable(share: missingShare) }
+        // Joints that dropped out for a moment cost reps: a short count with any real gap says so, rather than
+        // blaming how the reps were done.
+        if counted < expected, missingShare > shortCountMissingShare { return .jointsUnreliable(share: missingShare) }
         if counted == 0, partials == 0 { return .noReps }
         if partials > 0 { return .partialsInDemo(partials) }
         if counted != expected { return .countMismatch(counted: counted, expected: expected) }

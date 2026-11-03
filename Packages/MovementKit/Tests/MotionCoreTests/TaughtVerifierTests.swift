@@ -161,6 +161,8 @@ struct TaughtVerifierTests {
         #expect(judge() == nil)
         #expect(judge(counted: 0, roms: [], missing: 0.5) == .jointsUnreliable(share: 0.5), "hidden joints explain a wrong count")
         #expect(judge(missing: 0.2) == nil, "a fifth of the take is allowed")
+        #expect(judge(counted: 2, missing: 0.075) == .jointsUnreliable(share: 0.075), "a short count with gaps blames the gaps")
+        #expect(judge(counted: 2, missing: 0.02) == .countMismatch(counted: 2, expected: 3))
         #expect(judge(missing: 1, ready: false) == .jointsUnreliable(share: 1))
         #expect(judge(counted: 0, roms: []) == .noReps)
         #expect(judge(counted: 2, partials: 1, roms: [0.9, 0.9]) == .partialsInDemo(1), "partials before the count")

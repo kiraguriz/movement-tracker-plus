@@ -172,9 +172,11 @@ enum ExemplarLearning {
 struct TeachAnalyzer: Sendable {
     /// A role must be seen in at least this share of the samples to be part of the learned pose; one that
     /// is often out of frame would stop the counting whenever it is.
-    static let minRoleAvailability = 0.9
+    static let minRoleAvailability = 0.97
     /// A role must carry at least this share of the pose movement to be part of the learned pose.
     static let minRoleShare = 0.05
+    /// A role may be inside the framing edge margin in at most this share of the samples.
+    static let maxRoleEdgeShare = 0.02
     /// The last moments of a take are the hand reaching for the Done button.
     static let tailSeconds = 0.7
     /// A take longer than this is cut off.
@@ -188,6 +190,9 @@ struct TeachAnalyzer: Sendable {
     private var rowFrames: [PoseFrame] = []
     private var rowViews: [CameraView] = []
     private var rowTimes: [Double] = []
+    /// Per moving role, the samples in which it was inside the framing edge margin.
+    private var edgeCounts: [Int]
+    private let edgeMargin: Double
     private var nextSampleTime = -Double.infinity
     private var isAnalyzing: Bool
     private var firstTime: Double?
@@ -198,6 +203,8 @@ struct TeachAnalyzer: Sendable {
     /// the user is still walking back into position, is part of the take but not of what is learned.
     init(config: MotionConfig = .default, analyzesFromStart: Bool = true) {
         moving = ExemplarTeacher.defaultRoles.filter { $0 != .hip }
+        edgeCounts = Array(repeating: 0, count: moving.count)
+        edgeMargin = config.framing.edgeMargin
         front = FrontEnd(config: config, scoringRoles: ExemplarTeacher.defaultRoles)
         isAnalyzing = analyzesFromStart
     }
@@ -226,6 +233,12 @@ struct TeachAnalyzer: Sendable {
         var row = Array(repeating: Double.nan, count: moving.count * 2)
         for (i, role) in moving.enumerated() {
             guard let point = front.point(role) else { continue }
+            if let joint = front.joint(role) {
+                let nx = joint.x / front.aspect
+                if nx <= edgeMargin || nx >= 1 - edgeMargin || joint.y <= edgeMargin || joint.y >= 1 - edgeMargin {
+                    edgeCounts[i] += 1
+                }
+            }
             let n = body.normalize(point)
             row[2 * i] = n.x
             row[2 * i + 1] = n.y
@@ -276,8 +289,12 @@ struct TeachAnalyzer: Sendable {
                     total + max(0, squares[c] / count - (sum[c] / count) * (sum[c] / count))
                 }
             }
+            // A role that runs into the edge of the picture would stop the counting whenever it does, because the
+            // framing check requires every role the spec uses to stay inside it.
             let candidates = moving.indices.filter {
-                moving[$0] == .shoulder || Double(available[$0]) >= Self.minRoleAvailability * Double(n)
+                moving[$0] == .shoulder
+                    || (Double(available[$0]) >= Self.minRoleAvailability * Double(n)
+                        && Double(edgeCounts[$0]) <= Self.maxRoleEdgeShare * Double(n))
             }
             let total = candidates.reduce(0.0) { $0 + movement($1) }
             keep = candidates.filter { moving[$0] == .shoulder || (total > 0 && movement($0) / total >= Self.minRoleShare) }
