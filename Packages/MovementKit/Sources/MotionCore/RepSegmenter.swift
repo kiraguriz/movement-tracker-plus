@@ -41,6 +41,9 @@ public struct RepSegment: Equatable, Codable, Sendable {
     /// Mean concentric velocity in signal units per second (positive): the fitted range of the rise over
     /// its fitted duration.
     public var conVelocity: Double
+    /// The same measure for the first leg (leaving the rest plateau), which is the working leg of a
+    /// `liftFirst` exercise.
+    public var leadVelocity: Double
 
     public var eccMs: Double { (tBottom - tStart) * 1000 }
     public var conMs: Double { (tEnd - tLift) * 1000 }
@@ -604,8 +607,8 @@ public struct RepSegmenter: Sendable {
 
     /// A fitted rise is used only if its levels have the right direction and a range near the plateau
     /// estimate; otherwise the velocity falls back to the plateau range over the timing edges.
-    private func isRise(_ step: StepFit, expectedSpan: Double) -> Bool {
-        let range = step.to - step.from
+    private func isRise(_ step: StepFit, expectedSpan: Double, falling: Bool = false) -> Bool {
+        let range = falling ? step.from - step.to : step.to - step.from
         return range > 0.6 * expectedSpan && range < 1.6 * expectedSpan
     }
 
@@ -667,9 +670,15 @@ public struct RepSegmenter: Sendable {
         let iArrival = firstIndex(from: max(iDescent, first), upTo: bottomEnd) { $0 <= descentBandBottom } ?? bottomEnd
         var tStart: Double
         var tBottom: Double
+        var fittedLead: Double?
         if let fit = fitTransition(from: uHigh0, to: uLow, first: iDescent, last: max(iArrival, min(iDescent + 1, end))) {
             tStart = fit.start
             tBottom = fit.start + fit.duration
+            if let step = fitStep(
+                guess: fit, padding: stepPadding(fit.duration), first: first, last: max(bottomEnd, iArrival)
+            ), isRise(step, expectedSpan: span0, falling: true) {
+                fittedLead = abs(step.to - step.from) / max(step.duration, 1e-3)
+            }
         } else {
             tStart = iDescent < bottomStart ? crossing(iDescent, iDescent + 1, descentBandTop) : trace[absolute: iDescent].t
             tBottom = iArrival > iDescent ? crossing(iArrival - 1, iArrival, descentBandBottom) : trace[absolute: iArrival].t
@@ -712,13 +721,15 @@ public struct RepSegmenter: Sendable {
         // noise-prone numbers come from one fit instead of two level crossings. Without a usable fit it is
         // the plateau range over the timing edges.
         let conVelocity = velocity ?? span1 / max(tEnd - tLift, 1e-3)
+        let leadVelocity = fittedLead ?? span0 / max(tBottom - tStart, 1e-3)
 
         let segment = RepSegment(
             tStart: tStart, tBottom: tBottom, tLift: tLift, tEnd: tEnd,
             rom: min(span0, span1),
             bottomValue: sign * uLow,
             topValue: sign * uHigh1,
-            conVelocity: conVelocity
+            conVelocity: conVelocity,
+            leadVelocity: leadVelocity
         )
         return Measurement(segment: segment, uLow: uLow, uHigh0: uHigh0, uHigh1: uHigh1, jitter: jitter(first, end))
     }

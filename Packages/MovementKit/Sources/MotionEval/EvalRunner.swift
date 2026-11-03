@@ -41,7 +41,7 @@ enum EvalRunner {
 
         var errorDescription: String? {
             switch self {
-            case let .unknownExercise(id): "unknown exercise '\(id)'; use squat.bodyweight, pushup or the path of a spec .json"
+            case let .unknownExercise(id): "unknown exercise '\(id)'; use squat.bodyweight, pushup, jumpingjack or the path of a spec .json"
             case .undetermined: "cannot tell which exercise this is: name the file like squat.bodyweight_10.mov or pass --spec"
             }
         }

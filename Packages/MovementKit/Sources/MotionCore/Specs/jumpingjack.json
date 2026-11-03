@@ -1,0 +1,23 @@
+{
+  "id": "jumpingjack",
+  "version": 1,
+  "view": "front",
+  "requiredJoints": ["hip", "shoulder", "elbow", "ankle"],
+  "signal": { "kind": "jointAngle", "a": "hip", "b": "shoulder", "c": "elbow" },
+  "rep": {
+    "polarity": "up",
+    "topPrior": 15,
+    "bottomPrior": 160,
+    "minRom": 80,
+    "dwellMs": 50,
+    "minPeriodMs": 350,
+    "maxPeriodMs": 6000,
+    "idleSeconds": 20,
+    "liftFirst": true
+  },
+  "metrics": ["bottomValue", "rom", "eccMs", "conMs", "conVelocity"],
+  "rules": [
+    { "id": "armsHigh", "metric": "bottomValue", "op": ">=", "value": 140, "severity": "major", "cue": "cue.jumpingJack.armsUp" }
+  ],
+  "score": { "armsHigh": 0.5 }
+}

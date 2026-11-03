@@ -1,3 +1,4 @@
+import AppLogic
 import AVFoundation
 import Foundation
 
@@ -35,6 +36,7 @@ private actor SpeechEngine {
     private let voiceLanguage: String
     private var synthesizer: AVSpeechSynthesizer?
     private var delegate: Delegate?
+    private var chosenVoice: AVSpeechSynthesisVoice?
 
     init(voiceLanguage: String) {
         self.voiceLanguage = voiceLanguage
@@ -45,8 +47,36 @@ private actor SpeechEngine {
         if synthesizer.isSpeaking { synthesizer.stopSpeaking(at: .immediate) }
         activateAudio()
         let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = AVSpeechSynthesisVoice(language: voiceLanguage)
+        utterance.voice = bestVoice()
         synthesizer.speak(utterance)
+    }
+
+    /// The best installed voice for the language (premium, then enhanced, then standard), chosen explicitly because
+    /// `AVSpeechSynthesisVoice(language:)` makes no promise to return it; developers reported it answering with the
+    /// standard voice on iOS 26. The system's own pick is the fallback. Looked up once per player: a voice downloaded
+    /// meanwhile is used from the next set on.
+    private func bestVoice() -> AVSpeechSynthesisVoice? {
+        if let chosenVoice { return chosenVoice }
+        let systemDefault = AVSpeechSynthesisVoice(language: voiceLanguage)
+        let installed = AVSpeechSynthesisVoice.speechVoices()
+        let candidates = installed.map { voice in
+            SpeechVoiceCandidate(
+                identifier: voice.identifier, language: voice.language,
+                quality: Self.quality(of: voice),
+                isNoveltyOrPersonal: !voice.voiceTraits.isDisjoint(with: [.isNoveltyVoice, .isPersonalVoice]))
+        }
+        let best = SpeechVoiceChoice.best(for: voiceLanguage, among: candidates, systemDefaultIdentifier: systemDefault?.identifier)
+        let voice = best.flatMap { AVSpeechSynthesisVoice(identifier: $0.identifier) } ?? systemDefault
+        chosenVoice = voice
+        return voice
+    }
+
+    private static func quality(of voice: AVSpeechSynthesisVoice) -> SpeechVoiceQuality {
+        switch voice.quality {
+        case .premium: .premium
+        case .enhanced: .enhanced
+        default: .standard
+        }
     }
 
     func stop() {

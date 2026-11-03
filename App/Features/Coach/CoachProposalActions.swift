@@ -71,7 +71,9 @@ struct CoachProposalActions {
 
     /// Applies the confirmed targets without manufacturing any completed sets.
     func startWorkout(_ day: PlanProposal.Session) async throws -> StartResult {
-        let starter = WorkoutPlanStarter(workouts: environment.workouts, exercises: environment.exercises, ids: environment.ids)
+        let starter = WorkoutPlanStarter(
+            workouts: environment.workouts, exercises: environment.exercises,
+            excluding: ExperimentalExercises.hiddenIDs(environment.launch), ids: environment.ids)
         return try await starter.start(title: day.name, exercises: day.exercises.map {
             PlannedExercise(name: $0.name, prescription: ExercisePrescription(
                 sets: $0.sets, reps: $0.reps, restSeconds: $0.restSec, note: $0.note))

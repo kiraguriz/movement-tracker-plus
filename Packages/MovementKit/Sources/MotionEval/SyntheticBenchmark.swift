@@ -32,6 +32,13 @@ enum SyntheticBenchmark {
                 expectedReps: reps, expectedPartials: partials
             ))
         }
+        func jumpingJack(_ name: String, actions: [SyntheticMotion.Action], reps: Int, partials: Int = 0, facing: SyntheticMotion.Facing = .right, seed: UInt64, glitches: SyntheticMotion.RandomGlitches? = nil) {
+            cases.append(SyntheticCase(
+                name: name, spec: .jumpingJack,
+                motion: SyntheticMotion(exercise: .jumpingJack, actions: actions, facing: facing, noise: noise, randomGlitches: glitches, seed: seed),
+                expectedReps: reps, expectedPartials: partials
+            ))
+        }
         func repeated(_ rep: SyntheticMotion.Rep, _ count: Int) -> [SyntheticMotion.Action] {
             Array(repeating: .rep(rep), count: count)
         }
@@ -63,6 +70,18 @@ enum SyntheticBenchmark {
                         .rep(.partialPushUp()), .rep(.pushUp()), .rep(.pushUp()), .rep(.pushUp()), .rep(.pushUp())],
               reps: 8, partials: 2, seed: 206)
         pushUp("pushup_0_plank", actions: [.hold(seconds: 25)], reps: 0, seed: 207)
+
+        // Jumping jacks, front view
+        jumpingJack("jumpingjack_20", actions: repeated(.jumpingJack(), 20), reps: 20, seed: 301)
+        jumpingJack("jumpingjack_20_left", actions: repeated(.jumpingJack(), 20), reps: 20, facing: .left, seed: 302)
+        jumpingJack("jumpingjack_30_fast", actions: repeated(.jumpingJack(raise: 0.25, lower: 0.25, pauseRest: 0), 30), reps: 30, seed: 303)
+        jumpingJack("jumpingjack_16_4",
+                    actions: (0..<20).map { .rep($0 % 5 == 4 ? .partialJumpingJack() : .jumpingJack()) },
+                    reps: 16, partials: 4, seed: 304)
+        jumpingJack("jumpingjack_20_dropouts", actions: repeated(.jumpingJack(), 20), reps: 20, seed: 305,
+                    glitches: SyntheticMotion.RandomGlitches(joints: [.leftElbow, .rightElbow, .leftShoulder, .rightShoulder], ratePerSecond: 0.15, minDuration: 0.05, maxDuration: 0.12))
+        jumpingJack("jumpingjack_0_standing", actions: [.hold(seconds: 25)], reps: 0, seed: 306)
+        jumpingJack("jumpingjack_0_walk_away", actions: [.hold(seconds: 3), .walkOut(seconds: 2), .absent(seconds: 4), .walkIn(seconds: 2), .hold(seconds: 4)], reps: 0, seed: 307)
         return cases
     }
 }

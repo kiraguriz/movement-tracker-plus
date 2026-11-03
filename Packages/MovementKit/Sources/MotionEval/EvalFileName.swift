@@ -15,6 +15,7 @@ enum EvalFileName {
     static let aliases: [String: BundledSpec] = [
         "squat": .squatBodyweight, "squats": .squatBodyweight, "squat.bodyweight": .squatBodyweight,
         "pushup": .pushUp, "pushups": .pushUp, "push-up": .pushUp, "push-ups": .pushUp,
+        "jumpingjack": .jumpingJack, "jumpingjacks": .jumpingJack, "jumping-jack": .jumpingJack, "jumping-jacks": .jumpingJack,
     ]
 
     static func parse(_ fileName: String) -> Parsed {

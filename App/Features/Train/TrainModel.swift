@@ -78,7 +78,11 @@ final class TrainModel {
     private func watchCatalog() async {
         await environment.exercises.observeExercises().forEachValue(
             onFailure: { errorMessage = $0.localizedDescription },
-            { exercises in catalog = Dictionary(exercises.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }) }
+            { exercises in
+                let hidden = ExperimentalExercises.hiddenIDs(environment.launch)
+                catalog = Dictionary(
+                    exercises.filter { !hidden.contains($0.id) }.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+            }
         )
     }
 

@@ -188,9 +188,17 @@ public struct MotionPipeline: Sendable {
 
     private mutating func makeRecord(_ segment: RepSegment, isCounted: Bool) -> RepRecord {
         attempts += 1
+        // The segmenter names the legs by position (first leg = eccentric). A lift-first exercise works on
+        // the first leg, so there the names swap and the velocity is the first leg's.
+        let liftFirst = spec.rep.liftFirst
+        let timing = LegTiming(
+            eccMs: liftFirst ? segment.conMs : segment.eccMs,
+            conMs: liftFirst ? segment.eccMs : segment.conMs,
+            conVelocity: liftFirst ? segment.leadVelocity : segment.conVelocity
+        )
         var metrics: [MetricKey: Double] = [:]
         for key in spec.metrics {
-            if let value = measure(key, segment), value.isFinite { metrics[key] = value }
+            if let value = measure(key, segment, timing), value.isFinite { metrics[key] = value }
         }
         let verdict = isCounted ? rules.evaluate(metrics) : RuleResult(issues: [], score: 0, isGood: false)
         // Back to capture time (the offset is zero unless the clock was resynchronised).
@@ -199,21 +207,27 @@ public struct MotionPipeline: Sendable {
             index: attempts, isCounted: isCounted,
             tStart: segment.tStart - shift, tBottom: segment.tBottom - shift,
             tLift: segment.tLift - shift, tEnd: segment.tEnd - shift,
-            eccMs: segment.eccMs, conMs: segment.conMs, rom: segment.rom,
-            bottomValue: segment.bottomValue, topValue: segment.topValue, conVelocity: segment.conVelocity,
+            eccMs: timing.eccMs, conMs: timing.conMs, rom: segment.rom,
+            bottomValue: segment.bottomValue, topValue: segment.topValue, conVelocity: timing.conVelocity,
             metrics: metrics, issues: verdict.issues, score: verdict.score
         )
     }
 
-    private func measure(_ key: MetricKey, _ s: RepSegment) -> Double? {
+    private struct LegTiming {
+        var eccMs: Double
+        var conMs: Double
+        var conVelocity: Double
+    }
+
+    private func measure(_ key: MetricKey, _ s: RepSegment, _ timing: LegTiming) -> Double? {
         switch key {
         case .bottomValue: return s.bottomValue
         case .topValue: return s.topValue
         case .rom: return s.rom
-        case .eccMs: return s.eccMs
-        case .conMs: return s.conMs
+        case .eccMs: return timing.eccMs
+        case .conMs: return timing.conMs
         case .durationMs: return s.durationMs
-        case .conVelocity: return s.conVelocity
+        case .conVelocity: return timing.conVelocity
         case .maxTorsoLeanDegDescent:
             return auxPercentile(0.9, from: s.tStart, to: s.tBottom) { $0.torsoLean }
         case .minBodyLineDeg:

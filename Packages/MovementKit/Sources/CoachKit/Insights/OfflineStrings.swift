@@ -54,6 +54,7 @@ public struct BuiltInOfflineStrings: OfflineStrings {
         "cue.pushup.lower": ("Lower your chest closer to the floor", "胸部再靠近地面一点"),
         "cue.pushup.hipsLevel": ("Keep hips, shoulders and ankles in one line", "保持肩、髋、踝成一条直线"),
         "cue.pushup.lockOut": ("Press all the way up until your arms are straight", "向上推到手臂完全伸直"),
+        "cue.jumpingJack.armsUp": ("Reach your arms all the way overhead", "手臂向上举过头顶"),
     ]
 
     public func cueText(forKey key: String, locale: CoachLocale) -> String? {

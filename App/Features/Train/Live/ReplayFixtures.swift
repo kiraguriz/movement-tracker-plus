@@ -17,7 +17,11 @@ enum ReplayFixtures {
 
     /// The recording to replay for an exercise when none was asked for by name.
     static func defaultName(forSpecID id: String) -> String {
-        id == BundledSpec.pushUp.rawValue ? "pushup" : "squat"
+        switch BundledSpec(rawValue: id) {
+        case .pushUp: "pushup"
+        case .jumpingJack: "jumpingjack"
+        default: "squat"
+        }
     }
 
     nonisolated static func url(named name: String) -> URL? {

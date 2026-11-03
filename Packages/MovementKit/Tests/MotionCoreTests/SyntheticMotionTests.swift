@@ -88,6 +88,73 @@ struct SyntheticMotionTests {
         #expect(a.frames() != c.frames())
     }
 
+    @Test("jumping jack frames are byte-identical for the same description")
+    func jumpingJackDeterminism() {
+        let a = SyntheticMotion.jumpingJacks(reps: 3, seed: 9)
+        var b = a
+        var c = a
+        b.noise = .visionLike
+        c.noise = .visionLike
+        #expect(a.frames() == SyntheticMotion.jumpingJacks(reps: 3, seed: 9).frames())
+        #expect(b.frames() == c.frames())
+        #expect(b.frames() != a.frames())
+    }
+
+    @Test("jumping jack keypoints stay inside the frame at both ends of the movement")
+    func jumpingJackInsideFrame() {
+        for peak in [95.0, 165, 178] {
+            for frame in SyntheticMotion.jumpingJacks(reps: 2, rep: .jumpingJack(peak: peak)).frames() {
+                #expect(frame.joints.count == Joint.count)
+                for keypoint in frame.joints.values {
+                    #expect((0.02...0.98).contains(keypoint.x) && (0.02...0.98).contains(keypoint.y), "peak \(peak)")
+                }
+            }
+        }
+    }
+
+    @Test("the spec's hip-shoulder-elbow angle runs from about 21 degrees at rest to the peak plus the torso's slant")
+    func jumpingJackArmAngle() throws {
+        let frames = SyntheticMotion.jumpingJacks(reps: 2, rep: .jumpingJack(peak: 165)).frames()
+        let angles = frames.compactMap { f -> Double? in
+            guard let h = point(f, .leftHip), let s = point(f, .leftShoulder), let e = point(f, .leftElbow) else { return nil }
+            return Geometry.includedAngle(at: s, from: h, to: e)
+        }
+        // The shoulders are wider than the hips, so the torso leans in by atan(0.08 / 0.5) = 9 degrees in the image
+        // and the arm angle read from the hip is that much larger than the arm's own swing (12 to 165).
+        #expect(abs(try #require(angles.first) - 21) < 3)
+        #expect(abs(try #require(angles.max()) - 174) < 3)
+        #expect(try #require(angles.min()) > 18)
+    }
+
+    @Test("jumping jack limbs keep their length while the arms and legs swing, within the projection")
+    func jumpingJackRigid() throws {
+        let frames = SyntheticMotion.jumpingJacks(reps: 2).frames()
+        // The figure faces the camera, so a limb that swings sideways keeps its image length.
+        let pairs: [(Joint, Joint, Double)] = [
+            (.leftShoulder, .leftElbow, 0.30), (.leftElbow, .leftWrist, 0.27), (.leftShoulder, .leftHip, 0.50),
+        ]
+        for (a, b, metres) in pairs {
+            let lengths = frames.compactMap { f -> Double? in
+                guard let pa = point(f, a), let pb = point(f, b) else { return nil }
+                return Geometry.distance(pa, pb)
+            }
+            let expected = metres / (2.6 * 1.2)
+            let low = try #require(lengths.min()), high = try #require(lengths.max())
+            #expect(low > expected * 0.9 && high < expected * 1.05, "\(a)-\(b): \(low) ... \(high), expected \(expected)")
+        }
+    }
+
+    @Test("the legs spread as the arms go up and close again")
+    func jumpingJackLegs() throws {
+        let frames = SyntheticMotion.jumpingJacks(reps: 2).frames()
+        let spreads = frames.compactMap { f -> Double? in
+            guard let l = point(f, .leftAnkle), let r = point(f, .rightAnkle) else { return nil }
+            return abs(l.x - r.x)
+        }
+        let first = try #require(spreads.first), widest = try #require(spreads.max())
+        #expect(widest > first * 1.8, "feet \(first) -> \(widest)")
+    }
+
     @Test("noise does not move the frame times")
     func independentStreams() {
         let quiet = SyntheticMotion.squats(reps: 2)

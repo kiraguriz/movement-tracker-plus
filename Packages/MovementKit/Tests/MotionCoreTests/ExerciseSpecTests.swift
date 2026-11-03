@@ -33,6 +33,20 @@ struct ExerciseSpecTests {
         #expect(abs(spec.score.values.reduce(0, +) - 1) < 1e-9)
     }
 
+    @Test("the jumping jack spec has the documented values")
+    func jumpingJackValues() throws {
+        let spec = try jumpingJackSpec()
+        #expect(spec.id == "jumpingjack" && spec.version == 1 && spec.view == .front)
+        #expect(spec.requiredJoints == [.hip, .shoulder, .elbow, .ankle])
+        #expect(spec.signal == .jointAngle(a: .hip, b: .shoulder, c: .elbow))
+        #expect(spec.rep.polarity == .up && spec.rep.liftFirst)
+        #expect(spec.rep.topPrior == 15 && spec.rep.bottomPrior == 160 && spec.rep.minRom == 80)
+        #expect(spec.rep.dwellMs == 50 && spec.rep.minPeriodMs == 350 && spec.rep.maxPeriodMs == 6000)
+        #expect(spec.rules.map(\.id) == ["armsHigh"])
+        #expect(spec.rules.first?.cue == "cue.jumpingJack.armsUp")
+        #expect(spec.rules.first?.severity == .major)
+    }
+
     @Test("every bundled spec loads and validates", arguments: BundledSpec.allCases)
     func bundledLoads(which: BundledSpec) throws {
         let spec = try ExerciseSpec.bundled(which)

@@ -153,6 +153,25 @@ Steps:
 Do not change a label to make a number look better. A set the engine miscounted is the result. Keep it: it is
 also a regression case for the engine.
 
+### Jumping jack (hidden until released)
+
+The jumping jack counts correctly on generated motion only. It stays out of the exercise picker, the Train list and
+coach plans until three real, labelled sets count right. `-MTExperimentalExercises` (Debug builds) shows it for one
+launch; `ExperimentalExercises.isReleased` (`App/Features/Train/ExperimentalExercises.swift`) releases it for everyone.
+
+- [ ] Install a Debug build and launch it with `-MTExperimentalExercises`. Turn on Save pose recordings in Me.
+- [ ] Stand 2.5 to 3 m from the front camera facing it, whole body in view, arms overhead included. If the app asks
+  you to face the camera, you are seen from the side.
+- [ ] Record at least 3 sets of 10 to 20 jumping jacks, one of them fast (about 1.5 reps per second). Count on paper.
+  Add one set where the arms stop at shoulder height for a few reps and note how many (partial reps), and one clip of
+  standing still for 30 s (`--reps 0 --tag idle`).
+- [ ] Label each with `tools/import-fixture.sh <file>.jsonl --reps N --partials M --tag person-a --tag room-1`
+  and run `tools/accuracy.sh`.
+- [ ] Release it only if every set is exact (0 off) and the idle clip has 0 false reps. Then set `isReleased` to true.
+  If Vision loses the elbow in fast sets (counts too low), lower `dwellMs` in `jumpingjack.json` and record again.
+
+The spec only checks the arms. A person who waves their arms without jumping is still counted.
+
 ## 4. Proxy deploy
 
 Completed for this project on 2026-11-01: the proxy is deployed, both secrets are configured, and real

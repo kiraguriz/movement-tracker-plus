@@ -1322,6 +1322,23 @@
         }
       }
     },
+    "cue.jumpingJack.armsUp" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reach your arms overhead"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手臂举过头顶"
+          }
+        }
+      }
+    },
     "cue.pushup.hipsLevel" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1742,6 +1759,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "硬拉"
+          }
+        }
+      }
+    },
+    "exercise.jumpingjack" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jumping Jack"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开合跳"
           }
         }
       }

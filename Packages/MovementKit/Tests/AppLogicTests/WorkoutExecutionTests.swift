@@ -24,6 +24,23 @@ struct WorkoutExecutionTests {
         #expect(try await starter.start(title: "Other", exercises: [], at: now, in: zone) == .busy)
     }
 
+    @Test func aPlanMatchesJumpingJacksUnlessTheAppExcludesThem() async throws {
+        let plan = [PlannedExercise(name: "Jumping Jacks", prescription: target)]
+
+        let db = try AppDatabase.inMemory()
+        let open = WorkoutPlanStarter(workouts: db.workouts, exercises: db.exercises)
+        #expect(try await open.start(title: "Warm-up", exercises: plan, at: now, in: zone) == .started(added: 1, missing: []))
+        let draft = try #require(try await db.workouts.latestDraft())
+        #expect(draft.exercises.first?.entry.exerciseID == BuiltInCatalog.jumpingJack)
+
+        let otherDB = try AppDatabase.inMemory()
+        let closed = WorkoutPlanStarter(workouts: otherDB.workouts, exercises: otherDB.exercises, excluding: BuiltInCatalog.experimental)
+        let result = try await closed.start(
+            title: "Warm-up", exercises: plan + [PlannedExercise(name: "开合跳", prescription: target)], at: now, in: zone)
+        #expect(result == .noneKnown(missing: ["Jumping Jacks", "开合跳"]))
+        #expect(try await otherDB.workouts.latestDraft() == nil)
+    }
+
     @Test func invalidTargetsLeaveNoPartialWorkout() async throws {
         let db = try AppDatabase.inMemory()
         let starter = WorkoutPlanStarter(workouts: db.workouts, exercises: db.exercises)
