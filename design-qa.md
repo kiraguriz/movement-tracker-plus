@@ -56,3 +56,24 @@ The comparison images contain both artifacts in the same input. Copies were norm
 - [x] Final light/dark screenshots reviewed and collected for handoff; no actionable P0/P1/P2 visual differences remain within the native style implementation scope.
 
 final result: passed
+
+## Muse step and Muse calorie plan (2026-11-03)
+
+Scope: the Muse choice screen after Welcome, and the Your plan page states (waiting, from Muse, adjusted, standard fallback). Run on the shared iPhone 18 Pro simulator, iOS 27.2, with the Debug canned coach (`-MTCoachStub`, `-MTCoachStubPlan`, `-MTCoachStubFail`). No live proxy or Meta call was made.
+
+**Reviewed captures (looked at)**
+
+- Muse step, English portrait and largest accessibility text in landscape: both actions reachable, the two cards (what Muse sees, what stays on the phone) readable, no clipping.
+- Your plan, waiting: cobalt card with spinner and one line, "Use standard plan" below it, Start disabled.
+- Your plan, from Muse: "From Muse" card with the stub badge and rationale above the kcal card; Start enabled.
+- Your plan, offline fallback: amber notice with "Try Again" above the standard numbers; Start enabled.
+
+**Not looked at**
+
+- The adjusted-plan state was captured, but the adjustment notices sit below the visible area of the capture. Their presence is asserted by `testGuardAdjustmentsAreShownOnTheMusePlan`; their layout was not reviewed visually.
+- The Chinese Muse screenshot was exported and its test passes, but it was not reviewed here.
+- Physical device and the Pro Max size were not checked.
+
+**Environment note**: on this simulator and runtime the keyboard does not take focus when the weight field is entered straight after the height field. The unmodified main baseline fails the same way. The onboarding UI tests dismiss the keyboard between the two fields. Not a regression from this change.
+
+**Results**: `OnboardingUITests` 11 of 11 pass (`-parallel-testing-enabled NO`).
