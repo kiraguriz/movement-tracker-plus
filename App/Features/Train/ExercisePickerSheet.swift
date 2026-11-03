@@ -8,6 +8,7 @@ struct ExercisePickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var query = ""
+    @State private var isTeaching = false
 
     var body: some View {
         NavigationStack {
@@ -17,6 +18,15 @@ struct ExercisePickerSheet: View {
                         ContentUnavailableView("No exercises found", systemImage: "magnifyingglass")
                             .frame(maxWidth: .infinity, minHeight: 240)
                             .accessibilityIdentifier("exercise.empty")
+                        Button {
+                            isTeaching = true
+                        } label: {
+                            Text("teach.entry.query \(query.trimmingCharacters(in: .whitespacesAndNewlines))")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity, minHeight: 48)
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityIdentifier(AccessibilityID.teachEntryQuery)
                     }
                     if !cameraExercises.isEmpty {
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: dynamicTypeSize.isAccessibilitySize ? 1 : 2), spacing: 10) {
@@ -50,6 +60,24 @@ struct ExercisePickerSheet: View {
                     Button(role: .close) { dismiss() }
                         .accessibilityIdentifier(AccessibilityID.exercisePickerClose)
                 }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        isTeaching = true
+                    } label: {
+                        Label("teach.entry", systemImage: "figure.walk.motion")
+                    }
+                    .accessibilityIdentifier(AccessibilityID.teachEntry)
+                }
+            }
+            .fullScreenCover(isPresented: $isTeaching) {
+                TeachFlow(
+                    initialName: query.trimmingCharacters(in: .whitespacesAndNewlines),
+                    onAdd: { exercise in
+                        isTeaching = false
+                        add(exercise)
+                    },
+                    onClose: { isTeaching = false }
+                )
             }
         }
         .presentationBackground(TraceTheme.paper)
