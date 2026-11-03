@@ -162,6 +162,8 @@ extension AppEnvironment {
             try await environment.settings.set(SettingKey.aiOptIn, to: true)
         }
         #endif
+        // Exercises the user taught resolve their stored spec through this; load them before the first screen.
+        await ExerciseSpecCatalog.follow(environment.exercises)
         return environment
     }
 
