@@ -607,7 +607,6 @@ nonisolated enum StubSpecAuthor {
         Data("data: \(json.canonicalString)\n\n".utf8)
     }
 }
-#endif
 
 // MARK: - Goal plan
 
@@ -654,3 +653,4 @@ nonisolated enum StubGoalPlan {
         return StubTransport.json(200, StubTransport.response(items: [StubTransport.message(plan.canonicalString)]))
     }
 }
+#endif
