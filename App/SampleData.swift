@@ -39,6 +39,8 @@ enum SampleData {
             unitSystem: .metric, activityLevel: .intermediate, createdAt: now, updatedAt: now
         ))
 
+        if let draft = environment.launch.draftWorkout { try await seedDraftWorkout(environment, state: draft, now: now, timeZone: timeZone) }
+
         guard level == .sample else { return }
         try await seedMeals(environment, today: today, timeZone: timeZone)
         try await seedWorkout(environment, now: now, timeZone: timeZone)
@@ -123,6 +125,38 @@ enum SampleData {
                 effects.append(.upsertSet(SetEntry(
                     id: environment.newID(), entryID: entry.id, position: setPosition, reps: set.reps,
                     load: set.loadKg.map { Mass(kilograms: $0) }, tracking: .manual
+                )))
+            }
+        }
+        try await environment.workouts.apply(effects)
+    }
+
+    /// An unfinished squat and push-up workout: `working` has no set yet, `rest` has two squat sets and the rest
+    /// running, `ready` has two squat sets and the rest over.
+    private static func seedDraftWorkout(_ environment: AppEnvironment, state: String, now: Date, timeZone: TimeZone) async throws {
+        let start = now.addingTimeInterval(-14 * 60)
+        let session = WorkoutSession(
+            id: environment.newID(), status: .draft, title: nil, startedAt: start, timeZoneID: timeZone.identifier,
+            localDay: LocalDay(start, in: timeZone)
+        )
+        var effects: [WorkoutEffect] = [.upsertSession(session)]
+        let plan: [(ExerciseID, ExercisePrescription)] = [
+            (BuiltInCatalog.squatBodyweight, ExercisePrescription(sets: 4, reps: 10, restSeconds: 90)),
+            (BuiltInCatalog.pushup, ExercisePrescription(sets: 3, reps: 8, restSeconds: 60)),
+        ]
+        var squatEntry: ExerciseEntry?
+        for (position, (exerciseID, prescription)) in plan.enumerated() {
+            let entry = ExerciseEntry(id: environment.newID(), sessionID: session.id, exerciseID: exerciseID, position: position, prescription: prescription)
+            effects.append(.upsertExerciseEntry(entry))
+            if position == 0 { squatEntry = entry }
+        }
+        if state != "working", let squatEntry {
+            let lastEnded = now.addingTimeInterval(state == "ready" ? -300 : -5)
+            for index in 0..<2 {
+                let ended = lastEnded.addingTimeInterval(Double(index - 1) * 120)
+                effects.append(.upsertSet(SetEntry(
+                    id: environment.newID(), entryID: squatEntry.id, position: index, reps: 12 - index,
+                    startedAt: ended.addingTimeInterval(-40), endedAt: ended, tracking: .manual
                 )))
             }
         }

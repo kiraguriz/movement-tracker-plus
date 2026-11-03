@@ -10,24 +10,22 @@ public struct RestReminder: Equatable, Sendable {
 
     public let fireDate: Date
     public let exerciseID: ExerciseID
-    /// The set to do next, 1-based, within `exerciseID`.
+    /// The exercise and set to do next (set 1-based): the plan moves on to the next exercise when one is done.
     public let nextSet: Int
 
-    /// The reminder for the rest after the latest finished set, or nil when no rest is running: no finished set,
-    /// the rest is over or about to be, or a set was started after the last one finished.
+    /// The reminder for the rest that is running in `plan`, or nil when none is: the rest is over or about to be,
+    /// or a set has started since the last one finished.
+    public init?(plan: WorkoutActivityPlan, now: Date) {
+        guard plan.phase == .resting, let end = plan.restEnd, let exercise = plan.exerciseID,
+              end.timeIntervalSince(now) >= Self.minimumLead else { return nil }
+        fireDate = end
+        exerciseID = exercise
+        nextSet = plan.setNumber
+    }
+
     public init?(workout: Workout, now: Date) {
-        guard let rest = RestPeriod(workout: workout), rest.deadline.timeIntervalSince(now) >= Self.minimumLead else { return nil }
-        let finished = workout.exercises.flatMap { exercise in
-            exercise.sets.compactMap { logged in logged.set.endedAt.map { (exercise, $0, logged.id) } }
-        }
-        guard let latest = finished.max(by: { ($0.1, $0.2.rawValue) < ($1.1, $1.2.rawValue) }) else { return nil }
-        let startedLater = workout.exercises.contains { exercise in
-            exercise.sets.contains { $0.set.endedAt == nil && ($0.set.startedAt ?? .distantPast) > latest.1 }
-        }
-        guard !startedLater else { return nil }
-        fireDate = rest.deadline
-        exerciseID = latest.0.entry.exerciseID
-        nextSet = latest.0.sets.filter { $0.set.endedAt != nil }.count + 1
+        guard let plan = WorkoutActivityPlan(workout: workout, now: now) else { return nil }
+        self.init(plan: plan, now: now)
     }
 }
 

@@ -28,7 +28,10 @@ import Foundation
 /// - `-MTAIOptIn`: with the in-memory database, start with the coach consent already given.
 /// - `-MTMealPhotoSample`: the meal photo sheet offers a generated sample photo (the Simulator has no camera).
 /// - `-MTNotificationPrompt`: with the in-memory database the first workout does not ask for notification
-///   permission (a system alert would block UI tests); this flag lets it.
+///   permission (a system alert would block UI tests); this flag lets it, and also asks when a workout is already
+///   open at launch.
+/// - `-MTDraftWorkout working|rest|ready`: with a seed, start with an unfinished squat and push-up workout: no set
+///   yet, two sets with the rest running, or two sets with the rest over (Live Activity and notification checks).
 /// - `-MTHealthStub`: Apple Health runs over an in-process fake that records what would be written or removed and
 ///   answers the access request without the system sheet; Me shows its counters. `-MTHealthStub denied` makes the
 ///   access request come back denied. The stub is not compiled into Release, and neither is this flag.
@@ -58,6 +61,7 @@ struct LaunchOptions: Equatable {
     var healthStub = false
     var healthStubDenies = false
     var notificationPrompt = false
+    var draftWorkout: String?
     #endif
 
     init() {}
@@ -84,6 +88,7 @@ struct LaunchOptions: Equatable {
         healthStub = arguments.contains("-MTHealthStub")
         healthStubDenies = healthStub && Self.value(after: "-MTHealthStub", in: arguments) == "denied"
         notificationPrompt = arguments.contains("-MTNotificationPrompt")
+        draftWorkout = Self.value(after: "-MTDraftWorkout", in: arguments)
         #endif
     }
 
@@ -93,6 +98,15 @@ struct LaunchOptions: Equatable {
         notificationPrompt || !inMemoryDatabase
         #else
         true
+        #endif
+    }
+
+    /// Whether a workout that is already open at launch asks for notification permission, as a started one does.
+    var promptsForOpenWorkout: Bool {
+        #if DEBUG
+        notificationPrompt
+        #else
+        false
         #endif
     }
 

@@ -10,6 +10,7 @@ final class ActiveWorkoutModel {
 
     private let environment: AppEnvironment
     @ObservationIgnored private let restAlerts = RestAlertScheduler()
+    @ObservationIgnored private let liveActivity = WorkoutActivityCoordinator()
     @ObservationIgnored private var hasSeenDraftState = false
 
     init(environment: AppEnvironment) {
@@ -17,13 +18,18 @@ final class ActiveWorkoutModel {
     }
 
     func run() async {
+        await liveActivity.setRestOverHandler { [weak self] in await self?.refresh() }
         do {
             for try await drafts in environment.workouts.observeHistory(WorkoutHistoryQuery(statuses: [.draft], limit: 1)) {
                 guard let id = drafts.first?.id, let draft = try await environment.workouts.workout(id: id) else {
+                    let ended = workout
                     workout = nil
                     exerciseName = nil
                     hasSeenDraftState = true
                     restAlerts.cancel()
+                    var saved: Workout?
+                    if let ended { saved = try await environment.workouts.workout(id: ended.id) }
+                    await liveActivity.workoutEnded(saved)
                     continue
                 }
                 // A draft that appears after the app has seen there was none is a workout the user just started.
@@ -31,22 +37,33 @@ final class ActiveWorkoutModel {
                 workout = draft
                 hasSeenDraftState = true
                 exerciseName = try await currentExerciseName(in: draft)
-                if began, environment.launch.allowsNotificationPrompt { await restAlerts.requestAuthorizationIfNeeded() }
-                await syncRestAlert(for: draft)
+                if began || environment.launch.promptsForOpenWorkout, environment.launch.allowsNotificationPrompt { await restAlerts.requestAuthorizationIfNeeded() }
+                await syncSystem(for: draft)
             }
         } catch {
             // The pill is a shortcut; Train reports workout errors where they can be acted on.
         }
     }
 
-    /// Keeps the pending "rest over" notification in step with the rest that is running.
-    private func syncRestAlert(for draft: Workout) async {
-        guard let reminder = RestReminder(workout: draft, now: environment.now()),
-              let name = try? await displayName(of: reminder.exerciseID) else {
+    /// Looks at the workout again, for what changes with time alone: the rest ending, or the app coming back to the
+    /// front after the system has moved on without it.
+    func refresh() async {
+        guard let workout else { return }
+        await syncSystem(for: workout)
+    }
+
+    /// Keeps what lives outside the app in step with the workout: the Live Activity and the pending "rest over"
+    /// notification. Both follow the same plan, which only changes at set boundaries.
+    private func syncSystem(for draft: Workout) async {
+        let now = environment.now()
+        let plan = WorkoutActivityPlan(workout: draft, now: now)
+        let name = if let id = plan?.exerciseID { try? await displayName(of: id) } else { nil as String? }
+        await liveActivity.sync(plan, exerciseName: name, now: now)
+        if let plan, let reminder = RestReminder(plan: plan, now: now), let name {
+            await restAlerts.sync(reminder, exerciseName: name)
+        } else {
             restAlerts.cancel()
-            return
         }
-        await restAlerts.sync(reminder, exerciseName: name)
     }
 
     private func displayName(of id: ExerciseID) async throws -> String {
