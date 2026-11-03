@@ -139,6 +139,7 @@ struct TodayView: View {
             if let summary = model.latestWorkout.value ?? nil {
                 NavigationLink { WorkoutHistoryView(environment: environment) } label: {
                     TodayWorkoutCard(summary: summary, setCounts: model.latestSetCounts, showsTally: false)
+                        .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("today.workoutHistory")
