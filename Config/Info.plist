@@ -2,6 +2,17 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>io.github.kiraguriz.MovementTracker</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>movementtracker</string>
+			</array>
+		</dict>
+	</array>
 	<key>CoachProxyURL</key>
 	<string>$(COACH_PROXY_URL)</string>
 	<key>LSSupportsOpeningDocumentsInPlace</key>

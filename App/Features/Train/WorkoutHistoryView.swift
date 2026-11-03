@@ -285,8 +285,7 @@ private struct WorkoutDetailView: View {
                         ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { offset, logged in
                             if logged.set.tracking == .camera, !logged.reps.isEmpty,
                                let catalogExercise = catalog[exercise.entry.exerciseID],
-                               let specID = catalogExercise.specID, let bundled = BundledSpec(rawValue: specID),
-                               let spec = try? ExerciseSpec.bundled(bundled) {
+                               let spec = try? ExerciseSpecCatalog.spec(for: catalogExercise) {
                                 Button {
                                     openReview(logged: logged, number: offset + 1, exercise: catalogExercise, spec: spec, workout: workout)
                                 } label: {

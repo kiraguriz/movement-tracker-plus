@@ -10,7 +10,7 @@ export async function handleCoach(ctx: Ctx): Promise<Response> {
 
   const featureHeader = ctx.request.headers.get("x-coach-feature")?.trim() ?? "";
   if (!isFeature(featureHeader)) {
-    throw badRequest("invalid_feature", "X-Coach-Feature must be one of: set_review, debrief, chat, meal_photo, spec_author");
+    throw badRequest("invalid_feature", "X-Coach-Feature must be one of: set_review, debrief, chat, meal_photo, spec_author, goal_plan");
   }
   const feature = featureHeader;
   const policy = POLICIES[feature];

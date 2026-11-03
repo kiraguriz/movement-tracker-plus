@@ -146,6 +146,7 @@ struct SeededPreview<Content: View>: View {
                 content(environment)
                     .environment(\.appEnvironment, environment)
                     .environment(session)
+                    .environment(AppRouter())
                     .task { await session.run() }
             }
         }

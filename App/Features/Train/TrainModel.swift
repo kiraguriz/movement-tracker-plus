@@ -135,6 +135,29 @@ final class TrainModel {
         }
     }
 
+    /// Opens a set of this exercise: the workout is resumed or started, the exercise is added when it is not there,
+    /// and its camera set starts (a manual set for a manual-only exercise). Unknown exercises are ignored.
+    func startSet(of exerciseID: ExerciseID) {
+        perform {
+            guard self.catalog[exerciseID] != nil || BuiltInCatalog.exercises.contains(where: { $0.id == exerciseID }) else { return }
+            try await self.adoptLatestDraft()
+            if self.workout == nil {
+                let transition = self.reducer.start(at: self.environment.now(), in: self.environment.timeZone())
+                try await self.environment.workouts.apply(transition.effects)
+                self.workout = transition.workout
+            }
+            if !self.exerciseEntries.contains(where: { $0.entry.exerciseID == exerciseID }) {
+                try await self.apply(.addExercise(exerciseID))
+            }
+            guard let entry = self.exerciseEntries.last(where: { $0.entry.exerciseID == exerciseID })?.entry else { return }
+            if let request = self.liveSetRequest(for: entry) {
+                self.liveSet = request
+            } else {
+                self.manualSetEntry = entry
+            }
+        }
+    }
+
     /// Adds the exercise to the workout, or reuses its entry when it is already there.
     func addExercise(_ id: ExerciseID) {
         perform {
@@ -197,9 +220,9 @@ final class TrainModel {
     /// The request to count a set of this exercise with the camera, or nil for a manual-only exercise.
     func liveSetRequest(for entry: ExerciseEntry) -> LiveSetRequest? {
         let exercise = exercise(for: entry.exerciseID)
-        guard let specID = exercise.specID, let bundled = BundledSpec(rawValue: specID) else { return nil }
         do {
-            return LiveSetRequest(exercise: exercise, spec: try .bundled(bundled), entryID: entry.id)
+            guard let spec = try ExerciseSpecCatalog.spec(for: exercise) else { return nil }
+            return LiveSetRequest(exercise: exercise, spec: spec, entryID: entry.id)
         } catch {
             errorMessage = error.localizedDescription
             return nil

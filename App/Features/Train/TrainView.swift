@@ -15,6 +15,7 @@ struct TrainView: View {
 
 private struct TrainScreen: View {
     @Environment(UserSession.self) private var session
+    @Environment(AppRouter.self) private var router
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var model: TrainModel
     @State private var isConfirmingDiscard = false
@@ -49,6 +50,8 @@ private struct TrainScreen: View {
         .toolbar { toolbar }
         .task { await model.run() }
         .onChange(of: refresh) { model.refreshDraft() }
+        .onChange(of: router.pending, initial: true) { startRequestedSet() }
+        .onChange(of: model.isLoaded) { startRequestedSet() }
         .sheet(isPresented: $model.isPickingExercise) {
             ExercisePickerSheet(model: model)
         }
@@ -82,6 +85,13 @@ private struct TrainScreen: View {
         }
         .errorAlert($model.errorMessage)
         .testIdentifier(AccessibilityID.screenTrain)
+    }
+
+    /// A set asked for from another tab, a link or an intent; it waits until the draft has loaded.
+    private func startRequestedSet() {
+        guard model.isLoaded, case .startSet(let exerciseID)? = router.pending else { return }
+        router.consume(.startSet(exerciseID))
+        model.startSet(of: exerciseID)
     }
 
     // MARK: Idle

@@ -22,6 +22,8 @@ public enum CoachFeature: String, Sendable, CaseIterable {
     case debrief
     case chat
     case mealPhoto = "meal_photo"
+    case specAuthor = "spec_author"
+    case goalPlan = "goal_plan"
 
     public struct Policy: Sendable, Equatable {
         public var efforts: [ReasoningEffort]
@@ -56,6 +58,12 @@ public enum CoachFeature: String, Sendable, CaseIterable {
         case .mealPhoto:
             return Policy(efforts: [.low, .minimal, .medium], defaultEffort: .low, defaultMaxOutputTokens: 4000, maxOutputTokens: 6000,
                           maxBodyBytes: 4 * mib, maxTextBytes: 64 * kib, maxImages: 2, allowsStreaming: false, allowsTools: false)
+        case .specAuthor:
+            return Policy(efforts: [.medium, .low, .high], defaultEffort: .medium, defaultMaxOutputTokens: 8000, maxOutputTokens: 12000,
+                          maxBodyBytes: 3 * mib, maxTextBytes: 128 * kib, maxImages: 8, allowsStreaming: true, allowsTools: false)
+        case .goalPlan:
+            return Policy(efforts: [.low, .minimal, .medium], defaultEffort: .low, defaultMaxOutputTokens: 4000, maxOutputTokens: 6000,
+                          maxBodyBytes: 32 * kib, maxTextBytes: 32 * kib, maxImages: 0, allowsStreaming: true, allowsTools: false)
         }
     }
 }

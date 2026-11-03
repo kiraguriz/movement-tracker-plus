@@ -1,6 +1,6 @@
 import { HttpError, badRequest, isObject } from "./http.ts";
 
-export const FEATURES = ["set_review", "debrief", "chat", "meal_photo", "spec_author"] as const;
+export const FEATURES = ["set_review", "debrief", "chat", "meal_photo", "spec_author", "goal_plan"] as const;
 export type Feature = (typeof FEATURES)[number];
 
 export function isFeature(value: string): value is Feature {
@@ -98,6 +98,19 @@ export const POLICIES: Record<Feature, Policy> = {
     allowStream: true,
     allowTools: false,
     dailyRequests: 20,
+  },
+  // The first calorie and macro plan, chosen inside ranges the phone computed. Numbers only, no images.
+  goal_plan: {
+    efforts: ["minimal", "low", "medium"],
+    defaultEffort: "low",
+    defaultMaxOutputTokens: 4000,
+    maxOutputTokens: 6000,
+    maxBodyBytes: 32 * KIB,
+    maxTextBytes: 32 * KIB,
+    maxImages: 0,
+    allowStream: true,
+    allowTools: false,
+    dailyRequests: 10,
   },
 };
 

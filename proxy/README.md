@@ -37,6 +37,7 @@ whole budget and leave the answer empty.
 | `chat` | medium, low, high | 6000 / 8000 | 256 KiB | 256 KiB | 0 | yes | function tools | 100 |
 | `meal_photo` | low, minimal, medium | 4000 / 6000 | 4 MiB | 64 KiB | 2 | no | no | 40 |
 | `spec_author` | medium, low, high | 8000 / 12000 | 3 MiB | 128 KiB | 8 | yes | no | 20 |
+| `goal_plan` | low, minimal, medium | 4000 / 6000 | 32 KiB | 32 KiB | 0 | yes | no | 10 |
 
 The text cap is the body minus inline image data. Text is billed per token, so a hostile client could
 otherwise fill a multi-MiB image allowance with text (about 0.6 USD per request at 2 MiB). Over it is

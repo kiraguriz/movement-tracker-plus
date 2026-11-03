@@ -1,3 +1,4 @@
+import AppLogic
 import SwiftUI
 
 enum AppTab: String, Hashable {
@@ -6,6 +7,7 @@ enum AppTab: String, Hashable {
 
 struct RootView: View {
     @Environment(\.appEnvironment) private var environment
+    @Environment(AppRouter.self) private var router
     @Environment(\.scenePhase) private var scenePhase
     @State private var selection: AppTab
     @State private var isCoachPresented = false
@@ -78,12 +80,30 @@ struct RootView: View {
         .onChange(of: selection) { _, tab in
             if tab == .train { trainRefresh += 1 }
         }
+        .onChange(of: router.pending, initial: true) { _, route in
+            if let route { follow(route) }
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { trainRefresh += 1 }
         }
         .sheet(isPresented: $isCoachPresented, onDismiss: { trainRefresh += 1 }) {
             CoachSheet(environment: environment, openTrain: { selection = .train })
         }
+    }
+
+    private func follow(_ route: AppRoute) {
+        switch route {
+        case .today: selection = .today
+        case .train: selection = .train
+        case .eat: selection = .eat
+        case .me: selection = .me
+        case .coach: isCoachPresented = true
+        case .startSet:
+            // Train consumes it once its workout has loaded.
+            selection = .train
+            return
+        }
+        router.consume(route)
     }
 
     /// Train shows its own rest card, so the running workout appears here only on the other tabs.

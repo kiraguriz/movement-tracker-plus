@@ -654,6 +654,7 @@ describe("coach daily budget", () => {
       chat: { efforts: "low|medium|high", defaultEffort: "medium", maxTokens: [6000, 8000], bodyKiB: 256, textKiB: 256, images: 0, stream: true, tools: true, perDay: 100 },
       meal_photo: { efforts: "minimal|low|medium", defaultEffort: "low", maxTokens: [4000, 6000], bodyKiB: 4096, textKiB: 64, images: 2, stream: false, tools: false, perDay: 40 },
       spec_author: { efforts: "low|medium|high", defaultEffort: "medium", maxTokens: [8000, 12000], bodyKiB: 3072, textKiB: 128, images: 8, stream: true, tools: false, perDay: 20 },
+      goal_plan: { efforts: "minimal|low|medium", defaultEffort: "low", maxTokens: [4000, 6000], bodyKiB: 32, textKiB: 32, images: 0, stream: true, tools: false, perDay: 10 },
     });
     assert.equal(MIN_OUTPUT_TOKENS, 4000);
   });

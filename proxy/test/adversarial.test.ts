@@ -365,7 +365,7 @@ describe("route and token hardening", () => {
     await coach(h, token, "chat", { input: "hi" });
     await h.call("/v1/food/search?q=apple%3Aevil%3A20260101", { token });
     for (const key of h.kv.keys()) {
-      assert.match(key, /^(tok:[0-9a-f]{64}|rl:install:[0-9a-f]{24}:\d+|bud:[0-9a-f]{32}:(set_review|debrief|chat|meal_photo|spec_author|voice|food):\d{8})$/, key);
+      assert.match(key, /^(tok:[0-9a-f]{64}|rl:install:[0-9a-f]{24}:\d+|bud:[0-9a-f]{32}:(set_review|debrief|chat|meal_photo|spec_author|goal_plan|voice|food):\d{8})$/, key);
     }
   });
 });
