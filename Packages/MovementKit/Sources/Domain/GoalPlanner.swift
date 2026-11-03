@@ -223,6 +223,63 @@ public enum GoalPlanner {
         }
     }
 
+    /// Protein, fat and carbs for a calorie target. Pure and shared with `GoalPlanGuard`.
+    public struct Macros: Equatable, Sendable {
+        public var proteinG: Int
+        public var carbsG: Int
+        public var fatG: Int
+        /// Protein per kg of the basis (lean mass when `usesLeanMass`, else body mass).
+        public var proteinPerKilogram: Double
+        public var usesLeanMass: Bool
+        /// Protein and fat were reduced so the macros fit inside `kcal`.
+        public var compressed: Bool
+        /// A body-fat value outside 5...60 % was given and ignored.
+        public var bodyFatIgnored: Bool
+    }
+
+    public static func macros(kcal: Int, kind: GoalKind, weightKilograms kg: Double, bodyFatPercent: Double? = nil) -> Macros {
+        var proteinBasisKg = kg
+        var usesLeanMass = false
+        var bodyFatIgnored = false
+        if let bodyFat = bodyFatPercent {
+            if leanMassBodyFatRange.contains(bodyFat) {
+                proteinBasisKg = kg * (1 - bodyFat / 100)
+                usesLeanMass = true
+            } else {
+                bodyFatIgnored = true
+            }
+        }
+        let proteinPerKg: Double
+        let fatPerKg: Double
+        switch kind {
+        case .gain: (proteinPerKg, fatPerKg) = (2.0, 0.9)
+        case .lose: (proteinPerKg, fatPerKg) = (2.2, 0.75)
+        case .maintain: (proteinPerKg, fatPerKg) = (1.8, 0.8)
+        }
+        let fatFloorGrams = max(minimumFatGrams, 0.20 * Double(kcal) / 9)
+        var protein = Int((proteinPerKg * proteinBasisKg).rounded())
+        var fat = Int(max(fatPerKg * kg, fatFloorGrams).rounded())
+
+        var compressed = false
+        if 4 * protein + 9 * fat > kcal {
+            compressed = true
+            fat = min(fat, Int(fatFloorGrams.rounded(.up)))
+        }
+        if 4 * protein + 9 * fat > kcal {
+            protein = min(protein, Int((proteinFloorPerKilogram * proteinBasisKg).rounded(.down)))
+        }
+        if 4 * protein + 9 * fat > kcal {
+            let scale = Double(kcal) / Double(4 * protein + 9 * fat)
+            protein = Int((Double(protein) * scale).rounded(.down))
+            fat = Int((Double(fat) * scale).rounded(.down))
+        }
+        let carbs = max(0, (kcal - 4 * protein - 9 * fat) / 4)
+        return Macros(
+            proteinG: protein, carbsG: carbs, fatG: fat, proteinPerKilogram: proteinPerKg, usesLeanMass: usesLeanMass,
+            compressed: compressed, bodyFatIgnored: bodyFatIgnored
+        )
+    }
+
     public static func plan(_ input: Input) throws(PlanError) -> Plan {
         // Validation
         guard input.ageYears >= minimumAge else { throw .ageBelowMinimum(minimum: minimumAge) }
@@ -308,49 +365,16 @@ public enum GoalPlanner {
         let effectiveRateKg = max(0, deliveredPerDay) * 7 / kcalPerKilogram
 
         // Macros
-        var proteinBasisKg = kg
-        var usesLeanMass = false
-        if let bodyFat = input.bodyFatPercent {
-            if leanMassBodyFatRange.contains(bodyFat) {
-                proteinBasisKg = kg * (1 - bodyFat / 100)
-                usesLeanMass = true
-            } else {
-                warnings.append(.bodyFatIgnored)
-            }
-        }
-        let proteinPerKg: Double
-        let fatPerKg: Double
-        switch input.kind {
-        case .gain: (proteinPerKg, fatPerKg) = (2.0, 0.9)
-        case .lose: (proteinPerKg, fatPerKg) = (2.2, 0.75)
-        case .maintain: (proteinPerKg, fatPerKg) = (1.8, 0.8)
-        }
-        let fatFloorGrams = max(minimumFatGrams, 0.20 * Double(kcal) / 9)
-        var protein = Int((proteinPerKg * proteinBasisKg).rounded())
-        var fat = Int(max(fatPerKg * kg, fatFloorGrams).rounded())
-
-        var compressed = false
-        if 4 * protein + 9 * fat > kcal {
-            compressed = true
-            fat = min(fat, Int(fatFloorGrams.rounded(.up)))
-        }
-        if 4 * protein + 9 * fat > kcal {
-            protein = min(protein, Int((proteinFloorPerKilogram * proteinBasisKg).rounded(.down)))
-        }
-        if 4 * protein + 9 * fat > kcal {
-            let scale = Double(kcal) / Double(4 * protein + 9 * fat)
-            protein = Int((Double(protein) * scale).rounded(.down))
-            fat = Int((Double(fat) * scale).rounded(.down))
-        }
-        let carbs = max(0, (kcal - 4 * protein - 9 * fat) / 4)
-
-        rationale.append(Rationale(usesLeanMass ? .proteinLeanMass : .proteinBodyMass, [proteinPerKg, Double(protein)]))
-        rationale.append(Rationale(.fat, [Double(fat)]))
-        rationale.append(Rationale(.carbsRemainder, [Double(carbs)]))
-        if compressed {
+        let macros = Self.macros(kcal: kcal, kind: input.kind, weightKilograms: kg, bodyFatPercent: input.bodyFatPercent)
+        if macros.bodyFatIgnored { warnings.append(.bodyFatIgnored) }
+        rationale.append(Rationale(macros.usesLeanMass ? .proteinLeanMass : .proteinBodyMass, [macros.proteinPerKilogram, Double(macros.proteinG)]))
+        rationale.append(Rationale(.fat, [Double(macros.fatG)]))
+        rationale.append(Rationale(.carbsRemainder, [Double(macros.carbsG)]))
+        if macros.compressed {
             warnings.append(.macrosCompressed)
             rationale.append(Rationale(.macrosCompressed))
         }
+        let (protein, carbs, fat) = (macros.proteinG, macros.carbsG, macros.fatG)
 
         var weeks: Int?
         if let target = input.targetWeight, effectiveRateKg > 0 {

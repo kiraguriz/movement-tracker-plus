@@ -26,6 +26,7 @@ public struct InsightKind: RawRepresentable, Hashable, Sendable, Codable, Expres
     public static let mealEstimate: InsightKind = "meal_estimate"
     public static let dailyTip: InsightKind = "daily_tip"
     public static let weeklyCheck: InsightKind = "weekly_check"
+    public static let goalPlan: InsightKind = "goal_plan"
 }
 
 /// A cached model output. Looked up by `(kind, inputHash)`, so the same input is never paid for twice.
