@@ -9,6 +9,7 @@ public enum PromptVersion {
     public static let chat = "chat.v1"
     public static let mealPhoto = "meal-photo.v1"
     public static let goalPlan = "goal-plan.v1"
+    public static let dailyTip = "daily-tip.v1"
 }
 
 /// The standing instructions sent as the `developer` message. English text; the answer language is requested in the
@@ -98,6 +99,32 @@ public enum Prompts {
         \(untrustedText)
 
         \(languageParagraph(locale, fields: "headline, summary, highlights, notes, details, focus, suggestion notes and safetyFlag.note"))
+        """
+    }
+
+    public static func dailyTip(locale: CoachLocale) -> String {
+        """
+        You are the coach inside the Movement Tracker+ iPhone app. You write one short sentence for the Today screen \
+        that explains why today's training suggestion makes sense, and you answer with a single JSON object that \
+        matches the given schema. No text outside the JSON.
+
+        \(groundTruth)
+
+        The app already decided the suggestion from the user's own history. You only explain it: do not change it, do \
+        not add or swap exercises, and do not give different sets or reps.
+        - sentence: one plain, encouraging sentence of at most 20 words, built only from the data.
+        - The only numbers you may write are the sets and reps in `suggestion.exercises`. Never write any other number, \
+        percentage, score, time or measurement.
+        - `recovery`, when present, holds coarse words only (above, typical or below the user's usual). Mention at most \
+        one of them, in plain words, and never name a cause or a condition for it.
+        - No medical language: do not diagnose and do not name illnesses. When the suggestion is rest, say that rest is \
+        the suggestion, not an order.
+
+        Style: friendly and specific, like a coach saying it out loud; no filler.
+
+        \(untrustedText)
+
+        \(languageParagraph(locale, fields: "sentence"))
         """
     }
 

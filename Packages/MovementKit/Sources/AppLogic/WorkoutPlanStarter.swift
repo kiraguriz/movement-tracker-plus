@@ -52,4 +52,30 @@ public struct WorkoutPlanStarter: Sendable {
         try await workouts.apply(effects)
         return .started(added: added, missing: missing)
     }
+
+    /// The same, for lifts chosen by id (Today's suggestion). An id that is not in the catalog is reported in `missing`
+    /// by its raw value and skipped.
+    public func start(title: String, lifts: [PlannedLift], at date: Date, in timeZone: TimeZone) async throws -> Result {
+        guard try await workouts.latestDraft() == nil else { return .busy }
+        let known = Set(try await exercises.allExercises().map(\.id))
+        var transition = reducer.start(title: title, at: date, in: timeZone)
+        var effects = transition.effects
+        var missing: [String] = []
+        var added = 0
+        for lift in lifts {
+            guard known.contains(lift.exerciseID) else {
+                missing.append(lift.exerciseID.rawValue)
+                continue
+            }
+            transition = try reducer.reduce(transition.workout, .addExercise(lift.exerciseID))
+            effects += transition.effects
+            guard let entry = transition.workout.exercises.last?.entry else { continue }
+            transition = try reducer.reduce(transition.workout, .setPrescription(entryID: entry.id, lift.prescription))
+            effects += transition.effects
+            added += 1
+        }
+        guard added > 0 else { return .noneKnown(missing: missing) }
+        try await workouts.apply(effects)
+        return .started(added: added, missing: missing)
+    }
 }

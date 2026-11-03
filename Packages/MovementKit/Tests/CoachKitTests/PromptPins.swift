@@ -12,5 +12,7 @@ enum PromptPins {
         "goal-plan.v1/zh-Hans": "578468796ea22d3e",
         "chat.v1/en": "ba59310c93ff88c4",
         "chat.v1/zh-Hans": "7a906e8163a348af",
+        "daily-tip.v1/en": "259e62cf36a496b8",
+        "daily-tip.v1/zh-Hans": "7b740d6842685839",
     ]
 }

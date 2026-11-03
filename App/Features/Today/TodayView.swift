@@ -26,6 +26,7 @@ struct TodayView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     header(wide: wide)
+                    TodayPlanCard(environment: environment, day: model.day, wide: wide)
                     if wide {
                         Grid(horizontalSpacing: 16, verticalSpacing: 16) {
                             GridRow {

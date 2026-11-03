@@ -13,7 +13,7 @@ public enum InsightEvent<Output: Codable & Sendable & Equatable>: Sendable, Equa
 /// usage and a "What Muse saw" record. Chat lives in `ChatService`.
 public struct CoachService: Sendable {
     public let client: CoachClient
-    private let runner: InsightRunner
+    let runner: InsightRunner
     private let offlineStrings: any OfflineStrings
     private let clock: any CoachClock
 
