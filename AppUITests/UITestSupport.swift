@@ -25,6 +25,15 @@ class AppUITestCase: XCTestCase {
         static let heightInches = "profile.heightInches"
         static let goalPicker = "profile.goal"
         static let planKcal = "plan.kcal"
+        static let onboardingMuse = "onboarding.muse"
+        static let onboardingMuseOn = "onboarding.muse.on"
+        static let onboardingMuseOff = "onboarding.muse.off"
+        static let onboardingPlanWaiting = "onboarding.plan.waiting"
+        static let onboardingPlanUseStandard = "onboarding.plan.useStandard"
+        static let onboardingPlanRetry = "onboarding.plan.retry"
+        static let onboardingPlanMuse = "onboarding.plan.muse"
+        static let onboardingPlanNotice = "onboarding.plan.notice"
+        static let onboardingPlanAdjustment = "onboarding.plan.adjustment"
 
         static let todayKcal = "today.kcal"
         static let todayWeight = "today.weight"
@@ -106,6 +115,7 @@ class AppUITestCase: XCTestCase {
             XCTAssertTrue(begin.waitForExistence(timeout: 10), "the welcome did not appear")
             if !showWelcome {
                 begin.tap()
+                chooseStandardPlanIfAsked(in: app)
                 XCTAssertTrue(app.textFields[ID.birthYear].waitForExistence(timeout: 10), "profile setup did not open")
             }
         } else {
@@ -114,6 +124,16 @@ class AppUITestCase: XCTestCase {
             }, "the native tab bar or sidebar tabs did not appear")
         }
         return app
+    }
+
+    /// With the coach available setup opens on the Muse choice. Tests that are not about Muse take the standard plan
+    /// (without `-MTNoCoach` the step is absent, so this does nothing).
+    @MainActor
+    func chooseStandardPlanIfAsked(in app: XCUIApplication) {
+        let standard = app.buttons[ID.onboardingMuseOff]
+        guard standard.waitForExistence(timeout: 3) else { return }
+        _ = waitUntil(timeout: 5) { standard.isHittable }
+        standard.tap()
     }
 
     // MARK: Lookups
