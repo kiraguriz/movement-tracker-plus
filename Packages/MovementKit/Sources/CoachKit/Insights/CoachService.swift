@@ -77,6 +77,19 @@ public struct CoachService: Sendable {
         try await runner.run(try mealPlan(input, locale: locale))
     }
 
+    // MARK: Taught exercise form checks
+
+    /// Asks Muse which form checks fit an exercise the user taught. Only a Muse answer is a draft worth acting on:
+    /// when Muse cannot answer, the result is the empty "just count" draft marked `.offline`. Throws only for
+    /// cancellation and for input that cannot be sent (not two PNG drawings). Callers check consent first.
+    public func authorSpec(
+        _ input: SpecAuthorInput,
+        locale: CoachLocale,
+        onUpdate: (@Sendable (InsightUpdate) -> Void)? = nil
+    ) async throws -> InsightResult<SpecDraft> {
+        try await runner.run(try specAuthorPlan(input, locale: locale), onUpdate: onUpdate)
+    }
+
     // MARK: Proxy calls
 
     public func searchFood(query: String, page: Int = 1) async throws -> FoodSearchPage {
@@ -190,6 +203,45 @@ public struct CoachService: Sendable {
             ),
             validate: { try $0.validated() },
             fallback: nil
+        )
+    }
+
+    func specAuthorPlan(_ input: SpecAuthorInput, locale: CoachLocale) throws -> InsightPlan<SpecDraft> {
+        guard input.images.count == 2 else { throw CoachError.invalidInput("A spec draft takes exactly two drawings.") }
+        var images: [(source: SkeletonImage, png: Data)] = []
+        for image in input.images {
+            guard let png = ImageSanitizer.png(image.png) else { throw CoachError.invalidInput("Skeleton images must be PNG data.") }
+            images.append((image, png))
+        }
+        let feature = CoachFeature.specAuthor
+        let json = input.json
+        let effort = ReasoningEffort.low
+        let text = "Choose the form checks for this exercise. The attached images follow the `images` list, in order.\n\nData (JSON):\n\(json.canonicalString)"
+        return InsightPlan(
+            kind: .specDraft,
+            feature: feature,
+            subjectID: input.exerciseID.rawValue,
+            promptVersion: PromptVersion.specAuthor,
+            locale: locale,
+            model: .sparkLatest,
+            effort: effort,
+            maxOutputTokens: 6000,
+            // Not streaming would run into the server-side time limit of the model host on a slow answer.
+            stream: true,
+            developerText: Prompts.specAuthor(locale: locale),
+            userParts: [.inputText(text)] + images.map { .inputImage(dataURL: Self.dataURL(mediaType: "image/png", $0.png)) },
+            format: StructuredFormat(name: "SpecDraft", schema: SpecDraft.schema),
+            saw: WhatMuseSaw(
+                feature: feature.rawValue, model: MuseModel.sparkLatest.rawValue, promptVersion: PromptVersion.specAuthor,
+                effort: effort.rawValue, locale: locale.rawValue, input: json,
+                images: images.map { SawImage(role: $0.source.role.rawValue, description: $0.source.summary, mediaType: "image/png", byteCount: $0.png.count) }
+            ),
+            inputHash: InsightHasher.hash(
+                feature: feature, promptVersion: PromptVersion.specAuthor, model: .sparkLatest, effort: effort, locale: locale,
+                subjectID: input.exerciseID.rawValue, input: json, images: images.map { .init(role: $0.source.role.rawValue, data: $0.png) }
+            ),
+            validate: { try $0.validated(for: input) },
+            fallback: { SpecDraft.offline() }
         )
     }
 

@@ -10,5 +10,7 @@ enum PromptPins {
         "meal-photo.v1/zh-Hans": "54a3b246b8ddc8b0",
         "chat.v1/en": "ba59310c93ff88c4",
         "chat.v1/zh-Hans": "7a906e8163a348af",
+        "spec-author.v1/en": "4e49731bcbeb4321",
+        "spec-author.v1/zh-Hans": "65ffc9e4b140e63a",
     ]
 }

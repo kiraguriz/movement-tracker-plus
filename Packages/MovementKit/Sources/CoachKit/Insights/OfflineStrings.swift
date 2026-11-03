@@ -54,6 +54,13 @@ public struct BuiltInOfflineStrings: OfflineStrings {
         "cue.pushup.lower": ("Lower your chest closer to the floor", "胸部再靠近地面一点"),
         "cue.pushup.hipsLevel": ("Keep hips, shoulders and ankles in one line", "保持肩、髋、踝成一条直线"),
         "cue.pushup.lockOut": ("Press all the way up until your arms are straight", "向上推到手臂完全伸直"),
+        // Form checks of taught exercises (`MotionCore.TaughtRuleTemplate`; `controlDown` is shared with the squat).
+        "cue.taught.deeper": ("Go a little deeper", "再深一点"),
+        "cue.taught.returnFully": ("Come all the way back to the start", "完全回到起始位置"),
+        "cue.taught.controlUp": ("Come up slowly and stay in control", "上升时放慢速度，保持控制"),
+        "cue.taught.chestUp": ("Keep your chest up", "挺胸，保持上身直立"),
+        "cue.taught.bodyStraight": ("Keep your body in one straight line", "保持身体成一条直线"),
+        "cue.taught.lockOut": ("Straighten your arms fully at the top", "在顶端把手臂完全伸直"),
     ]
 
     public func cueText(forKey key: String, locale: CoachLocale) -> String? {

@@ -76,6 +76,8 @@ struct PromptPinTests {
         (PromptVersion.mealPhoto, .zhHans, Prompts.mealPhoto(locale: .zhHans), ""),
         (PromptVersion.chat, .en, Prompts.chat(locale: .en, today: "2027-01-15", timeZoneID: "UTC", unitSystem: "metric"), ""),
         (PromptVersion.chat, .zhHans, Prompts.chat(locale: .zhHans, today: "2027-01-15", timeZoneID: "UTC", unitSystem: "metric"), ""),
+        (PromptVersion.specAuthor, .en, Prompts.specAuthor(locale: .en), ""),
+        (PromptVersion.specAuthor, .zhHans, Prompts.specAuthor(locale: .zhHans), ""),
     ]
 
     static let expected: [String: String] = PromptPins.shas
@@ -101,8 +103,8 @@ struct PromptPinTests {
     }
 
     @Test func versionsAreDistinctAndNamedAfterTheirFeature() {
-        let versions = [PromptVersion.setReview, PromptVersion.debrief, PromptVersion.chat, PromptVersion.mealPhoto]
-        #expect(Set(versions).count == 4)
+        let versions = [PromptVersion.setReview, PromptVersion.debrief, PromptVersion.chat, PromptVersion.mealPhoto, PromptVersion.specAuthor]
+        #expect(Set(versions).count == 5)
         #expect(versions.allSatisfy { $0.range(of: #"^[a-z-]+\.v\d+$"#, options: .regularExpression) != nil })
     }
 

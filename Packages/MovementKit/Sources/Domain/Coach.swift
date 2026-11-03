@@ -25,6 +25,7 @@ public struct InsightKind: RawRepresentable, Hashable, Sendable, Codable, Expres
     public static let sessionDebrief: InsightKind = "session_debrief"
     public static let mealEstimate: InsightKind = "meal_estimate"
     public static let dailyTip: InsightKind = "daily_tip"
+    public static let specDraft: InsightKind = "spec_draft"
     public static let weeklyCheck: InsightKind = "weekly_check"
 }
 

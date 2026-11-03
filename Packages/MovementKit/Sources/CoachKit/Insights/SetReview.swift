@@ -125,6 +125,9 @@ public struct SkeletonImage: Sendable, Equatable {
     public enum Role: String, Sendable {
         case bestRepBottom = "best_rep_bottom"
         case worstRepBottom = "worst_rep_bottom"
+        /// The two poses of a taught exercise: where the movement starts and its middle point.
+        case taughtStart = "taught_start"
+        case taughtMiddle = "taught_middle"
     }
 
     public var role: Role
@@ -141,6 +144,14 @@ public struct SkeletonImage: Sendable, Equatable {
 
     /// What the "What Muse saw" view says about this image.
     public var summary: String {
+        switch role {
+        case .taughtStart:
+            return "Skeleton drawing of the starting pose. A drawing from pose estimation, not a photo."
+        case .taughtMiddle:
+            return "Skeleton drawing of the middle pose. A drawing from pose estimation, not a photo."
+        case .bestRepBottom, .worstRepBottom:
+            break
+        }
         let which = role == .bestRepBottom ? "best" : "worst"
         let repText = rep.map { " (rep \($0))" } ?? ""
         return "Skeleton drawing of the \(which) rep\(repText) at the bottom of the movement. A drawing from pose estimation, not a photo."
