@@ -17,6 +17,8 @@
 	<string>$(COACH_PROXY_URL)</string>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 </dict>

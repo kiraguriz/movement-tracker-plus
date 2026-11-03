@@ -14,6 +14,7 @@
 		7A10C0DE0000000000000085 /* CoachKit in Frameworks */ = {isa = PBXBuildFile; productRef = 7A10C0DE0000000000000075 /* CoachKit */; };
 		7A10C0DE0000000000000086 /* HealthBridge in Frameworks */ = {isa = PBXBuildFile; productRef = 7A10C0DE0000000000000076 /* HealthBridge */; };
 		7A10C0DE0000000000000087 /* AppLogic in Frameworks */ = {isa = PBXBuildFile; productRef = 7A10C0DE0000000000000077 /* AppLogic */; };
+		7A10C0DE0000000000000099 /* MovementTrackerLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7A10C0DE0000000000000090 /* MovementTrackerLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -24,12 +25,35 @@
 			remoteGlobalIDString = 7A10C0DE0000000000000020;
 			remoteInfo = MovementTracker;
 		};
+		7A10C0DE000000000000009A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7A10C0DE0000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7A10C0DE0000000000000094;
+			remoteInfo = MovementTrackerLiveActivity;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		7A10C0DE0000000000000098 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				7A10C0DE0000000000000099 /* MovementTrackerLiveActivity.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		7A10C0DE0000000000000010 /* MovementTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MovementTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A10C0DE0000000000000011 /* MovementTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MovementTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A10C0DE0000000000000012 /* MovementTracker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MovementTracker.entitlements; sourceTree = "<group>"; };
+		7A10C0DE0000000000000090 /* MovementTrackerLiveActivity.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MovementTrackerLiveActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A10C0DE0000000000000091 /* LiveActivityExtension-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "LiveActivityExtension-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -41,6 +65,16 @@
 		7A10C0DE0000000000000005 /* AppUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = AppUITests;
+			sourceTree = "<group>";
+		};
+		7A10C0DE0000000000000092 /* LiveActivityExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = LiveActivityExtension;
+			sourceTree = "<group>";
+		};
+		7A10C0DE0000000000000093 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -67,6 +101,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7A10C0DE0000000000000096 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -75,6 +116,8 @@
 			children = (
 				7A10C0DE0000000000000004 /* App */,
 				7A10C0DE0000000000000005 /* AppUITests */,
+				7A10C0DE0000000000000092 /* LiveActivityExtension */,
+				7A10C0DE0000000000000093 /* Shared */,
 				7A10C0DE0000000000000006 /* Config */,
 				7A10C0DE0000000000000003 /* Products */,
 			);
@@ -85,6 +128,7 @@
 			children = (
 				7A10C0DE0000000000000010 /* MovementTracker.app */,
 				7A10C0DE0000000000000011 /* MovementTrackerUITests.xctest */,
+				7A10C0DE0000000000000090 /* MovementTrackerLiveActivity.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -93,6 +137,7 @@
 			isa = PBXGroup;
 			children = (
 				7A10C0DE0000000000000012 /* MovementTracker.entitlements */,
+				7A10C0DE0000000000000091 /* LiveActivityExtension-Info.plist */,
 			);
 			path = Config;
 			sourceTree = "<group>";
@@ -107,13 +152,16 @@
 				7A10C0DE0000000000000030 /* Sources */,
 				7A10C0DE0000000000000031 /* Frameworks */,
 				7A10C0DE0000000000000032 /* Resources */,
+				7A10C0DE0000000000000098 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				7A10C0DE000000000000009B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				7A10C0DE0000000000000004 /* App */,
+				7A10C0DE0000000000000093 /* Shared */,
 			);
 			name = MovementTracker;
 			packageProductDependencies = (
@@ -152,6 +200,29 @@
 			productReference = 7A10C0DE0000000000000011 /* MovementTrackerUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		7A10C0DE0000000000000094 /* MovementTrackerLiveActivity */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A10C0DE0000000000000043 /* Build configuration list for PBXNativeTarget "MovementTrackerLiveActivity" */;
+			buildPhases = (
+				7A10C0DE0000000000000095 /* Sources */,
+				7A10C0DE0000000000000096 /* Frameworks */,
+				7A10C0DE0000000000000097 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				7A10C0DE0000000000000092 /* LiveActivityExtension */,
+				7A10C0DE0000000000000093 /* Shared */,
+			);
+			name = MovementTrackerLiveActivity;
+			packageProductDependencies = (
+			);
+			productName = MovementTrackerLiveActivity;
+			productReference = 7A10C0DE0000000000000090 /* MovementTrackerLiveActivity.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -168,6 +239,9 @@
 					7A10C0DE0000000000000021 = {
 						CreatedOnToolsVersion = 27.1;
 						TestTargetID = 7A10C0DE0000000000000020;
+					};
+					7A10C0DE0000000000000094 = {
+						CreatedOnToolsVersion = 27.2;
 					};
 				};
 			};
@@ -191,6 +265,7 @@
 			targets = (
 				7A10C0DE0000000000000020 /* MovementTracker */,
 				7A10C0DE0000000000000021 /* MovementTrackerUITests */,
+				7A10C0DE0000000000000094 /* MovementTrackerLiveActivity */,
 			);
 		};
 /* End PBXProject section */
@@ -204,6 +279,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		7A10C0DE0000000000000035 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A10C0DE0000000000000097 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -227,6 +309,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7A10C0DE0000000000000095 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -234,6 +323,11 @@
 			isa = PBXTargetDependency;
 			target = 7A10C0DE0000000000000020 /* MovementTracker */;
 			targetProxy = 7A10C0DE0000000000000060 /* PBXContainerItemProxy */;
+		};
+		7A10C0DE000000000000009B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7A10C0DE0000000000000094 /* MovementTrackerLiveActivity */;
+			targetProxy = 7A10C0DE000000000000009A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -469,6 +563,62 @@
 			};
 			name = Release;
 		};
+		7A10C0DE000000000000009C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WL6JGN2HMU;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Config/LiveActivityExtension-Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Movement Tracker+";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.kiraguriz.MovementTracker.LiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		7A10C0DE000000000000009D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WL6JGN2HMU;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Config/LiveActivityExtension-Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Movement Tracker+";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.kiraguriz.MovementTracker.LiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -495,6 +645,15 @@
 			buildConfigurations = (
 				7A10C0DE0000000000000054 /* Debug */,
 				7A10C0DE0000000000000055 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7A10C0DE0000000000000043 /* Build configuration list for PBXNativeTarget "MovementTrackerLiveActivity" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7A10C0DE000000000000009C /* Debug */,
+				7A10C0DE000000000000009D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

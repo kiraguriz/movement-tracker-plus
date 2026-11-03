@@ -233,6 +233,8 @@ enum AccessibilityID {
     static let onboardingPlanMuse = "onboarding.plan.muse"
     static let onboardingPlanNotice = "onboarding.plan.notice"
     static let onboardingPlanAdjustment = "onboarding.plan.adjustment"
+    // System integrations
+    static let todayWeeklyGoal = "today.weeklyGoal"
 }
 
 extension View {

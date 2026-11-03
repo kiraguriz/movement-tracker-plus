@@ -18,7 +18,7 @@ final class AppLaunch {
         defer { isRunning = false }
         phase = .starting
         do {
-            phase = .ready(try await AppEnvironment.make())
+            phase = .ready(try await EnvironmentProvider.shared.environment())
         } catch {
             phase = .failed(error.localizedDescription)
         }

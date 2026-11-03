@@ -31,6 +31,11 @@ import Foundation
 /// - `-MTMealPhotoSample`: the meal photo sheet offers a generated sample photo (the Simulator has no camera).
 /// - `-MTExperimentalExercises`: shows the camera exercises that have not been checked on a person yet (see
 ///   `ExperimentalExercises`) in the picker, the Train list and coach plans.
+/// - `-MTNotificationPrompt`: with the in-memory database the first workout does not ask for notification
+///   permission (a system alert would block UI tests); this flag lets it, and also asks when a workout is already
+///   open at launch.
+/// - `-MTDraftWorkout working|rest|ready`: with a seed, start with an unfinished squat and push-up workout: no set
+///   yet, two sets with the rest running, or two sets with the rest over (Live Activity and notification checks).
 /// - `-MTHealthStub`: Apple Health runs over an in-process fake that records what would be written or removed and
 ///   answers the access request without the system sheet; Me shows its counters. `-MTHealthStub denied` makes the
 ///   access request come back denied. The stub is not compiled into Release, and neither is this flag.
@@ -66,6 +71,8 @@ struct LaunchOptions: Equatable {
     var healthStub = false
     var healthStubDenies = false
     var readiness: String?
+    var notificationPrompt = false
+    var draftWorkout: String?
     #endif
 
     init() {}
@@ -94,6 +101,26 @@ struct LaunchOptions: Equatable {
         healthStub = arguments.contains("-MTHealthStub")
         healthStubDenies = healthStub && Self.value(after: "-MTHealthStub", in: arguments) == "denied"
         readiness = Self.value(after: "-MTReadiness", in: arguments)
+        notificationPrompt = arguments.contains("-MTNotificationPrompt")
+        draftWorkout = Self.value(after: "-MTDraftWorkout", in: arguments)
+        #endif
+    }
+
+    /// Whether the first workout may show the system's notification permission alert.
+    var allowsNotificationPrompt: Bool {
+        #if DEBUG
+        notificationPrompt || !inMemoryDatabase
+        #else
+        true
+        #endif
+    }
+
+    /// Whether a workout that is already open at launch asks for notification permission, as a started one does.
+    var promptsForOpenWorkout: Bool {
+        #if DEBUG
+        notificationPrompt
+        #else
+        false
         #endif
     }
 

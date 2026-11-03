@@ -84,7 +84,10 @@ struct RootView: View {
             if let route { follow(route) }
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { trainRefresh += 1 }
+            if phase == .active {
+                trainRefresh += 1
+                Task { await activeWorkout?.refresh() }
+            }
         }
         .sheet(isPresented: $isCoachPresented, onDismiss: { trainRefresh += 1 }) {
             CoachSheet(environment: environment, openTrain: { selection = .train })
