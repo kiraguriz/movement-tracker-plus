@@ -14,9 +14,13 @@ final class TodayModel {
     private(set) var weights = Loadable<[BodyMeasurement]>.loading
     /// Completed-session minutes over the trailing seven local days, oldest first.
     private(set) var week: [WeekDayTraining] = []
+    /// This week against the weekly goal, once the history and the goals have loaded.
+    private(set) var weekly: WeeklyProgress?
     var errorMessage: String?
 
     private let environment: AppEnvironment
+    private var trainingDays: Set<LocalDay>?
+    private var weeklyTargets: [WeeklyTarget]?
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -38,7 +42,8 @@ final class TodayModel {
         async let workoutUpdates: Void = watchWorkout()
         async let weightUpdates: Void = watchWeights()
         async let weekUpdates: Void = watchWeek()
-        _ = await (totalUpdates, workoutUpdates, weightUpdates, weekUpdates)
+        async let streakUpdates: Void = watchWeekly()
+        _ = await (totalUpdates, workoutUpdates, weightUpdates, weekUpdates, streakUpdates)
     }
 
     private func watchTotals() async {
@@ -86,6 +91,46 @@ final class TodayModel {
         await environment.bodyMeasurements.observeMeasurements(kind: .weight, from: from, through: nil).forEachValue(
             onFailure: { errorMessage = $0.localizedDescription },
             { weights = .loaded($0) }
+        )
+    }
+
+    private func watchWeekly() async {
+        async let days: Void = watchTrainingDays()
+        async let targets: Void = watchWeeklyTargets()
+        _ = await (days, targets)
+    }
+
+    private func watchTrainingDays() async {
+        let from = day.adding(days: -(WeeklyProgressCalculator.maximumWeeks + 2) * 7)
+        let query = WorkoutHistoryQuery(statuses: [.completed], from: from, through: day, limit: .max)
+        await environment.workouts.observeHistory(query).forEachValue(
+            onFailure: { errorMessage = $0.localizedDescription },
+            { summaries in
+                trainingDays = WeeklyProgressCalculator.trainingDays(in: summaries)
+                updateWeekly()
+            }
+        )
+    }
+
+    /// The goal history changes when the active goal does.
+    private func watchWeeklyTargets() async {
+        do {
+            for try await _ in environment.profiles.observeActiveGoal() {
+                let goals = try await environment.profiles.goalHistory(limit: 200)
+                weeklyTargets = WeeklyProgressCalculator.targets(from: goals)
+                updateWeekly()
+            }
+        } catch is CancellationError {
+            return
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func updateWeekly() {
+        guard let trainingDays, let weeklyTargets else { return }
+        weekly = WeeklyProgressCalculator.progress(
+            today: day, firstWeekday: Calendar.current.firstWeekday, trainingDays: trainingDays, targets: weeklyTargets
         )
     }
 

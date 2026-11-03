@@ -100,6 +100,7 @@ struct TodayView: View {
                     Text("Training · min").font(.subheadline).foregroundStyle(TraceTheme.secondary)
                     if !model.week.isEmpty {
                         WeekStrip(days: model.week, today: model.day)
+                        if let weekly = model.weekly, weekly.target > 0 { WeeklyGoalRow(progress: weekly) }
                     } else {
                         ProgressView().frame(maxWidth: .infinity, minHeight: 150)
                     }

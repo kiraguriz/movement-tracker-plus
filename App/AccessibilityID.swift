@@ -212,6 +212,9 @@ enum AccessibilityID {
     static let profileEditor = "profileEditor"
     static let profileCancel = "profileEditor.cancel"
     static let profileSave = "profileEditor.save"
+
+    // System integrations
+    static let todayWeeklyGoal = "today.weeklyGoal"
 }
 
 extension View {

@@ -33,7 +33,7 @@ enum SampleData {
             workoutsPerWeek: 4, kind: .lose, weeklyRatePercent: 0.5
         )
         let plan = try GoalPlanner.plan(input)
-        try await environment.profiles.setActiveGoal(plan.makeGoal(id: environment.newID(), startDay: today, createdAt: now))
+        try await environment.profiles.setActiveGoal(plan.makeGoal(id: environment.newID(), startDay: level == .sample ? today.adding(days: -21) : today, createdAt: now))
         try await environment.profiles.save(Profile(
             id: environment.newID(), birthYear: today.year - age, sex: .male, height: height,
             unitSystem: .metric, activityLevel: .intermediate, createdAt: now, updatedAt: now
@@ -42,6 +42,7 @@ enum SampleData {
         guard level == .sample else { return }
         try await seedMeals(environment, today: today, timeZone: timeZone)
         try await seedWorkout(environment, now: now, timeZone: timeZone)
+        try await seedWeeklyHistory(environment, today: today, timeZone: timeZone)
     }
 
     // MARK: Meals
@@ -123,6 +124,28 @@ enum SampleData {
                     id: environment.newID(), entryID: entry.id, position: setPosition, reps: set.reps,
                     load: set.loadKg.map { Mass(kilograms: $0) }, tracking: .manual
                 )))
+            }
+        }
+        try await environment.workouts.apply(effects)
+    }
+
+    /// One short workout on each of the first four days of the last two finished weeks, so the weekly goal of four
+    /// has a streak of two before this week's own workouts.
+    private static func seedWeeklyHistory(_ environment: AppEnvironment, today: LocalDay, timeZone: TimeZone) async throws {
+        let thisWeek = WeeklyProgressCalculator.weekStart(containing: today, firstWeekday: Calendar.current.firstWeekday)
+        var effects: [WorkoutEffect] = []
+        for week in 1...2 {
+            for offset in 0..<4 {
+                let day = thisWeek.adding(days: -7 * week + offset)
+                let start = day.start(in: timeZone).addingTimeInterval(18 * 3600)
+                let session = WorkoutSession(
+                    id: environment.newID(), status: .completed, title: nil, startedAt: start,
+                    endedAt: start.addingTimeInterval(30 * 60), timeZoneID: timeZone.identifier, localDay: day
+                )
+                let entry = ExerciseEntry(id: environment.newID(), sessionID: session.id, exerciseID: BuiltInCatalog.pushup, position: 0)
+                effects.append(.upsertSession(session))
+                effects.append(.upsertExerciseEntry(entry))
+                effects.append(.upsertSet(SetEntry(id: environment.newID(), entryID: entry.id, position: 0, reps: 10, tracking: .manual)))
             }
         }
         try await environment.workouts.apply(effects)
