@@ -14,6 +14,7 @@ struct MealEditorSheet: View {
     @State private var isConfirmingDelete = false
     @State private var errorMessage: String?
     @FocusState private var focus: MealDraft.Field?
+    @FocusState private var nameFocused: Bool
 
     private let day: LocalDay
     private let environment: AppEnvironment
@@ -75,8 +76,11 @@ struct MealEditorSheet: View {
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    Button("Done") { focus = nil }
-                        .accessibilityIdentifier("meal.keyboardDone")
+                    Button("Done") {
+                        focus = nil
+                        nameFocused = false
+                    }
+                    .accessibilityIdentifier("meal.keyboardDone")
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button(role: .cancel) { dismiss() }
@@ -104,6 +108,7 @@ struct MealEditorSheet: View {
         TextField("Name", text: $draft.name, axis: .vertical)
             .font(.title.bold())
             .lineLimit(1...3)
+            .focused($nameFocused)
             .frame(minHeight: 44)
             .padding(.horizontal, 4)
             .accessibilityIdentifier(AccessibilityID.mealName)
