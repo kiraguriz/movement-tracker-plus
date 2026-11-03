@@ -35,6 +35,7 @@ struct RootView: View {
                 .accessibilityIdentifier(AccessibilityID.tabToday)
                 Tab(value: AppTab.train) {
                     NavigationStack { TrainView(refresh: trainRefresh) }
+                        .environment(activeWorkout)
                         .safeAreaInset(edge: .bottom, spacing: 8) { bottomBar(showsWorkout: false, showsCoach: !wide) }
                 } label: {
                     Label("Train", systemImage: "dumbbell")

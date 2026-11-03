@@ -12,9 +12,17 @@ final class ActiveWorkoutModel {
     @ObservationIgnored private let restAlerts = RestAlertScheduler()
     @ObservationIgnored private let liveActivity = WorkoutActivityCoordinator()
     @ObservationIgnored private var hasSeenDraftState = false
+    /// The rest the user skipped in Train; outside the app it ends at once too.
+    @ObservationIgnored private var skippedRest: EntityID?
 
     init(environment: AppEnvironment) {
         self.environment = environment
+    }
+
+    /// Drops the "rest over" notification and shows the next set as ready on the Lock Screen.
+    func skipRest(_ id: EntityID) async {
+        skippedRest = id
+        await refresh()
     }
 
     func run() async {
@@ -56,7 +64,8 @@ final class ActiveWorkoutModel {
     /// notification. Both follow the same plan, which only changes at set boundaries.
     private func syncSystem(for draft: Workout) async {
         let now = environment.now()
-        let plan = WorkoutActivityPlan(workout: draft, now: now)
+        var plan = WorkoutActivityPlan(workout: draft, now: now)
+        if let skippedRest, RestPeriod(workout: draft)?.id == skippedRest { plan = plan?.afterRest }
         let name = if let id = plan?.exerciseID { try? await displayName(of: id) } else { nil as String? }
         await liveActivity.sync(plan, exerciseName: name, now: now)
         if let plan, let reminder = RestReminder(plan: plan, now: now), let name {

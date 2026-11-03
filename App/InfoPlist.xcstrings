@@ -41,13 +41,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reads your sleep, heart rate variability and resting heart rate to suggest today's training. Raw Health data never leaves this iPhone."
+            "value" : "Reads your sleep, heart rate variability, resting heart rate and breathing rate to suggest today's training. Raw Health data never leaves this iPhone."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "读取你的睡眠、心率变异性和静息心率，用来建议今天的训练。原始健康数据不会离开这部 iPhone。"
+            "value" : "读取你的睡眠、心率变异性、静息心率和呼吸频率，用来建议今天的训练。原始健康数据不会离开这部 iPhone。"
           }
         }
       }

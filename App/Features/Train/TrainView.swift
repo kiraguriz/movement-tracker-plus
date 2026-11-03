@@ -16,6 +16,7 @@ struct TrainView: View {
 private struct TrainScreen: View {
     @Environment(UserSession.self) private var session
     @Environment(AppRouter.self) private var router
+    @Environment(ActiveWorkoutModel.self) private var activeWorkout: ActiveWorkoutModel?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var model: TrainModel
     @State private var isConfirmingDiscard = false
@@ -391,7 +392,10 @@ private struct TrainScreen: View {
                 .accessibilityLabel("Rest")
                 .accessibilityValue(Text(Duration.seconds(seconds), format: .time(pattern: .minuteSecond)))
             Spacer(minLength: 8)
-            Button("Skip") { skippedRest = restID }
+            Button("Skip") {
+                skippedRest = restID
+                Task { await activeWorkout?.skipRest(restID) }
+            }
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.white)
                 .padding(.horizontal, 18)
