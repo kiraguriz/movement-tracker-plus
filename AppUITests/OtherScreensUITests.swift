@@ -222,7 +222,9 @@ final class OtherScreensUITests: TrainUITestCase {
             if target.exists && target.isHittable { return }
             let scroll = app.scrollViews.allElementsBoundByIndex.last { $0.isHittable }
             guard let scroll else { break }
-            let barBottom = app.navigationBars.firstMatch.frame.maxY
+            // Today has no navigation bar in landscape.
+            let bar = app.navigationBars.firstMatch
+            let barBottom = bar.exists ? bar.frame.maxY : app.windows.firstMatch.frame.minY
             if target.exists, target.frame.minY < barBottom {
                 scroll.swipeDown()
             } else {
