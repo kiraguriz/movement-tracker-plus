@@ -83,11 +83,13 @@ struct RestCountdown: View {
 /// otherwise take all it is offered.
 struct ElapsedTime: View {
     let since: Date
-    var width: CGFloat = 84
+    var width: CGFloat = 110
 
     var body: some View {
         Text(since, style: .timer)
             .monospacedDigit()
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
             .multilineTextAlignment(.trailing)
             .frame(width: width, alignment: .trailing)
     }
