@@ -30,6 +30,13 @@ public struct SignalReading: Equatable, Sendable {
     public var value: Double?
     /// The user's usual in the same unit, when there is a baseline.
     public var baseline: Double?
+
+    public init(signal: RecoverySignal, state: SignalState, value: Double?, baseline: Double?) {
+        self.signal = signal
+        self.state = state
+        self.value = value
+        self.baseline = baseline
+    }
 }
 
 public struct ReadinessResult: Equatable, Sendable {
@@ -48,6 +55,21 @@ public struct ReadinessResult: Equatable, Sendable {
     public var needsRest: Bool
     /// Recent training load in weighted sets.
     public var strain: Double
+
+    public init(
+        value: Int, band: ReadinessBand, confidence: ReadinessConfidence, readings: [SignalReading], usesRecoveryData: Bool,
+        baselineNights: Int, limitedHistory: Bool, needsRest: Bool, strain: Double
+    ) {
+        self.value = value
+        self.band = band
+        self.confidence = confidence
+        self.readings = readings
+        self.usesRecoveryData = usesRecoveryData
+        self.baselineNights = baselineNights
+        self.limitedHistory = limitedHistory
+        self.needsRest = needsRest
+        self.strain = strain
+    }
 
     /// The number to show: only when the evidence is at least medium.
     public var score: Int? { confidence >= .medium ? value : nil }
