@@ -14,6 +14,10 @@ public enum TaughtFailure: Error, Equatable, Sendable {
     case inconsistentDepth(ratio: Double)
     /// A joint the movement needs was out of view for too much of the demonstration.
     case jointsUnreliable(share: Double)
+    /// A form check in the spec marks reps of the demonstration itself as bad. The demonstration defines good
+    /// form, so a spec whose checks disagree with it is not accepted (`TaughtSpecBuilder` calibrates so that
+    /// they cannot).
+    case ruleFailsDemo(ruleID: String, violations: Int, of: Int)
 }
 
 /// The result of replaying a demonstration through the counting engine.
@@ -70,10 +74,16 @@ public enum TaughtVerifier {
         }
 
         let roms = summary.records.map(\.rom).sorted()
-        let failure = judge(
+        var failure = judge(
             counted: summary.reps, partials: summary.partials, roms: roms, expected: take.confirmedReps,
             missingShare: missing, wasReady: firstReady != nil
         )
+        if failure == nil, !spec.rules.isEmpty {
+            let flagged = summary.records.filter { !$0.issues.isEmpty }
+            if let first = flagged.first?.issues.first {
+                failure = .ruleFailsDemo(ruleID: first.ruleID, violations: flagged.count, of: summary.records.count)
+            }
+        }
 
         return TaughtVerification(
             counted: summary.reps, partials: summary.partials, rejected: summary.rejected, reps: summary.records,

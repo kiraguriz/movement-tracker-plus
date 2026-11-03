@@ -14,5 +14,7 @@ enum PromptPins {
         "chat.v1/zh-Hans": "7a906e8163a348af",
         "daily-tip.v1/en": "259e62cf36a496b8",
         "daily-tip.v1/zh-Hans": "7b740d6842685839",
+        "spec-author.v1/en": "4e49731bcbeb4321",
+        "spec-author.v1/zh-Hans": "65ffc9e4b140e63a",
     ]
 }

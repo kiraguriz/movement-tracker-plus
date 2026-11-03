@@ -91,6 +91,8 @@ final class TeachFlowUITests: TrainUITestCase {
             XCTFail("the demonstration did not verify: \(element(TeachID.failed, in: app).label)")
         }
         shot("6-verified", in: app)
+        // With Muse off the step is slice A's: no form checks section, no waiting.
+        XCTAssertFalse(element("teach.checks.thinking", in: app).exists || element("teach.checks", in: app).exists || element("teach.checks.none", in: app).exists)
 
         XCTAssertFalse(app.buttons[TeachID.save].isEnabled, "saving must wait for a muscle group")
         tap(TeachID.muscleQuads, in: app)
@@ -117,6 +119,57 @@ final class TeachFlowUITests: TrainUITestCase {
         tap(TeachID.close, in: app)
         XCTAssertTrue(element(TeachID.flow, in: app).waitForNonExistence(timeout: 10))
         XCTAssertTrue(element(TrainID.picker, in: app).exists)
+    }
+
+    /// With Muse on (the stub), the demonstration that counted gets form checks: proposed by Muse, eased and replayed by
+    /// the phone, listed under the result. The saved exercise still counts live.
+    @MainActor
+    func testMuseFormChecksAppearAndTheExerciseStillCounts() {
+        let app = launchTrain(extraArguments: ["-MTCoachStub", "-MTAIOptIn"])
+        openTeach(in: app)
+        nameIt("Test Lunge", in: app)
+        demonstrate(in: app, shots: false)
+        tap(TeachID.confirm, in: app)
+        XCTAssertTrue(
+            waitUntil(timeout: 60) { app.buttons[TeachID.save].exists || element(TeachID.failed, in: app).exists },
+            "verification never finished"
+        )
+        XCTAssertFalse(element(TeachID.failed, in: app).exists, "the demonstration did not verify")
+        shot("11-muse-thinking", in: app)
+        XCTAssertTrue(element("teach.checks", in: app).waitForExistence(timeout: 40), "Muse's checks never appeared")
+        let checks = app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH 'teach.check.'"))
+        XCTAssertGreaterThanOrEqual(checks.count, 1, "no check survived the replay")
+        shot("12-muse-checks", in: app)
+        app.swipeUp()
+        shot("13-muse-checks-scrolled", in: app)
+        // Muse's guess about the muscles fills the empty choice.
+        XCTAssertTrue(waitUntil(timeout: 5) { app.buttons[TeachID.save].isEnabled }, "Muse's muscles were not applied")
+        tap(TeachID.save, in: app)
+        XCTAssertTrue(element(TeachID.saved, in: app).waitForExistence(timeout: 20), "not saved")
+        tap(TeachID.addToWorkout, in: app)
+        XCTAssertTrue(element(TeachID.flow, in: app).waitForNonExistence(timeout: 10))
+        let live = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'train.live.taught.'")).firstMatch
+        XCTAssertTrue(live.waitForExistence(timeout: 10), "the taught exercise is not in the workout with a camera button")
+        live.tap()
+        XCTAssertTrue(element(TrainID.liveSet, in: app).waitForExistence(timeout: 10), "live set did not open")
+        XCTAssertTrue(waitForReps(5, in: app), "the exercise with form checks did not count (at \(repCount(in: app)))")
+    }
+
+    /// Muse unreachable: the exercise is kept as taught, counting only.
+    @MainActor
+    func testMuseOfflineLeavesTheTaughtExerciseUnchanged() {
+        let app = launchTrain(extraArguments: ["-MTCoachStub", "-MTAIOptIn", "-MTCoachStubFail", "offline"])
+        openTeach(in: app)
+        nameIt("Offline Lunge", in: app)
+        demonstrate(in: app, shots: false)
+        tap(TeachID.confirm, in: app)
+        XCTAssertTrue(app.buttons[TeachID.save].waitForExistence(timeout: 60), "verification never finished")
+        XCTAssertTrue(element("teach.checks.none", in: app).waitForExistence(timeout: 40), "no counting-only result")
+        XCTAssertFalse(element("teach.checks", in: app).exists)
+        shot("14-muse-offline", in: app)
+        tap(TeachID.muscleQuads, in: app)
+        tap(TeachID.save, in: app)
+        XCTAssertTrue(element(TeachID.saved, in: app).waitForExistence(timeout: 20), "not saved")
     }
 
     /// A wrong count never saves a camera exercise. After three failed attempts the exercise can still be kept

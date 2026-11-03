@@ -14,6 +14,7 @@ struct PrivacyView: View {
                 row("Meals", detail: "Food names, calories, protein, carbs, fat", systemImage: "fork.knife")
                 row("Body and goal", detail: "Weight and body fat history, calorie targets, age, height, training level", systemImage: "scalemass")
                 row("Skeleton drawings", detail: "Stick figures of your best and worst reps", systemImage: "figure.stand")
+                row("Exercises you teach", detail: "Name, two stick figures and joint angles of your demonstration", systemImage: "figure.cooldown")
                 row("Meal photos", detail: "Only when you log a meal with a photo", systemImage: "camera")
             } header: {
                 Text("Sent to Muse")

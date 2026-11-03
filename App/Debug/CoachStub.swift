@@ -15,6 +15,8 @@ import Foundation
 /// - `GET /v1/food/search`: a small USDA-shaped catalog, with a per-100-ml item and one with missing nutrients.
 /// - feature `goal_plan`: one JSON plan built from the device numbers in the request (`-MTCoachStubPlan` picks `ok`,
 ///   `adjusted`, `unsafe` or `slow`), so the guard and the Plan page can be walked through without Muse.
+/// - feature `spec_author`: an SSE stream with a form-check draft for a taught exercise, built from the menu in the
+///   request (`StubSpecAuthor`). The drawings are not looked at.
 /// - `set_review`, `debrief`: answered as a paused service, so those screens use their on-device fallback.
 ///
 /// The UI marks every stub-backed screen (`StubBadge`) so nothing reads as Muse output.
@@ -89,6 +91,9 @@ nonisolated struct StubTransport: HTTPTransport {
                 continuation.onTermination = { _ in task.cancel() }
             }
             return HTTPStreamResponse(status: 200, headers: ["content-type": "application/json"], body: body)
+        }
+        if case .coach("spec_author") = route {
+            return HTTPStreamResponse(status: 200, headers: ["content-type": "text/event-stream"], body: StubSpecAuthor.stream(for: request))
         }
         guard case .coach("chat") = route else {
             let paused = Self.pausedFeature
@@ -504,6 +509,102 @@ nonisolated enum StubFoods {
             members["servings"] = .array(entry.servings.map { ["label": .string($0.0), "grams": .double($0.1)] })
         }
         return .object(members)
+    }
+}
+
+// MARK: - Spec author
+
+/// The scripted answer to a taught exercise's form-check request. It reads the menu out of the request and proposes
+/// checks that are on it, so the phone's calibration and replay run on real numbers: the first threshold is stricter
+/// than the demonstration allows (the phone eases it), the others have room.
+nonisolated enum StubSpecAuthor {
+    static func stream(for request: HTTPRequest) -> AsyncThrowingStream<Data, any Error> {
+        let text = draft(for: request).canonicalString
+        let message = StubTransport.message(text)
+        var steps: [(delay: Int, chunk: Data)] = [
+            (900, event(["type": "response.created", "response": ["id": "resp_stub", "status": "in_progress"]])),
+        ]
+        var rest = Substring(text)
+        while !rest.isEmpty {
+            let piece = rest.prefix(24)
+            rest = rest.dropFirst(piece.count)
+            steps.append((30, event([
+                "type": "response.output_text.delta", "item_id": "msg_stub", "output_index": 0, "content_index": 0, "delta": .string(String(piece)),
+            ])))
+        }
+        steps.append((20, event(["type": "response.output_item.done", "output_index": 0, "item": message])))
+        steps.append((300, event(["type": "response.completed", "response": StubTransport.response(items: [message])])))
+        steps.append((0, Data("data: [DONE]\n\n".utf8)))
+        let script = steps
+        return AsyncThrowingStream { continuation in
+            let task = Task {
+                for step in script {
+                    do { try await Task.sleep(for: .milliseconds(step.delay)) } catch { break }
+                    continuation.yield(step.chunk)
+                }
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+
+    private struct Entry {
+        var template: String
+        var min: Double
+        var max: Double
+        var demoMin: Double
+        var demoMax: Double
+    }
+
+    private static func menu(of request: HTTPRequest) -> [Entry] {
+        let body = request.body.flatMap { try? JSONValue(jsonData: $0) }
+        let text = (body?["input"]?.arrayValue ?? [])
+            .filter { $0["role"]?.stringValue == "user" }
+            .flatMap { $0["content"]?.arrayValue ?? [] }
+            .compactMap { $0["text"]?.stringValue }
+            .joined()
+        guard let marker = text.range(of: "Data (JSON):\n"),
+              let data = try? JSONValue(jsonString: String(text[marker.upperBound...])) else { return [] }
+        return (data["menu"]?.arrayValue ?? []).compactMap { entry in
+            guard let template = entry["template"]?.stringValue, let low = entry["min"]?.doubleValue, let high = entry["max"]?.doubleValue,
+                  let demoMin = entry["demoMin"]?.doubleValue, let demoMax = entry["demoMax"]?.doubleValue else { return nil }
+            return Entry(template: template, min: low, max: high, demoMin: demoMin, demoMax: demoMax)
+        }
+    }
+
+    private static func draft(for request: HTTPRequest) -> JSONValue {
+        let zh = StubChat.language(of: request) == .zh
+        let entries = menu(of: request)
+        func clamp(_ value: Double, _ entry: Entry) -> Double { Swift.min(entry.max, Swift.max(entry.min, value)) }
+        func check(_ entry: Entry, _ threshold: Double, weight: Double, severity: String, why: String) -> JSONValue {
+            ["template": .string(entry.template), "threshold": .double(threshold), "severity": .string(severity), "weight": .double(weight), "why": .string(why)]
+        }
+        var checks: [JSONValue] = []
+        for entry in entries {
+            switch entry.template {
+            case "reachBottom":
+                checks.append(check(entry, entry.min, weight: 0.3, severity: "major",
+                                    why: zh ? "每次都蹲到同样的深度，训练才有效。" : "Reaching the same depth every rep is what makes the movement work."))
+            case "returnTop":
+                checks.append(check(entry, clamp(entry.demoMin - 0.05, entry), weight: 0.2, severity: "minor",
+                                    why: zh ? "完全回到起点，每一次才算完整。" : "Coming fully back to the start makes each rep complete."))
+            case "slowDown":
+                checks.append(check(entry, clamp(entry.demoMin * 0.7, entry), weight: 0.2, severity: "minor",
+                                    why: zh ? "放慢下放，用肌肉控制而不是靠冲力。" : "A slower lowering keeps the muscles in control instead of momentum."))
+            default:
+                break
+            }
+        }
+        return [
+            "category": "strength", "equipment": "bodyweight", "primaryMuscles": ["quadriceps", "glutes"], "cameraAdvice": "either",
+            "checks": .array(Array(checks.prefix(3))),
+            "summary": .string(zh ? "一个下蹲类动作，检查深度、回到起点和下放节奏。" : "A squat-like movement; the checks watch depth, a full return and a controlled lowering."),
+            "confidence": 0.7,
+        ]
+    }
+
+    private static func event(_ json: JSONValue) -> Data {
+        Data("data: \(json.canonicalString)\n\n".utf8)
     }
 }
 #endif
