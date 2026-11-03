@@ -17,6 +17,7 @@ struct CoachConsentCard: View {
                     row("Your messages", systemImage: "bubble.left")
                     row("Workout and nutrition numbers", detail: "Reps, depth, tempo, fatigue, daily totals, weight trend", systemImage: "chart.xyaxis.line")
                     row("Skeleton drawings", detail: "Stick figures of your best and worst reps", systemImage: "figure.stand")
+                    row("Exercises you teach", detail: "Name, two stick figures and joint angles of your demonstration", systemImage: "figure.cooldown")
                     row("Meal photos", detail: "Only when you log a meal with a photo", systemImage: "camera")
                 }
                 Text("Your name and video never leave your phone.")

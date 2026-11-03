@@ -108,6 +108,8 @@ final class TeachModel {
         case replay
     }
 
+    /// Form checks Muse proposes once the demonstration counts (slice B); idle when Muse is off.
+    let formChecks: TeachFormChecks
     @ObservationIgnored private let environment: AppEnvironment
     @ObservationIgnored private var exerciseID: ExerciseID?
     @ObservationIgnored private var cleanName = ""
@@ -129,6 +131,7 @@ final class TeachModel {
 
     init(environment: AppEnvironment, name: String = "") {
         self.environment = environment
+        formChecks = TeachFormChecks(environment: environment)
         self.name = String(name.prefix(TaughtExercise.maxNameLength))
     }
 
@@ -440,9 +443,20 @@ final class TeachModel {
                 topFrame = result.topFrame
                 bottomFrame = result.bottomFrame
                 step = .verified
+                beginFormChecks(spec: verdict.spec, result: result, reps: reps, exerciseID: exerciseID)
             } catch {
                 errorMessage = error.localizedDescription
             }
+        }
+    }
+
+    /// Muse picks form checks for the exercise that just counted. Muse's guess about muscles and equipment fills
+    /// only what the user has not chosen.
+    private func beginFormChecks(spec: ExerciseSpec, result: TeachResult, reps: Int, exerciseID: ExerciseID) {
+        formChecks.begin(exerciseID: exerciseID, name: cleanName, baseline: spec, result: result, reps: reps) { [weak self] muscles, equipment in
+            guard let self, self.step == .verified, self.muscles.isEmpty else { return }
+            self.muscles = Set(muscles)
+            self.equipment = equipment
         }
     }
 
@@ -462,6 +476,7 @@ final class TeachModel {
         guard case .failed = step else { return }
         result = nil
         verifiedSpec = nil
+        formChecks.reset()
         repsSeen = 0
         elapsed = 0
         replay?.rewind()
@@ -491,6 +506,8 @@ final class TeachModel {
         let name = cleanName
         let position = cameraPosition
         let usedReplay = source == .replay
+        // Form checks that passed Gate 2; nil (Muse off, or nothing survived) saves exactly the taught spec.
+        let checkedSpec = isManual ? nil : formChecks.acceptedSpec
         Task {
             defer { isWorking = false }
             do {
@@ -505,6 +522,18 @@ final class TeachModel {
                         exercise: exercise, specJSON: json, specRowID: environment.newID(), now: environment.now()
                     )
                     ExerciseSpecCatalog.register(spec, for: id)
+                    if let checkedSpec {
+                        // Its own row, so dropping the checks later leaves the taught spec as it was.
+                        do {
+                            try await TaughtExerciseSaver(store: environment.exercises).save(
+                                exercise: exercise, specJSON: try JSONPayload(encoding: checkedSpec), origin: .muse,
+                                specRowID: environment.newID(), now: environment.now()
+                            )
+                            ExerciseSpecCatalog.register(checkedSpec, for: id)
+                        } catch {
+                            // The exercise counts without the checks.
+                        }
+                    }
                     if let learned {
                         // The demonstration is kept for re-checking the spec later; losing it loses nothing else.
                         try? await TaughtDemoFiles.write(
@@ -515,6 +544,7 @@ final class TeachModel {
                     try await environment.exercises.save(exercise)
                 }
                 savedExercise = exercise
+                formChecks.reset()
                 step = .saved
             } catch {
                 errorMessage = error.localizedDescription
@@ -527,6 +557,7 @@ final class TeachModel {
     /// Stops the camera and everything running. Safe to call more than once.
     func stop() async {
         isStopped = true
+        formChecks.reset()
         takeTask?.cancel()
         takeTask = nil
         pumpTask?.cancel()

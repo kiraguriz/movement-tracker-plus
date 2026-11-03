@@ -480,6 +480,7 @@ private struct SaveStep: View {
                 .accessibilityAddTraits(.isHeader)
             if model.step == .verified {
                 verified
+                TeachFormChecksSection(checks: model.formChecks)
             }
             VStack(alignment: .leading, spacing: 10) {
                 Text("teach.muscles")

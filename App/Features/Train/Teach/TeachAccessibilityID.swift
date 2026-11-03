@@ -1,4 +1,5 @@
 import Domain
+import MotionCore
 
 extension AccessibilityID {
     static let teachEntry = "teach.entry"
@@ -31,4 +32,11 @@ extension AccessibilityID {
     static let teachDiscard = "teach.discard.confirm"
     static let teachCameraDenied = "teach.camera.denied"
     static func teachMuscle(_ muscle: MuscleGroup) -> String { "teach.muscle.\(muscle.rawValue)" }
+
+    // Form checks (slice B)
+    static let teachChecks = "teach.checks"
+    static let teachChecksThinking = "teach.checks.thinking"
+    static let teachChecksNone = "teach.checks.none"
+    static let teachChecksUse = "teach.checks.use"
+    static func teachCheck(_ template: TaughtRuleTemplate) -> String { "teach.check.\(template.rawValue)" }
 }
