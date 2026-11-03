@@ -11,6 +11,7 @@ struct SchemaTests {
         ("SetReview", SetReview.schema),
         ("SessionDebrief", SessionDebrief.schema),
         ("MealEstimate", MealEstimate.schema),
+        ("GoalPlan", GoalPlan.schema),
     ]
 
     @Test(arguments: strictSchemas.map(\.name))

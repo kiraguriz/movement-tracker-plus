@@ -7,7 +7,7 @@ public enum InsightEvent<Output: Codable & Sendable & Equatable>: Sendable, Equa
     case finished(InsightResult<Output>)
 }
 
-/// The coach's one-shot features: set review, session debrief and meal photo, plus food search and voice
+/// The coach's one-shot features: set review, session debrief, meal photo and goal plan, plus food search and voice
 /// transcription. Every answer is cached by its input hash in the `CoachInsightStore`, decoded strictly (one retry with
 /// the error, then an on-device fallback where the feature has one) and stored with the model, prompt version, token
 /// usage and a "What Muse saw" record. Chat lives in `ChatService`.
@@ -15,6 +15,7 @@ public struct CoachService: Sendable {
     public let client: CoachClient
     private let runner: InsightRunner
     private let offlineStrings: any OfflineStrings
+    private let clock: any CoachClock
 
     public init(
         client: CoachClient,
@@ -25,6 +26,7 @@ public struct CoachService: Sendable {
     ) {
         self.client = client
         self.runner = InsightRunner(client: client, insights: insights, ids: ids, clock: clock)
+        self.clock = clock
         self.offlineStrings = offlineStrings
     }
 
@@ -75,6 +77,25 @@ public struct CoachService: Sendable {
     /// fallback: when Muse cannot answer, this throws the reason.
     public func estimateMeal(_ input: MealPhotoInput, locale: CoachLocale) async throws -> InsightResult<MealEstimate> {
         try await runner.run(try mealPlan(input, locale: locale))
+    }
+
+    // MARK: Goal plan
+
+    /// The default time `planGoal` gives Muse, covering the install request, retries and streaming.
+    public static let goalPlanDeadline = Duration.seconds(20)
+
+    /// Asks Muse for a new user's calorie plan. Streamed, without an offline fallback: when Muse cannot answer in time
+    /// this throws the reason (`CoachError.isDeadline` for a missed deadline) and the app shows the standard plan it has
+    /// already computed. The result is Muse's own suggestion; run it through `GoalPlanGuard` before showing it.
+    public func planGoal(
+        _ input: GoalPlanInput,
+        locale: CoachLocale,
+        deadline: Duration? = CoachService.goalPlanDeadline
+    ) async throws -> InsightResult<GoalPlan> {
+        let plan = try goalPlanPlan(input, locale: locale)
+        let runner = runner
+        guard let deadline else { return try await runner.run(plan) }
+        return try await withDeadline(deadline, clock: clock) { try await runner.run(plan) }
     }
 
     // MARK: Proxy calls
@@ -187,6 +208,36 @@ public struct CoachService: Sendable {
             inputHash: InsightHasher.hash(
                 feature: feature, promptVersion: PromptVersion.mealPhoto, model: .sparkLatest, effort: effort, locale: locale,
                 subjectID: input.subjectID, input: json, images: [.init(role: "meal_photo", data: jpeg)]
+            ),
+            validate: { try $0.validated() },
+            fallback: nil
+        )
+    }
+
+    func goalPlanPlan(_ input: GoalPlanInput, locale: CoachLocale) throws -> InsightPlan<GoalPlan> {
+        let feature = CoachFeature.goalPlan
+        let json = input.json
+        let effort = ReasoningEffort.low
+        return InsightPlan(
+            kind: .goalPlan,
+            feature: feature,
+            subjectID: nil,
+            promptVersion: PromptVersion.goalPlan,
+            locale: locale,
+            model: .sparkLatest,
+            effort: effort,
+            maxOutputTokens: 4000,
+            stream: true,
+            developerText: Prompts.goalPlan(locale: locale),
+            userParts: [.inputText("Make the plan for this user.\n\nData (JSON):\n\(json.canonicalString)")],
+            format: StructuredFormat(name: "GoalPlan", schema: GoalPlan.schema),
+            saw: WhatMuseSaw(
+                feature: feature.rawValue, model: MuseModel.sparkLatest.rawValue, promptVersion: PromptVersion.goalPlan,
+                effort: effort.rawValue, locale: locale.rawValue, input: json, images: []
+            ),
+            inputHash: InsightHasher.hash(
+                feature: feature, promptVersion: PromptVersion.goalPlan, model: .sparkLatest, effort: effort, locale: locale,
+                subjectID: nil, input: json, images: []
             ),
             validate: { try $0.validated() },
             fallback: nil

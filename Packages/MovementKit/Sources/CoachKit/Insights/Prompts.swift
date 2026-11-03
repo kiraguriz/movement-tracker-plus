@@ -8,6 +8,7 @@ public enum PromptVersion {
     public static let debrief = "debrief.v1"
     public static let chat = "chat.v1"
     public static let mealPhoto = "meal-photo.v1"
+    public static let goalPlan = "goal-plan.v1"
 }
 
 /// The standing instructions sent as the `developer` message. English text; the answer language is requested in the
@@ -119,6 +120,30 @@ public enum Prompts {
         \(untrustedText)
 
         \(languageParagraph(locale, fields: "name and notes"))
+        """
+    }
+
+    public static func goalPlan(locale: CoachLocale) -> String {
+        """
+        You set a daily calorie and macro plan for one new user of the Movement Tracker+ iPhone app and answer with a \
+        single JSON object that matches the given schema. No text outside the JSON.
+
+        Ground truth: BMR, activity factor, TDEE, the calorie floor and every range under `device` were computed on the \
+        user's phone. They are facts: do not recompute, correct or contradict them. You choose values inside the ranges.
+
+        - kcal is inside [kcalMin, kcalMax]. proteinG and fatG are inside their ranges. carbsG fills what is left, so \
+        4 * proteinG + 4 * carbsG + 9 * fatG is at most kcal.
+        - weeklyRatePercent is never above `goal.preferredPacePercentPerWeek` and is 0 for maintain.
+        - workoutsPerWeek is inside [workoutsMin, workoutsMax].
+        - `standardPlan` is the plain formula result. Move away from it only when the user's data gives a reason \
+        (training level, age, pace) and say why.
+        - rationale: one or two plain sentences, at most 220 characters, that cite the user's own numbers. No medical \
+        claims and no diagnosis.
+        - safetyFlag: level none, caution or stop with a short note (empty when none). For a user under 18 or a very fast \
+        pace use caution with a short note.
+        - confidence: 0 to 1.
+
+        \(languageParagraph(locale, fields: "rationale and safetyFlag.note"))
         """
     }
 

@@ -74,6 +74,8 @@ struct PromptPinTests {
         (PromptVersion.debrief, .zhHans, Prompts.debrief(locale: .zhHans), ""),
         (PromptVersion.mealPhoto, .en, Prompts.mealPhoto(locale: .en), ""),
         (PromptVersion.mealPhoto, .zhHans, Prompts.mealPhoto(locale: .zhHans), ""),
+        (PromptVersion.goalPlan, .en, Prompts.goalPlan(locale: .en), ""),
+        (PromptVersion.goalPlan, .zhHans, Prompts.goalPlan(locale: .zhHans), ""),
         (PromptVersion.chat, .en, Prompts.chat(locale: .en, today: "2027-01-15", timeZoneID: "UTC", unitSystem: "metric"), ""),
         (PromptVersion.chat, .zhHans, Prompts.chat(locale: .zhHans, today: "2027-01-15", timeZoneID: "UTC", unitSystem: "metric"), ""),
     ]
@@ -101,8 +103,8 @@ struct PromptPinTests {
     }
 
     @Test func versionsAreDistinctAndNamedAfterTheirFeature() {
-        let versions = [PromptVersion.setReview, PromptVersion.debrief, PromptVersion.chat, PromptVersion.mealPhoto]
-        #expect(Set(versions).count == 4)
+        let versions = [PromptVersion.setReview, PromptVersion.debrief, PromptVersion.chat, PromptVersion.mealPhoto, PromptVersion.goalPlan]
+        #expect(Set(versions).count == 5)
         #expect(versions.allSatisfy { $0.range(of: #"^[a-z-]+\.v\d+$"#, options: .regularExpression) != nil })
     }
 
@@ -114,7 +116,7 @@ struct PromptPinTests {
     }
 
     @Test func everyPromptStatesThatMuseNeverCounts() {
-        let withGroundTruth = Self.pins.filter { $0.version != PromptVersion.mealPhoto }
+        let withGroundTruth = Self.pins.filter { $0.version != PromptVersion.mealPhoto && $0.version != PromptVersion.goalPlan }
         for pin in withGroundTruth {
             #expect(pin.text.contains("you never measure"), "\(pin.version)")
             #expect(pin.text.contains("Do not recount"), "\(pin.version)")

@@ -1985,4 +1985,314 @@ enum Goldens {
       ]
     }
     """#  + "\n"
+
+    static let goalPlan = #"""
+    POST /v1/coach/responses
+    X-Coach-Feature: goal_plan
+    Accept: text/event-stream
+    Content-Type: application/json
+
+    {
+      "input": [
+        {
+          "content": [
+            {
+              "text": "<developer text: 1313 characters, sha256 803d4a6bbfc07edf>",
+              "type": "input_text"
+            }
+          ],
+          "role": "developer",
+          "type": "message"
+        },
+        {
+          "content": [
+            {
+              "dataJSON": {
+                "device": {
+                  "activityFactor": 1.55,
+                  "bmrKcal": 1780,
+                  "equation": "male",
+                  "fatGMax": 103,
+                  "fatGMin": 52,
+                  "kcalFloor": 1500,
+                  "kcalMax": 2759,
+                  "kcalMin": 2319,
+                  "proteinGMax": 192,
+                  "proteinGMin": 128,
+                  "standardPlan": {
+                    "carbsG": 268,
+                    "fatG": 60,
+                    "kcal": 2319,
+                    "proteinG": 176
+                  },
+                  "tdeeKcal": 2759,
+                  "workoutsMax": 6,
+                  "workoutsMin": 2
+                },
+                "goal": {
+                  "kind": "lose",
+                  "preferredPacePercentPerWeek": 0.5,
+                  "workoutsPerWeek": 4
+                },
+                "task": "Set a daily calorie and macro plan for a new user.",
+                "user": {
+                  "ageYears": 30,
+                  "heightCm": 180,
+                  "sex": "male",
+                  "trainingLevel": "intermediate",
+                  "units": "metric",
+                  "weightKg": 80
+                }
+              },
+              "text": "Make the plan for this user.",
+              "type": "input_text"
+            }
+          ],
+          "role": "user",
+          "type": "message"
+        }
+      ],
+      "max_output_tokens": 4000,
+      "model": "muse-spark-1.3",
+      "reasoning": {
+        "effort": "low"
+      },
+      "store": false,
+      "stream": true,
+      "text": {
+        "format": {
+          "name": "GoalPlan",
+          "schema": {
+            "additionalProperties": false,
+            "properties": {
+              "carbsG": {
+                "description": "Daily carbohydrate in grams: what is left after protein and fat.",
+                "type": "integer"
+              },
+              "confidence": {
+                "description": "0 to 1: how well the data supports this plan.",
+                "type": "number"
+              },
+              "fatG": {
+                "description": "Daily fat in grams, inside the device's fatGMin to fatGMax.",
+                "type": "integer"
+              },
+              "kcal": {
+                "description": "Daily calories, inside the device's kcalMin to kcalMax.",
+                "type": "integer"
+              },
+              "proteinG": {
+                "description": "Daily protein in grams, inside the device's proteinGMin to proteinGMax.",
+                "type": "integer"
+              },
+              "rationale": {
+                "description": "One or two plain sentences, at most 220 characters, that cite the user's own numbers.",
+                "type": "string"
+              },
+              "safetyFlag": {
+                "additionalProperties": false,
+                "properties": {
+                  "level": {
+                    "description": "none, caution or stop.",
+                    "enum": [
+                      "none",
+                      "caution",
+                      "stop"
+                    ],
+                    "type": "string"
+                  },
+                  "note": {
+                    "description": "Short note; empty when level is none.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "level",
+                  "note"
+                ],
+                "type": "object"
+              },
+              "weeklyRatePercent": {
+                "description": "Body mass change per week in percent, never above the user's preferred pace; 0 to maintain.",
+                "type": "number"
+              },
+              "workoutsPerWeek": {
+                "description": "Planned workouts per week, inside the device's workoutsMin to workoutsMax.",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "kcal",
+              "proteinG",
+              "carbsG",
+              "fatG",
+              "weeklyRatePercent",
+              "workoutsPerWeek",
+              "rationale",
+              "safetyFlag",
+              "confidence"
+            ],
+            "type": "object"
+          },
+          "strict": true,
+          "type": "json_schema"
+        }
+      }
+    }
+    """#  + "\n"
+
+    static let goalPlanChinese = #"""
+    POST /v1/coach/responses
+    X-Coach-Feature: goal_plan
+    Accept: text/event-stream
+    Content-Type: application/json
+
+    {
+      "input": [
+        {
+          "content": [
+            {
+              "text": "<developer text: 1331 characters, sha256 578468796ea22d3e>",
+              "type": "input_text"
+            }
+          ],
+          "role": "developer",
+          "type": "message"
+        },
+        {
+          "content": [
+            {
+              "dataJSON": {
+                "device": {
+                  "activityFactor": 1.55,
+                  "bmrKcal": 1780,
+                  "equation": "male",
+                  "fatGMax": 103,
+                  "fatGMin": 52,
+                  "kcalFloor": 1500,
+                  "kcalMax": 2759,
+                  "kcalMin": 2319,
+                  "proteinGMax": 192,
+                  "proteinGMin": 128,
+                  "standardPlan": {
+                    "carbsG": 268,
+                    "fatG": 60,
+                    "kcal": 2319,
+                    "proteinG": 176
+                  },
+                  "tdeeKcal": 2759,
+                  "workoutsMax": 6,
+                  "workoutsMin": 2
+                },
+                "goal": {
+                  "kind": "lose",
+                  "preferredPacePercentPerWeek": 0.5,
+                  "workoutsPerWeek": 4
+                },
+                "task": "Set a daily calorie and macro plan for a new user.",
+                "user": {
+                  "ageYears": 30,
+                  "heightCm": 180,
+                  "sex": "male",
+                  "trainingLevel": "intermediate",
+                  "units": "metric",
+                  "weightKg": 80
+                }
+              },
+              "text": "Make the plan for this user.",
+              "type": "input_text"
+            }
+          ],
+          "role": "user",
+          "type": "message"
+        }
+      ],
+      "max_output_tokens": 4000,
+      "model": "muse-spark-1.3",
+      "reasoning": {
+        "effort": "low"
+      },
+      "store": false,
+      "stream": true,
+      "text": {
+        "format": {
+          "name": "GoalPlan",
+          "schema": {
+            "additionalProperties": false,
+            "properties": {
+              "carbsG": {
+                "description": "Daily carbohydrate in grams: what is left after protein and fat.",
+                "type": "integer"
+              },
+              "confidence": {
+                "description": "0 to 1: how well the data supports this plan.",
+                "type": "number"
+              },
+              "fatG": {
+                "description": "Daily fat in grams, inside the device's fatGMin to fatGMax.",
+                "type": "integer"
+              },
+              "kcal": {
+                "description": "Daily calories, inside the device's kcalMin to kcalMax.",
+                "type": "integer"
+              },
+              "proteinG": {
+                "description": "Daily protein in grams, inside the device's proteinGMin to proteinGMax.",
+                "type": "integer"
+              },
+              "rationale": {
+                "description": "One or two plain sentences, at most 220 characters, that cite the user's own numbers.",
+                "type": "string"
+              },
+              "safetyFlag": {
+                "additionalProperties": false,
+                "properties": {
+                  "level": {
+                    "description": "none, caution or stop.",
+                    "enum": [
+                      "none",
+                      "caution",
+                      "stop"
+                    ],
+                    "type": "string"
+                  },
+                  "note": {
+                    "description": "Short note; empty when level is none.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "level",
+                  "note"
+                ],
+                "type": "object"
+              },
+              "weeklyRatePercent": {
+                "description": "Body mass change per week in percent, never above the user's preferred pace; 0 to maintain.",
+                "type": "number"
+              },
+              "workoutsPerWeek": {
+                "description": "Planned workouts per week, inside the device's workoutsMin to workoutsMax.",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "kcal",
+              "proteinG",
+              "carbsG",
+              "fatG",
+              "weeklyRatePercent",
+              "workoutsPerWeek",
+              "rationale",
+              "safetyFlag",
+              "confidence"
+            ],
+            "type": "object"
+          },
+          "strict": true,
+          "type": "json_schema"
+        }
+      }
+    }
+    """#  + "\n"
 }

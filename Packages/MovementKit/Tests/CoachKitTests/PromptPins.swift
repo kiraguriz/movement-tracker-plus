@@ -8,6 +8,8 @@ enum PromptPins {
         "debrief.v1/zh-Hans": "928ff1ad604cadb2",
         "meal-photo.v1/en": "94a209263b1c4460",
         "meal-photo.v1/zh-Hans": "54a3b246b8ddc8b0",
+        "goal-plan.v1/en": "803d4a6bbfc07edf",
+        "goal-plan.v1/zh-Hans": "578468796ea22d3e",
         "chat.v1/en": "ba59310c93ff88c4",
         "chat.v1/zh-Hans": "7a906e8163a348af",
     ]
