@@ -206,12 +206,13 @@ class AppUITestCase: XCTestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 10), "field \(field) not found")
         let app = XCUIApplication()
         let keyboard = app.keyboards.firstMatch
+        let keyboardDone = ["onboarding.keyboardDone", "meal.keyboardDone", "manual.keyboardDone"]
         // XCTest's keyboard frame excludes the predictive bar on some keyboards. The onboarding
         // action also rises above the keyboard, so start each drag inside the form above both.
         for _ in 0..<3 {
             let window = app.windows.firstMatch.frame
             var formBottom = keyboard.exists ? keyboard.frame.minY - 64 : window.maxY - 80
-            for id in [ID.onboardingNext, ID.onboardingFinish, "onboarding.keyboardDone", "meal.keyboardDone"] {
+            for id in [ID.onboardingNext, ID.onboardingFinish] + keyboardDone {
                 let action = app.buttons[id]
                 if action.exists {
                     let actionFrame = action.frame
@@ -222,6 +223,13 @@ class AppUITestCase: XCTestCase {
             }
             formBottom -= 16
             guard field.frame.maxY > formBottom else { break }
+            // The keyboard lifts the onboarding action over the form, where a drag would land on it; close the
+            // keyboard before scrolling to a field below.
+            if keyboard.exists, !hasKeyboardFocus(field),
+               let done = keyboardDone.map({ app.buttons[$0] }).first(where: { $0.exists && $0.isHittable }) {
+                done.tap()
+                if waitUntil(timeout: 3, { !keyboard.exists }) { continue }
+            }
             let navigationBar = app.navigationBars.firstMatch
             let upperLimit = navigationBar.exists ? max(window.minY + 80, navigationBar.frame.maxY + 12) : window.minY + 80
             let startY = formBottom
