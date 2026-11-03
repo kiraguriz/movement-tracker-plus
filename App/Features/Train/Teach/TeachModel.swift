@@ -26,6 +26,8 @@ enum TeachProblem: Equatable {
         case .romTooSmall: self = .small
         case .inconsistentDepth: self = .uneven
         case .jointsUnreliable: self = .hidden
+        // Only form checks produce this, and slice A's spec has none.
+        case .ruleFailsDemo: self = .uneven
         }
     }
 }
