@@ -19,11 +19,17 @@ final class NotificationCoordinator: NSObject, UNUserNotificationCenterDelegate 
         []
     }
 
+    /// The completion-handler form, not the async one: the system calls it on a background queue, and the async form
+    /// finishes there too, which UIKit rejects when the tap launches the app. The handler is called on the main actor.
     nonisolated func userNotificationCenter(
-        _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse
-    ) async {
-        guard response.actionIdentifier == UNNotificationDefaultActionIdentifier,
-              let route = NotificationLink.route(from: response.notification.request.content.userInfo) else { return }
-        await router.open(route)
+        _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping @Sendable () -> Void
+    ) {
+        let route = response.actionIdentifier == UNNotificationDefaultActionIdentifier
+            ? NotificationLink.route(from: response.notification.request.content.userInfo) : nil
+        Task { @MainActor in
+            if let route { router.open(route) }
+            completionHandler()
+        }
     }
 }
