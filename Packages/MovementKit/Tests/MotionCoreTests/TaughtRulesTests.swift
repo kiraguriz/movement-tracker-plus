@@ -89,6 +89,14 @@ struct TaughtRulesTests {
         }
     }
 
+    @Test("a threshold that is only rounded to the stored precision is not reported as eased")
+    func roundingIsNotEasing() throws {
+        let analysis = try analysis()
+        let build = TaughtSpecBuilder.build(analysis, proposal: TaughtProposal(checks: [check("slowDown", 600.0004, weight: 0.3)]))
+        let kept = try #require(build.kept.first, "dropped: \(build.dropped)")
+        #expect(!kept.wasRelaxed && abs(kept.threshold - 600) < 0.01)
+    }
+
     @Test("a timing check never asks for slower than the user's fastest rep")
     func timing() throws {
         let analysis = try analysis()

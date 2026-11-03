@@ -280,7 +280,7 @@ public enum TaughtSpecBuilder {
                 seen.insert(template)
                 kept.append(TaughtKeptCheck(
                     template: template, proposedThreshold: check.threshold, threshold: threshold, severity: check.severity,
-                    weight: check.weight, wasRelaxed: abs(threshold - check.threshold) > 1e-9
+                    weight: check.weight, wasRelaxed: abs(threshold - check.threshold) > 0.001
                 ))
             }
         }
