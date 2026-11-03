@@ -6,6 +6,8 @@ struct PlanSummaryView: View {
     let plan: GoalPlanner.Plan
     let units: UnitFormatter
     var compact = false
+    /// Extra sentences for the amber area, for example what the device-side guard changed in a Muse plan.
+    var notices: [String] = []
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .largeTitle) private var calorieSize = 150.0
@@ -22,7 +24,7 @@ struct PlanSummaryView: View {
                     macroCard.frame(maxHeight: .infinity)
                     rationaleCard.frame(maxHeight: .infinity)
                 }
-                if !plan.warnings.isEmpty { warnings.gridCellColumns(2) }
+                if !plan.warnings.isEmpty || !notices.isEmpty { warnings.gridCellColumns(2) }
             }
         } else {
             VStack(spacing: 12) {
@@ -51,6 +53,14 @@ struct PlanSummaryView: View {
 
     private var warnings: some View {
         VStack(spacing: 8) {
+            ForEach(Array(notices.enumerated()), id: \.offset) { _, notice in
+                Label(notice, systemImage: "exclamationmark.triangle.fill")
+                    .font(.subheadline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
+                    .background(TraceTheme.amber.opacity(0.15), in: .rect(cornerRadius: 20))
+                    .accessibilityIdentifier(AccessibilityID.onboardingPlanAdjustment)
+            }
             ForEach(plan.warnings, id: \.self) { warning in
                 Label(PlannerText.warning(warning), systemImage: "exclamationmark.triangle.fill")
                     .font(.subheadline)
@@ -253,6 +263,21 @@ struct TraceMeasurementValue: View {
 enum PlannerText {
     static func warning(_ warning: GoalPlanner.Warning) -> String {
         localized(warning.rawValue)
+    }
+
+    /// What the device-side guard changed in a Muse plan, as a sentence.
+    static func adjustment(_ adjustment: GoalPlanGuard.Adjustment) -> String {
+        let format = localized(adjustment.key.rawValue)
+        let numbers = adjustment.arguments
+        switch adjustment.key {
+        case .kcalRaisedToFloor, .kcalLowered, .kcalRaised:
+            let text = numbers.map { Int($0).formatted() as NSString }
+            return String(format: format, locale: .current, arguments: text)
+        case .workoutsAdjusted:
+            return String(format: format, locale: .current, arguments: numbers.map { Int($0) })
+        case .macrosAdjusted, .carbsRecalculated:
+            return format
+        }
     }
 
     static func rationale(_ rationale: GoalPlanner.Rationale, units: UnitFormatter) -> String {

@@ -5990,6 +5990,348 @@
           }
         }
       }
+    },
+    "Plan with Muse" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plan with Muse"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用 Muse 制定计划"
+          }
+        }
+      }
+    },
+    "Use standard plan" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use standard plan"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用标准计划"
+          }
+        }
+      }
+    },
+    "Muse sees" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse sees"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse 会看到"
+          }
+        }
+      }
+    },
+    "Height and weight" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Height and weight"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "身高和体重"
+          }
+        }
+      }
+    },
+    "Goal, pace and workouts" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goal, pace and workouts"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目标、节奏和每周训练次数"
+          }
+        }
+      }
+    },
+    "Stays on this phone" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stays on this phone"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不会离开手机"
+          }
+        }
+      }
+    },
+    "Also lets Coach use Muse. Change it in Me." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Also lets Coach use Muse. Change it in Me."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同时让教练使用 Muse，可在“我”里关闭。"
+          }
+        }
+      }
+    },
+    "Muse is building your plan" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse is building your plan"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse 正在制定你的计划"
+          }
+        }
+      }
+    },
+    "From Muse" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From Muse"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "来自 Muse"
+          }
+        }
+      }
+    },
+    "Muse's plan didn't pass the safety check. Using the standard plan." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse's plan didn't pass the safety check. Using the standard plan."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse 的方案没有通过安全检查，已使用标准计划。"
+          }
+        }
+      }
+    },
+    "You're offline. Using the standard plan." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You're offline. Using the standard plan."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前离线，已使用标准计划。"
+          }
+        }
+      }
+    },
+    "Muse took too long. Using the standard plan." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse took too long. Using the standard plan."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse 响应太慢，已使用标准计划。"
+          }
+        }
+      }
+    },
+    "Muse is unavailable right now. Using the standard plan." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse is unavailable right now. Using the standard plan."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse 暂时不可用，已使用标准计划。"
+          }
+        }
+      }
+    },
+    "You've reached today's Muse limit. Using the standard plan." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You've reached today's Muse limit. Using the standard plan."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天的 Muse 次数已用完，已使用标准计划。"
+          }
+        }
+      }
+    },
+    "That didn't work. Using the standard plan." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That didn't work. Using the standard plan."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作未成功，已使用标准计划。"
+          }
+        }
+      }
+    },
+    "planner.adjust.kcal.floor" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse suggested %1$@ kcal. Raised to the %2$@ kcal minimum."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse 建议 %1$@ 千卡，已提高到 %2$@ 千卡下限。"
+          }
+        }
+      }
+    },
+    "planner.adjust.kcal.lowered" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse suggested %1$@ kcal. Lowered to %2$@ kcal for your pace."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse 建议 %1$@ 千卡，已按你的节奏降到 %2$@ 千卡。"
+          }
+        }
+      }
+    },
+    "planner.adjust.kcal.raised" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse suggested %1$@ kcal. Raised to %2$@ kcal for your pace."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse 建议 %1$@ 千卡，已按你的节奏提高到 %2$@ 千卡。"
+          }
+        }
+      }
+    },
+    "planner.adjust.macros" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Protein and fat adjusted to safe ranges."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "蛋白质和脂肪已调整到安全范围。"
+          }
+        }
+      }
+    },
+    "planner.adjust.carbs" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carbs recalculated to fit your calories."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "碳水已重新计算，以匹配总热量。"
+          }
+        }
+      }
+    },
+    "planner.adjust.workouts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workouts per week adjusted to %lld."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每周训练次数已调整为 %lld。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -212,6 +212,17 @@ enum AccessibilityID {
     static let profileEditor = "profileEditor"
     static let profileCancel = "profileEditor.cancel"
     static let profileSave = "profileEditor.save"
+
+    // Onboarding: the Muse choice and the plan states
+    static let onboardingMuse = "onboarding.muse"
+    static let onboardingMuseOn = "onboarding.muse.on"
+    static let onboardingMuseOff = "onboarding.muse.off"
+    static let onboardingPlanWaiting = "onboarding.plan.waiting"
+    static let onboardingPlanUseStandard = "onboarding.plan.useStandard"
+    static let onboardingPlanRetry = "onboarding.plan.retry"
+    static let onboardingPlanMuse = "onboarding.plan.muse"
+    static let onboardingPlanNotice = "onboarding.plan.notice"
+    static let onboardingPlanAdjustment = "onboarding.plan.adjustment"
 }
 
 extension View {

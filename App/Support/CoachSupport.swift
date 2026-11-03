@@ -16,7 +16,7 @@ extension CoachLocale {
 /// is mapped to a localized sentence here.
 struct CoachFailure: Equatable {
     enum Area {
-        case chat, search, photo
+        case chat, search, photo, plan
     }
 
     enum Kind {
@@ -24,6 +24,8 @@ struct CoachFailure: Equatable {
     }
 
     var kind: Kind
+    /// The request missed its deadline. It counts as `offline` for the icon and the retry rules.
+    var timedOut = false
     var message: String
     /// True when asking again later can work. CoachKit knows which failures that holds for (a spent budget, a
     /// refusal, a bad request or the proxy's own broken credentials stay as they are); anything else is a
@@ -32,8 +34,9 @@ struct CoachFailure: Equatable {
 
     init(_ error: any Error, area: Area) {
         kind = Self.kind(of: error)
+        timedOut = (error as? CoachError)?.isDeadline ?? false
         isRetryable = (error as? CoachError)?.isTransient ?? true
-        message = Self.message(kind, area: area, isRetryable: isRetryable)
+        message = timedOut ? String(localized: "Muse took too long. Using the standard plan.") : Self.message(kind, area: area, isRetryable: isRetryable)
     }
 
     private static func kind(of error: any Error) -> Kind {
@@ -55,6 +58,10 @@ struct CoachFailure: Equatable {
 
     private static func message(_ kind: Kind, area: Area, isRetryable: Bool) -> String {
         switch (kind, area) {
+        case (.budget, .plan): String(localized: "You've reached today's Muse limit. Using the standard plan.")
+        case (.offline, .plan): String(localized: "You're offline. Using the standard plan.")
+        case (.paused, .plan), (.busy, .plan), (.unavailable, .plan): String(localized: "Muse is unavailable right now. Using the standard plan.")
+        case (.refused, .plan), (.other, .plan): String(localized: "That didn't work. Using the standard plan.")
         case (.budget, .chat): String(localized: "You've reached today's coach limit. Try again tomorrow.")
         case (.budget, .search): String(localized: "You've reached today's search limit. You can still add meals by hand.")
         case (.budget, .photo): String(localized: "You've reached today's photo limit. You can still add meals by hand.")
@@ -96,6 +103,12 @@ final class AIConsent {
         )
     }
 
+    /// Stores the choice and returns when it is written; unlike `set`, it shows nothing optimistically.
+    func commit(_ isOn: Bool) async throws {
+        try await environment.commitAIOptIn(isOn)
+        self.isOn = isOn
+    }
+
     func set(_ isOn: Bool) {
         let previous = self.isOn
         self.isOn = isOn
@@ -121,6 +134,11 @@ extension AppEnvironment {
     /// check behind every Muse call: the coach chat, the meal photo and the Train flow.
     func isAIOptedIn() async -> Bool {
         (try? await settings.get(SettingKey.aiOptIn)) ?? false
+    }
+
+    /// Writes the Muse consent and throws when it could not be stored, so onboarding only moves on after a saved choice.
+    func commitAIOptIn(_ isOn: Bool) async throws {
+        try await settings.set(SettingKey.aiOptIn, to: isOn)
     }
 }
 

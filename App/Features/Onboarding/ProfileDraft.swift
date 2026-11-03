@@ -25,6 +25,9 @@ final class ProfileDraft {
     private(set) var goalKind = GoalKind.maintain
     var ratePercent = ProfileDraft.defaultRate(for: .lose)
 
+    /// Whether the user asked Muse to make the first plan. Nil until onboarding asks; never stored.
+    var museChoice: Bool?
+
     private let currentYear: Int
 
     /// An empty draft for first launch.
@@ -188,10 +191,10 @@ final class ProfileDraft {
 
     var isComplete: Bool { isAboutValid && isBodyValid }
 
-    /// The plan for the current answers, or nil while they are incomplete or the planner rejects them.
-    var plan: GoalPlanner.Plan? {
+    /// What the planner needs, or nil while the answers are incomplete.
+    var plannerInput: GoalPlanner.Input? {
         guard isComplete, case .ok(let age) = ageCheck, let equation = resolvedEquation, let height, let weight else { return nil }
-        let input = GoalPlanner.Input(
+        return GoalPlanner.Input(
             equation: equation,
             ageYears: age,
             weight: weight,
@@ -200,6 +203,11 @@ final class ProfileDraft {
             kind: goalKind,
             weeklyRatePercent: goalKind == .maintain ? nil : ratePercent
         )
+    }
+
+    /// The plan for the current answers, or nil while they are incomplete or the planner rejects them.
+    var plan: GoalPlanner.Plan? {
+        guard let input = plannerInput else { return nil }
         do throws(GoalPlanner.PlanError) {
             return try GoalPlanner.plan(input)
         } catch {
@@ -229,11 +237,15 @@ final class ProfileDraft {
 
     /// Writes the profile, the new active goal and, when the weight changed, a weight measurement in one transaction,
     /// so an interrupted save leaves what was stored before. A failed save keeps the ids it used, so trying again
-    /// rewrites the same rows instead of adding a second weight or goal. Returns the stored measurement, if any.
+    /// rewrites the same rows instead of adding a second weight or goal. `chosenPlan` is the plan the user confirmed
+    /// when it is not the standard one for these answers (a Muse plan that passed the device-side guard).
+    /// Returns the stored measurement, if any.
     @MainActor
     @discardableResult
-    func save(using environment: AppEnvironment, existing: Profile?, latestWeight: Mass?) async throws -> BodyMeasurement? {
-        guard let plan, let sex, let birthYear, let height, let weight else { throw SaveError.incomplete }
+    func save(
+        using environment: AppEnvironment, existing: Profile?, latestWeight: Mass?, plan chosenPlan: GoalPlanner.Plan? = nil
+    ) async throws -> BodyMeasurement? {
+        guard let plan = chosenPlan ?? plan, let sex, let birthYear, let height, let weight else { throw SaveError.incomplete }
         let now = environment.now()
         let timeZone = environment.timeZone()
         let ids = attemptIDs ?? AttemptIDs(measurement: environment.newID(), goal: environment.newID(), profile: environment.newID())

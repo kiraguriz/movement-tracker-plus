@@ -5,7 +5,7 @@ Date: 2026-11-02. Scope: implement the selected direction in the existing native
 **Source and implementation evidence**
 
 - Selected visual: [onboarding-reference.png](/Users/haitianzhu/Projects/Workout_movement_tracker+/docs/onboarding-reference.png), the first displayed design option.
-- Implementation: Welcome → About you → Body → Goal → Your plan → Today. The existing profile draft, validation, goal planner and persistence remain the source of the actual plan.
+- Implementation: Welcome → Muse (when the coach is available; added 2026-11-03, see the last section) → About you → Body → Goal → Your plan → Today. The existing profile draft, validation, goal planner and persistence remain the source of the actual plan.
 - Simulator: iPhone 17 Pro Max, iOS 27.0, 440 × 956 points, screenshots at 1320 × 2868 pixels (@3x). No iPhone Duo result is claimed.
 - Reference: 852 × 1846 pixels, approximately a 390 × 845 content-only artboard. It omits system chrome. The native implementation uses the real status bar, safe areas, navigation and home indicator. This is a style implementation on the user's chosen simulator, not a claim of pixel identity across different viewport sizes.
 - Full-view comparison: [initial](/Users/haitianzhu/.codex/visualizations/2026/11/02/01a19da3-14bd-73e0-ba63-c8c920185668/onboarding-comparison-initial.png) and [revised](/Users/haitianzhu/.codex/visualizations/2026/11/02/01a19da3-14bd-73e0-ba63-c8c920185668/onboarding-comparison-final.png).

@@ -1,9 +1,13 @@
 import Domain
 import SwiftUI
 
-/// The welcome introduces the motion loop; the four setup steps share one draft until it is saved.
+/// The welcome introduces the motion loop; the four setup steps share one draft until it is saved. When the coach is
+/// available, a Muse step comes first: it asks whether Muse makes the calorie plan, and the Plan page then shows
+/// Muse's plan (fitted into the phone's own ranges) or the standard plan.
 struct OnboardingView: View {
     private enum Step: Int, Hashable {
+        /// Not counted in the progress bar.
+        case muse = 0
         case about = 1, body, goal, plan
     }
 
@@ -12,6 +16,8 @@ struct OnboardingView: View {
     @State private var draft: ProfileDraft
     @State private var path: [Step] = []
     @State private var isSaving = false
+    @State private var isChoosingMuse = false
+    @State private var musePlan = MusePlanModel()
     @State private var errorMessage: String?
     @FocusState private var birthYearFocused: Bool
     @FocusState private var heightFocused: Bool
@@ -27,7 +33,7 @@ struct OnboardingView: View {
     var body: some View {
         GeometryReader { geometry in
             NavigationStack(path: $path) {
-                OnboardingWelcomeView { path.append(.about) }
+                OnboardingWelcomeView { path.append(environment.coach == nil ? Step.about : Step.muse) }
                     .navigationTitle("Welcome")
                     .toolbar(.hidden, for: .navigationBar)
                     .navigationDestination(for: Step.self) { step in
@@ -44,6 +50,12 @@ struct OnboardingView: View {
 
     @ViewBuilder private func setup(_ step: Step, wide: Bool) -> some View {
         switch step {
+        case .muse:
+            OnboardingMuseStep(isBusy: isChoosingMuse) { wantsMuse in
+                Task { await chooseMuse(wantsMuse) }
+            }
+            .navigationTitle("Muse")
+            .navigationBarTitleDisplayMode(.large)
         case .about:
             form("About you", step: step, canContinue: draft.isAboutValid, next: .body) {
                 OnboardingAboutStep(draft: draft, birthYearFocus: $birthYearFocused)
@@ -92,7 +104,11 @@ struct OnboardingView: View {
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            OnboardingAction(title: next == .plan ? "See my plan" : "Continue", isEnabled: canContinue) {
+            OnboardingAction(
+                title: next == .plan ? (draft.museChoice == true ? "Plan with Muse" : "See my plan") : "Continue",
+                systemImage: next == .plan && draft.museChoice == true ? "sparkles" : "arrow.right",
+                isEnabled: canContinue
+            ) {
                 dismissKeyboard()
                 path.append(next)
             }
@@ -112,9 +128,7 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 20) {
                 OnboardingProgress(step: Step.plan.rawValue)
                 if !wide { planGoalRow }
-                if let plan = draft.plan {
-                    PlanSummaryView(plan: plan, units: UnitFormatter(system: draft.unitSystem), compact: wide)
-                }
+                planContent(wide: wide)
             }
             .frame(maxWidth: 1040)
             .frame(maxWidth: .infinity)
@@ -126,6 +140,9 @@ struct OnboardingView: View {
         .background(TraceTheme.paper)
         .navigationTitle("Your plan")
         .navigationBarTitleDisplayMode(wide ? .inline : .large)
+        .onAppear { musePlan.begin(for: draft, environment: environment) }
+        .onDisappear { musePlan.cancel() }
+        .onChange(of: musePlan.state) { old, new in announce(from: old, to: new) }
         .toolbar {
             if wide {
                 ToolbarItem(placement: .principal) {
@@ -139,7 +156,7 @@ struct OnboardingView: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: 12) {
-                OnboardingAction(title: "Start", isEnabled: draft.plan != nil, isBusy: isSaving) {
+                OnboardingAction(title: "Start", isEnabled: chosenPlan != nil, isBusy: isSaving) {
                     Task { await finish() }
                 }
                 .accessibilityIdentifier(AccessibilityID.onboardingFinish)
@@ -156,6 +173,57 @@ struct OnboardingView: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
             .background(TraceTheme.paper)
+        }
+    }
+
+    /// The plan on screen, which is the one Start saves. Nil only while Muse is still working.
+    private var chosenPlan: GoalPlanner.Plan? {
+        switch musePlan.state {
+        case .waiting: nil
+        case .muse(let muse): muse.plan
+        case .standard, .rejected, .failed: draft.plan
+        }
+    }
+
+    @ViewBuilder private func planContent(wide: Bool) -> some View {
+        let units = UnitFormatter(system: draft.unitSystem)
+        switch musePlan.state {
+        case .waiting:
+            MusePlanWaiting { musePlan.useStandard() }
+        case .muse(let muse):
+            MusePlanNote(rationale: muse.rationale, caution: muse.caution)
+            PlanSummaryView(plan: muse.plan, units: units, compact: wide, notices: muse.adjustments.map(PlannerText.adjustment))
+        case .standard:
+            standardSummary(units: units, wide: wide)
+        case .rejected:
+            MusePlanFallbackNotice(message: String(localized: "Muse's plan didn't pass the safety check. Using the standard plan."))
+            standardSummary(units: units, wide: wide)
+        case .failed(let failure):
+            MusePlanFallbackNotice(
+                message: failure.message,
+                retry: failure.isRetryable && failure.kind != .budget ? { musePlan.retry(for: draft, environment: environment) } : nil
+            )
+            standardSummary(units: units, wide: wide)
+        }
+    }
+
+    @ViewBuilder private func standardSummary(units: UnitFormatter, wide: Bool) -> some View {
+        if let plan = draft.plan {
+            PlanSummaryView(plan: plan, units: units, compact: wide)
+        }
+    }
+
+    private func announce(from old: MusePlanModel.State, to new: MusePlanModel.State) {
+        guard old == .waiting else { return }
+        switch new {
+        case .waiting, .standard:
+            break
+        case .muse:
+            AccessibilityNotification.Announcement(String(localized: "Your plan")).post()
+        case .rejected:
+            AccessibilityNotification.Announcement(String(localized: "Muse's plan didn't pass the safety check. Using the standard plan.")).post()
+        case .failed(let failure):
+            AccessibilityNotification.Announcement(failure.message).post()
         }
     }
 
@@ -179,12 +247,26 @@ struct OnboardingView: View {
         weightFocused = false
     }
 
+    /// Stores the consent first; the next step opens only once it is written.
+    private func chooseMuse(_ wantsMuse: Bool) async {
+        guard !isChoosingMuse else { return }
+        isChoosingMuse = true
+        defer { isChoosingMuse = false }
+        do {
+            try await environment.commitAIOptIn(wantsMuse)
+            draft.museChoice = wantsMuse
+            path.append(.about)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     private func finish() async {
-        guard !isSaving else { return }
+        guard !isSaving, let plan = chosenPlan else { return }
         isSaving = true
         defer { isSaving = false }
         do {
-            try await draft.save(using: environment, existing: nil, latestWeight: nil)
+            try await draft.save(using: environment, existing: nil, latestWeight: nil, plan: plan)
         } catch {
             errorMessage = error.localizedDescription
         }

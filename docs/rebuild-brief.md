@@ -205,10 +205,23 @@ card in the meal-list column. Eat summary margins match the 20 pt dashboard inse
 and food search use adaptive page sheets, with two-column content at 640 pt and up and a single
 column for compact or accessibility sizes. Recent foods stay visible without automatic keyboard focus.
 
-First launch opens with a labelled squat-counting example, followed by About you → Body → Goal →
+First launch opens with a labelled squat-counting example, followed by Muse → About you → Body → Goal →
 Your plan. Setup uses ink capsule actions and keeps the same draft when navigating back or editing
-the goal from the plan preview. Only Start saves the profile and calculated plan. Camera, Health,
-and Muse permissions stay in their existing feature flows; onboarding requests none of them.
+the goal from the plan preview. Only Start saves the profile and calculated plan. Camera and Health
+permissions stay in their existing feature flows; onboarding requests neither.
+
+The Muse step comes first (only when the coach is available) and asks one question: plan with Muse or use
+the standard plan. Its card lists exactly what Muse would receive (age in years, sex, height and weight,
+goal, pace and workouts per week, training level) and what stays on the phone (name, birth year, camera
+video). Either button saves the choice in `SettingKey.aiOptIn` — the one consent shared by the whole coach, so
+choosing Muse turns the coach on and the step says so — and advances only after the write succeeded. With
+Muse chosen the Plan page asks CoachKit's `goal_plan` feature (strict schema `GoalPlan`, prompt
+`goal-plan.v1`, streamed, 20 s deadline, no offline stand-in) for calories and macros. The phone has already
+computed the standard plan and the ranges around it; `GoalPlanGuard` moves small deviations into those ranges
+and shows what it changed, recomputes carbs from the remainder, and discards a Muse plan whose calories are more
+than 300 kcal from the standard plan or point the wrong way for the goal. Failure, timeout, offline, a spent
+budget, a missing consent or a rejected plan leave the standard plan on screen with the reason, and Start always
+saves the plan that is shown. Muse still never counts reps and never changes an on-device measurement.
 
 Live Trace samples carry capture timestamps from MotionCore; review markers anchor to the matching
 rep's measured bottom inside its time interval. The trace is bounded to 3,600 in-memory samples and is

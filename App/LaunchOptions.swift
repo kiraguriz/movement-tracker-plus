@@ -24,6 +24,8 @@ import Foundation
 /// - `-MTRecordPoses`: records every live set's poses as if the setting were on.
 /// - `-MTCoachStub`: build the coach over a canned, in-process transport (no network, not Muse). Wins over
 ///   `-MTCoachURL`. `-MTCoachStubFail offline|budget|paused` makes every call fail that way.
+/// - `-MTCoachStubPlan ok|adjusted|unsafe|slow`: what the stub's Muse answers to the onboarding calorie plan: a valid
+///   plan, one the device-side guard has to move, one it throws away, or one that takes two minutes.
 /// - `-MTNoCoach`: simulate an unconfigured coach, even when a deployed endpoint is configured.
 /// - `-MTAIOptIn`: with the in-memory database, start with the coach consent already given.
 /// - `-MTMealPhotoSample`: the meal photo sheet offers a generated sample photo (the Simulator has no camera).
@@ -49,6 +51,7 @@ struct LaunchOptions: Equatable {
     var coachStub = false
     var noCoach = false
     var coachStubFailure: String?
+    var coachStubPlan: String?
     var aiOptIn = false
     var mealPhotoSample = false
     #if DEBUG
@@ -74,6 +77,7 @@ struct LaunchOptions: Equatable {
         coachStub = arguments.contains("-MTCoachStub")
         noCoach = arguments.contains("-MTNoCoach")
         coachStubFailure = Self.value(after: "-MTCoachStubFail", in: arguments)
+        coachStubPlan = Self.value(after: "-MTCoachStubPlan", in: arguments)
         aiOptIn = arguments.contains("-MTAIOptIn")
         mealPhotoSample = arguments.contains("-MTMealPhotoSample")
         #if DEBUG

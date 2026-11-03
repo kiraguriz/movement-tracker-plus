@@ -94,7 +94,7 @@ struct AppEnvironment: Sendable {
         #if DEBUG
         if launch.noCoach { return nil }
         if launch.coachStub {
-            return (CoachStub.makeClient(failure: launch.coachStubFailure), true)
+            return (CoachStub.makeClient(failure: launch.coachStubFailure, plan: launch.coachStubPlan), true)
         }
         #endif
         guard let url = CoachEndpoint.url(for: launch) else { return nil }

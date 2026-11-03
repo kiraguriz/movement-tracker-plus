@@ -3,6 +3,7 @@ import SwiftUI
 /// Onboarding uses the reference's quiet ink capsule rather than the app's glass sheet action.
 struct OnboardingAction: View {
     let title: LocalizedStringKey
+    var systemImage = "arrow.right"
     var isEnabled = true
     var isBusy = false
     let action: () -> Void
@@ -15,7 +16,7 @@ struct OnboardingAction: View {
                 } else {
                     Text(title)
                         .fixedSize(horizontal: false, vertical: true)
-                    Image(systemName: "arrow.right")
+                    Image(systemName: systemImage)
                         .accessibilityHidden(true)
                 }
             }

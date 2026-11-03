@@ -13,18 +13,24 @@ import Foundation
 ///   streams a short answer built from those results.
 /// - feature `meal_photo`: one JSON response with a fixed three-item estimate. The photo is not looked at.
 /// - `GET /v1/food/search`: a small USDA-shaped catalog, with a per-100-ml item and one with missing nutrients.
+/// - feature `goal_plan`: one JSON plan built from the device numbers in the request (`-MTCoachStubPlan` picks `ok`,
+///   `adjusted`, `unsafe` or `slow`), so the guard and the Plan page can be walked through without Muse.
 /// - `set_review`, `debrief`: answered as a paused service, so those screens use their on-device fallback.
 ///
 /// The UI marks every stub-backed screen (`StubBadge`) so nothing reads as Muse output.
 nonisolated enum CoachStub {
     static let baseURL = URL(string: "https://coach-stub.invalid")!
 
-    /// `failure` is the value of `-MTCoachStubFail` (`offline`, `budget` or `paused`) or nil.
-    static func makeClient(failure: String?) -> CoachClient {
+    /// `failure` is the value of `-MTCoachStubFail` (`offline`, `budget` or `paused`) or nil; `plan` the value of
+    /// `-MTCoachStubPlan` (`ok`, `adjusted`, `unsafe` or `slow`) or nil.
+    static func makeClient(failure: String?, plan: String? = nil) -> CoachClient {
         CoachClient(
             baseURL: baseURL,
             tokenStore: InMemoryTokenStore(token: "stub-install-token"),
-            transport: StubTransport(failure: failure.flatMap(StubTransport.Failure.init(rawValue:))),
+            transport: StubTransport(
+                failure: failure.flatMap(StubTransport.Failure.init(rawValue:)),
+                plan: plan.flatMap(StubGoalPlan.Mode.init(rawValue:)) ?? .ok
+            ),
             retry: .none
         )
     }
@@ -36,6 +42,7 @@ nonisolated struct StubTransport: HTTPTransport {
     }
 
     var failure: Failure?
+    var plan = StubGoalPlan.Mode.ok
 
     // MARK: HTTPTransport
 
@@ -71,6 +78,17 @@ nonisolated struct StubTransport: HTTPTransport {
                 status: rejected.status, headers: rejected.headers,
                 body: AsyncThrowingStream { $0.yield(rejected.body); $0.finish() }
             )
+        }
+        if case .coach("goal_plan") = route {
+            let body = AsyncThrowingStream<Data, any Error> { continuation in
+                let task = Task {
+                    do { try await Task.sleep(for: .milliseconds(plan == .slow ? 120_000 : 3_000)) } catch { return }
+                    continuation.yield(StubGoalPlan.response(for: request, mode: plan).body)
+                    continuation.finish()
+                }
+                continuation.onTermination = { _ in task.cancel() }
+            }
+            return HTTPStreamResponse(status: 200, headers: ["content-type": "application/json"], body: body)
         }
         guard case .coach("chat") = route else {
             let paused = Self.pausedFeature
@@ -489,3 +507,49 @@ nonisolated enum StubFoods {
     }
 }
 #endif
+
+// MARK: - Goal plan
+
+/// The canned Muse calorie plan: a small, valid step away from the standard plan that the request carries.
+nonisolated enum StubGoalPlan {
+    nonisolated enum Mode: String, Sendable {
+        /// Inside the device's ranges: the Plan page shows it as it is.
+        case ok
+        /// Below the range for the user's pace but near the standard plan: the guard raises it and says so.
+        case adjusted
+        /// Far below the standard plan: the guard throws it away.
+        case unsafe
+        /// Answers after two minutes, so a test can leave through "Use standard plan".
+        case slow
+    }
+
+    static func response(for request: HTTPRequest, mode: Mode) -> HTTPResponse {
+        let body = request.body.flatMap { try? JSONValue(jsonData: $0) }
+        let user = (body?["input"]?.arrayValue ?? [])
+            .last { $0["role"]?.stringValue == "user" }
+            .flatMap { ($0["content"]?.arrayValue ?? []).compactMap { $0["text"]?.stringValue }.joined() } ?? ""
+        let data = user.range(of: "Data (JSON):\n").flatMap { try? JSONValue(jsonString: String(user[$0.upperBound...])) }
+        let device = data?["device"]
+        let standard = device?["standardPlan"]
+        func number(_ value: JSONValue?, _ fallback: Int) -> Int { value?.intValue ?? fallback }
+        let standardKcal = number(standard?["kcal"], 2000)
+        let kcalMin = number(device?["kcalMin"], standardKcal)
+        let kcalMax = number(device?["kcalMax"], standardKcal)
+        let kcal: Int = switch mode {
+        case .ok, .slow: standardKcal + 50 <= kcalMax ? standardKcal + 50 : max(kcalMin, standardKcal - 50)
+        case .adjusted: kcalMin - 120
+        case .unsafe: 900
+        }
+        let protein = number(standard?["proteinG"], 120)
+        let fat = number(standard?["fatG"], 60)
+        let carbs = max(0, (kcal - 4 * protein - 9 * fat) / 4)
+        let chinese = StubChat.language(of: request) == .zh
+        let plan: JSONValue = [
+            "kcal": .int(kcal), "proteinG": .int(protein), "carbsG": .int(carbs), "fatG": .int(fat),
+            "weeklyRatePercent": 0.4, "workoutsPerWeek": .int(number(data?["goal"]?["workoutsPerWeek"], 3)),
+            "rationale": .string(chinese ? "示例方案：在标准数值上略作调整。" : "Sample plan: a small step from the standard numbers."),
+            "safetyFlag": ["level": "none", "note": ""], "confidence": 0.7,
+        ]
+        return StubTransport.json(200, StubTransport.response(items: [StubTransport.message(plan.canonicalString)]))
+    }
+}
