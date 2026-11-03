@@ -1,4 +1,5 @@
 import AppLogic
+import CoachKit
 import Domain
 import SwiftUI
 
@@ -12,12 +13,17 @@ import SwiftUI
 final class TodayPlanModel {
     private(set) var plan: TodayPlan?
     private(set) var isBusy = false
+    /// Muse's one sentence for today, when the user allowed Muse and it answered. Otherwise the card shows its own words.
+    var tip: String? { tipKind == plan?.recommendation.kind ? tipText : nil }
+    private var tipText: String?
+    private var tipKind: TodayRecommendation.Kind?
     var errorMessage: String?
 
     @ObservationIgnored private let environment: AppEnvironment
     @ObservationIgnored private let service: TodayPlanService
     @ObservationIgnored private var allowRest = true
     @ObservationIgnored private var generation = 0
+    @ObservationIgnored private var tipAttempt: LocalDay?
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -31,7 +37,8 @@ final class TodayPlanModel {
     func run() async {
         async let workoutUpdates: Void = watchWorkouts()
         async let switchUpdates: Void = watchSwitch()
-        _ = await (workoutUpdates, switchUpdates)
+        async let consentUpdates: Void = watchConsent()
+        _ = await (workoutUpdates, switchUpdates, consentUpdates)
     }
 
     private func watchWorkouts() async {
@@ -39,6 +46,13 @@ final class TodayPlanModel {
         let query = WorkoutHistoryQuery(statuses: [.completed, .draft], limit: 1)
         await environment.workouts.observeHistory(query).forEachValue(
             onFailure: { errorMessage = $0.localizedDescription },
+            { _ in Task { await reload() } }
+        )
+    }
+
+    private func watchConsent() async {
+        await environment.settings.observe(SettingKey.aiOptIn).forEachValue(
+            onFailure: { _ in },
             { _ in Task { await reload() } }
         )
     }
@@ -58,12 +72,40 @@ final class TodayPlanModel {
             let result = try await service.plan(now: environment.now(), timeZone: environment.timeZone(), allowRest: allowRest)
             guard mine == generation else { return }
             plan = result
+            await refreshTip(for: result)
         } catch is CancellationError {
             return
         } catch {
             guard mine == generation else { return }
             errorMessage = error.localizedDescription
         }
+    }
+
+    /// Asks Muse for today's sentence: only with Coach on, a real Muse behind it, and a plan worth explaining. Muse
+    /// answers at most once per local day (CoachKit keeps the answer); a failure is not retried until the next launch,
+    /// and the card keeps its own words. Recovery reaches Muse only as coarse words, and only behind its own switch.
+    private func refreshTip(for plan: TodayPlan) async {
+        guard [.train, .easy, .rest].contains(plan.recommendation.kind) else { clearTip(); return }
+        guard let coach = environment.coach, !environment.coachIsStub, await environment.isAIOptedIn() else { clearTip(); return }
+        guard tipAttempt != plan.day else { return }
+        tipAttempt = plan.day
+        let shares = (try? await environment.settings.get(SettingKey.readinessShareWithMuse)) ?? false
+        var names: [ExerciseID: String] = [:]
+        for lift in plan.recommendation.lifts { names[lift.exerciseID] = ExerciseNames.name(id: lift.exerciseID) }
+        let input = DailyTipInput(
+            day: plan.day, recommendation: plan.recommendation, names: names,
+            readiness: shares && plan.readiness.usesRecoveryData ? plan.readiness : nil
+        )
+        if let sentence = (try? await coach.dailyTip(input, locale: .app))?.output.sentence {
+            tipText = sentence
+            tipKind = plan.recommendation.kind
+        }
+    }
+
+    private func clearTip() {
+        tipText = nil
+        tipKind = nil
+        tipAttempt = nil
     }
 
     /// Replaces a rest-day suggestion with an easy session.

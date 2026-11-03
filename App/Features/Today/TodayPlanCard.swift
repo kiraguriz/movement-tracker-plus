@@ -166,7 +166,18 @@ struct TodayPlanCard: View {
                 .foregroundStyle(TraceTheme.ink)
         default:
             let text = TodayPlanText.reasons(recommendation.reasons)
-            if !text.isEmpty {
+            if let tip = model.tip {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    TraceCoachGlyph(size: 18)
+                    Text(tip)
+                        .font(.headline)
+                        .foregroundStyle(TraceTheme.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(String(localized: "Muse: \(tip)"))
+                .accessibilityIdentifier(AccessibilityID.todayPlanTip)
+            } else if !text.isEmpty {
                 Text(text)
                     .font(.headline)
                     .foregroundStyle(TraceTheme.ink)

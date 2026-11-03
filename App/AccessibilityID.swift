@@ -86,6 +86,8 @@ enum AccessibilityID {
     static let todayPlanConnect = "today.plan.connect"
     static let todayPlanGauge = "today.plan.gauge"
     static let todayPlanLifts = "today.plan.lifts"
+    static let todayPlanTip = "today.plan.tip"
+    static let privacyShareRecovery = "privacy.shareRecovery"
 
     // Train
     static let trainStart = "train.start"

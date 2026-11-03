@@ -6440,6 +6440,70 @@
           }
         }
       }
+    },
+    "Muse: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muse：%@"
+          }
+        }
+      }
+    },
+    "Recovery summary" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recovery summary"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢复摘要"
+          }
+        }
+      }
+    },
+    "Only whether sleep, HRV and resting heart rate are below, near or above your usual. Never the numbers." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only whether sleep, HRV and resting heart rate are below, near or above your usual. Never the numbers."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅说明睡眠、HRV 和静息心率是低于、接近还是高于你的平时水平，不包含具体数值。"
+          }
+        }
+      }
+    },
+    "Sleep, HRV and heart rate values" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sleep, HRV and heart rate values"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "睡眠、HRV 和心率数值"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

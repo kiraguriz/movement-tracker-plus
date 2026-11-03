@@ -78,6 +78,33 @@ final class ReadinessUITests: AppUITestCase {
         XCTAssertFalse(element(PlanID.connect, in: app).exists)
     }
 
+    /// Muse sees a recovery summary only after the user turns it on, and the switch exists only once readiness is on.
+    @MainActor
+    func testRecoverySharingSwitchIsOffByDefaultAndOnlyWithReadiness() throws {
+        let app = launchApp(seed: .sample, startTab: "me", extraArguments: ["-MTReadiness", "none"])
+        XCTAssertTrue(element("screen.me", in: app).waitForExistence(timeout: 20))
+        scrollClearOfBottomBars(element(ID.privacyLink, in: app), in: app)
+        tap(ID.privacyLink, in: app)
+        XCTAssertTrue(element(ID.screenPrivacy, in: app).waitForExistence(timeout: 10))
+        app.swipeUp()
+        XCTAssertTrue(app.staticTexts["Sent to USDA"].waitForExistence(timeout: 5), "the list did not scroll to the end")
+        XCTAssertFalse(element("privacy.shareRecovery", in: app).exists, "the switch showed before readiness was on")
+    }
+
+    @MainActor
+    func testRecoverySharingSwitchTurnsOnWhenReadinessIsOn() throws {
+        let app = launchApp(seed: .sample, startTab: "me", extraArguments: ["-MTReadiness", "high"])
+        XCTAssertTrue(element("screen.me", in: app).waitForExistence(timeout: 20))
+        scrollClearOfBottomBars(element(ID.privacyLink, in: app), in: app)
+        tap(ID.privacyLink, in: app)
+        let toggle = element("privacy.shareRecovery", in: app)
+        scrollClearOfBottomBars(toggle, in: app)
+        XCTAssertEqual(toggle.value as? String, "0")
+        flip(toggle)
+        XCTAssertTrue(waitUntil { (toggle.value as? String) == "1" }, "the switch did not turn on")
+        attachScreenshot("privacy-recovery")
+    }
+
     @MainActor
     func testAnOpenWorkoutIsContinuedNotDuplicated() throws {
         let app = launchToday(seed: .profile, readiness: "none")

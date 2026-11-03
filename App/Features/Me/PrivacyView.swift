@@ -3,6 +3,9 @@ import SwiftUI
 /// Exactly what leaves the phone when the coach is on, and what never does.
 /// Keep it in step with what CoachKit sends: the chat tools, the insight inputs, the meal photo and food search.
 struct PrivacyView: View {
+    @Environment(\.appEnvironment) private var environment
+    @State private var sharing: RecoverySharingModel?
+
     var body: some View {
         List {
             Section {
@@ -17,13 +20,20 @@ struct PrivacyView: View {
             } footer: {
                 Text("Muse is Meta's AI model. Requests go through this app's server. With Coach off, none of this is sent.")
             }
+            if let sharing { RecoverySharingSection(model: sharing) }
             Section("Sent to USDA") {
                 row("Food searches", detail: "What you type in food search, also with Coach off", systemImage: "magnifyingglass")
             }
             Section("Never leaves your phone") {
                 row("Your name", systemImage: "person.crop.circle")
                 row("Camera video", systemImage: "video")
+                row("Sleep, HRV and heart rate values", systemImage: "heart")
             }
+        }
+        .task {
+            let model = RecoverySharingModel(environment: environment)
+            sharing = model
+            await model.run()
         }
         .navigationTitle("What Muse sees")
         .navigationBarTitleDisplayMode(.inline)
