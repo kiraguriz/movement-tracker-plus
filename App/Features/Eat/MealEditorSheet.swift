@@ -14,6 +14,7 @@ struct MealEditorSheet: View {
     @State private var isConfirmingDelete = false
     @State private var errorMessage: String?
     @FocusState private var focus: MealDraft.Field?
+    @FocusState private var nameFocused: Bool
 
     private let day: LocalDay
     private let environment: AppEnvironment
@@ -37,35 +38,42 @@ struct MealEditorSheet: View {
     var body: some View {
         NavigationStack {
             GeometryReader { geometry in
-                ScrollView {
-                    Group {
-                        if geometry.size.width >= 640 && !dynamicTypeSize.isAccessibilitySize {
-                            HStack(alignment: .top, spacing: 20) {
-                                energyCard
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        Group {
+                            if geometry.size.width >= 640 && !dynamicTypeSize.isAccessibilitySize {
+                                HStack(alignment: .top, spacing: 20) {
+                                    energyCard
+                                        .frame(maxWidth: .infinity)
+                                    VStack(alignment: .leading, spacing: 16) {
+                                        nameField
+                                        mealPicker
+                                        amountCard
+                                        deleteButton
+                                    }
                                     .frame(maxWidth: .infinity)
-                                VStack(alignment: .leading, spacing: 16) {
+                                }
+                            } else {
+                                VStack(alignment: .leading, spacing: 12) {
                                     nameField
                                     mealPicker
+                                    energyCard
                                     amountCard
                                     deleteButton
                                 }
-                                .frame(maxWidth: .infinity)
-                            }
-                        } else {
-                            VStack(alignment: .leading, spacing: 12) {
-                                nameField
-                                mealPicker
-                                energyCard
-                                amountCard
-                                deleteButton
                             }
                         }
+                        .padding(.horizontal, geometry.size.width >= 640 ? 24 : 16)
+                        .padding(.top, 8)
+                        .padding(.bottom, 24)
                     }
-                    .padding(.horizontal, geometry.size.width >= 640 ? 24 : 16)
-                    .padding(.top, 8)
-                    .padding(.bottom, 24)
+                    .scrollBounceBehavior(.basedOnSize)
+                    // The keyboard's Done bar floats over the form, and in a stacked sheet keyboard avoidance also
+                    // stops short, so leave room to center the field being typed in.
+                    .contentMargins(.bottom, focus == nil ? 0 : 80, for: .scrollContent)
+                    .onChange(of: focus) { reveal(focus, in: proxy) }
+                    .onChange(of: geometry.size.height) { reveal(focus, in: proxy) }
                 }
-                .scrollBounceBehavior(.basedOnSize)
             }
             .background(TraceTheme.paper)
             .scrollDismissesKeyboard(.interactively)
@@ -75,8 +83,11 @@ struct MealEditorSheet: View {
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    Button("Done") { focus = nil }
-                        .accessibilityIdentifier("meal.keyboardDone")
+                    Button("Done") {
+                        focus = nil
+                        nameFocused = false
+                    }
+                    .accessibilityIdentifier("meal.keyboardDone")
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button(role: .cancel) { dismiss() }
@@ -104,6 +115,7 @@ struct MealEditorSheet: View {
         TextField("Name", text: $draft.name, axis: .vertical)
             .font(.title.bold())
             .lineLimit(1...3)
+            .focused($nameFocused)
             .frame(minHeight: 44)
             .padding(.horizontal, 4)
             .accessibilityIdentifier(AccessibilityID.mealName)
@@ -288,6 +300,7 @@ struct MealEditorSheet: View {
         .keyboardType(.decimalPad)
         .lineLimit(1)
         .focused($focus, equals: field)
+        .id(field)
         .accessibilityLabel(Text(verbatim: String(localized: title) + " " + unit))
         .accessibilityIdentifier(identifier)
         .minimumScaleFactor(0.5)
@@ -295,6 +308,11 @@ struct MealEditorSheet: View {
     }
 
     private func grams(_ text: String) -> Double { NumberInput(text).value ?? 0 }
+
+    private func reveal(_ field: MealDraft.Field?, in proxy: ScrollViewProxy) {
+        guard let field else { return }
+        withAnimation { proxy.scrollTo(field, anchor: .center) }
+    }
 
     private func delete() async {
         guard let onDelete else { return }

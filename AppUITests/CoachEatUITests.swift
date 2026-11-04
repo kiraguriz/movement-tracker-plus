@@ -440,7 +440,10 @@ final class CoachEatUITests: AppUITestCase {
     @MainActor
     private func expectDayOneOnTrain(in app: XCUIApplication) {
         for exercise in ["squat.bodyweight", "pushup", "overhead.press"] {
-            XCTAssertTrue(element(CoachID.addSet(exercise), in: app).waitForExistence(timeout: 10), "\(exercise) is not on Train")
+            let addSet = element(CoachID.addSet(exercise), in: app)
+            // The list builds the last exercise's rows only once they are scrolled to.
+            if !addSet.waitForExistence(timeout: 3) { scrollIntoView(addSet, in: app) }
+            XCTAssertTrue(addSet.waitForExistence(timeout: 10), "\(exercise) is not on Train")
         }
         XCTAssertFalse(element(CoachID.trainStart, in: app).exists, "Train still offers to start a workout")
     }

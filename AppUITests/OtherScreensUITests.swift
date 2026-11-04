@@ -205,8 +205,8 @@ final class OtherScreensUITests: TrainUITestCase {
 
     @MainActor
     private func dismissKeyboardForCapture(in app: XCUIApplication) {
-        let done = app.buttons["meal.keyboardDone"]
-        if app.keyboards.firstMatch.exists, done.exists, done.isHittable { done.tap() }
+        let done = ["meal.keyboardDone", "manual.keyboardDone"].map { app.buttons[$0] }.first { $0.exists && $0.isHittable }
+        if app.keyboards.firstMatch.exists, let done { done.tap() }
         let scroll = app.scrollViews.allElementsBoundByIndex.last { $0.isHittable }
         XCTAssertNotNil(scroll, "the sheet must expose scrollable content")
         for _ in 0..<3 where app.keyboards.firstMatch.exists {
@@ -222,7 +222,9 @@ final class OtherScreensUITests: TrainUITestCase {
             if target.exists && target.isHittable { return }
             let scroll = app.scrollViews.allElementsBoundByIndex.last { $0.isHittable }
             guard let scroll else { break }
-            let barBottom = app.navigationBars.firstMatch.frame.maxY
+            // Today has no navigation bar in landscape.
+            let bar = app.navigationBars.firstMatch
+            let barBottom = bar.exists ? bar.frame.maxY : app.windows.firstMatch.frame.minY
             if target.exists, target.frame.minY < barBottom {
                 scroll.swipeDown()
             } else {
