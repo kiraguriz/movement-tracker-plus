@@ -103,11 +103,17 @@ struct OnboardingAboutStep: View {
             birthYearFocus?.wrappedValue = false
         } label: {
             VStack(alignment: .leading, spacing: 22) {
-                ZStack {
-                    Circle().strokeBorder(selected ? TraceTheme.sky : TraceTheme.line, lineWidth: 2)
-                    if selected { Circle().fill(TraceTheme.sky).padding(8) }
+                HStack(alignment: .top) {
+                    ZStack {
+                        Circle().strokeBorder(selected ? TraceTheme.sky : TraceTheme.line, lineWidth: 2)
+                        if selected { Circle().fill(TraceTheme.sky).padding(8) }
+                    }
+                    .frame(width: 28, height: 28)
+                    Spacer(minLength: 8)
+                    Image(systemName: sex == .female ? "figure.stand.dress" : "figure.stand")
+                        .font(.system(size: 34, weight: .medium))
+                        .foregroundStyle(selected ? TraceTheme.sky : TraceTheme.secondary)
                 }
-                .frame(width: 28, height: 28)
                 .accessibilityHidden(true)
                 Text(sex.title)
                     .font(.title3.weight(.bold))

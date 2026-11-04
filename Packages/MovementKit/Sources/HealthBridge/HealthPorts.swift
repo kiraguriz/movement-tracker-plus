@@ -123,3 +123,28 @@ public enum HealthAuthorizationState: Equatable, Sendable {
     /// True when every type the module writes can be saved.
     public var canWrite: Bool { self == .authorized }
 }
+
+/// What Health knows about the user, for filling in the profile form. A value is nil when Health has none or the user
+/// did not allow reading it; Health does not say which.
+public struct HealthProfile: Equatable, Sendable {
+    /// Nil also when Health says "other" or "not set": the form then leaves the choice to the user.
+    public var sex: Sex?
+    public var birthYear: Int?
+    public var height: Length?
+    public var weight: Mass?
+
+    public init(sex: Sex? = nil, birthYear: Int? = nil, height: Length? = nil, weight: Mass? = nil) {
+        self.sex = sex
+        self.birthYear = birthYear
+        self.height = height
+        self.weight = weight
+    }
+}
+
+public protocol HealthProfileReading: Sendable {
+    /// False on a device without Health, such as most iPads.
+    var isAvailable: Bool { get }
+    /// Shows Health's sheet for everything the app reads and writes (only for types not asked about before), then
+    /// reads the profile.
+    func connect() async throws -> HealthProfile
+}

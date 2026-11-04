@@ -8,6 +8,7 @@ struct TodayView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var model: TodayModel
     @State private var isLoggingWeight = false
+    @State private var isWritingTip = false
 
     private let openTrain: () -> Void
     private let openEat: () -> Void
@@ -26,7 +27,7 @@ struct TodayView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     header(wide: wide)
-                    TodayPlanCard(environment: environment, day: model.day, wide: wide)
+                    TodayPlanCard(environment: environment, day: model.day, wide: wide, isWritingTip: $isWritingTip)
                     if wide {
                         Grid(horizontalSpacing: 16, verticalSpacing: 16) {
                             GridRow {
@@ -84,7 +85,7 @@ struct TodayView: View {
                     .lineLimit(1).minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            TodayInsightView(environment: environment, openCoach: openCoach)
+            TodayInsightView(environment: environment, day: model.day, isWritingTip: isWritingTip, openCoach: openCoach)
                 .frame(maxWidth: .infinity)
         }
     }

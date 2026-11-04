@@ -1997,7 +1997,7 @@ enum Goldens {
         {
           "content": [
             {
-              "text": "<developer text: 1313 characters, sha256 803d4a6bbfc07edf>",
+              "text": "<developer text: 1439 characters, sha256 f02444b528df617f>",
               "type": "input_text"
             }
           ],
@@ -2086,7 +2086,7 @@ enum Goldens {
                 "type": "integer"
               },
               "rationale": {
-                "description": "One or two plain sentences, at most 220 characters, that cite the user's own numbers.",
+                "description": "One or two plain sentences, at most 260 characters: the daily intake and why this protein, carbs and fat split suits the user, citing their own numbers.",
                 "type": "string"
               },
               "safetyFlag": {
@@ -2152,7 +2152,7 @@ enum Goldens {
         {
           "content": [
             {
-              "text": "<developer text: 1331 characters, sha256 578468796ea22d3e>",
+              "text": "<developer text: 1457 characters, sha256 655ea1f6f9af2920>",
               "type": "input_text"
             }
           ],
@@ -2241,7 +2241,7 @@ enum Goldens {
                 "type": "integer"
               },
               "rationale": {
-                "description": "One or two plain sentences, at most 220 characters, that cite the user's own numbers.",
+                "description": "One or two plain sentences, at most 260 characters: the daily intake and why this protein, carbs and fat split suits the user, citing their own numbers.",
                 "type": "string"
               },
               "safetyFlag": {

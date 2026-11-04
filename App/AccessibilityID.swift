@@ -86,7 +86,6 @@ enum AccessibilityID {
     static let todayPlanConnect = "today.plan.connect"
     static let todayPlanGauge = "today.plan.gauge"
     static let todayPlanLifts = "today.plan.lifts"
-    static let todayPlanTip = "today.plan.tip"
     static let privacyShareRecovery = "privacy.shareRecovery"
 
     // Train
@@ -227,6 +226,9 @@ enum AccessibilityID {
     static let onboardingMuse = "onboarding.muse"
     static let onboardingMuseOn = "onboarding.muse.on"
     static let onboardingMuseOff = "onboarding.muse.off"
+    static let onboardingHealth = "onboarding.health"
+    static let onboardingHealthConnect = "onboarding.health.connect"
+    static let onboardingHealthSkip = "onboarding.health.skip"
     static let onboardingPlanWaiting = "onboarding.plan.waiting"
     static let onboardingPlanUseStandard = "onboarding.plan.useStandard"
     static let onboardingPlanRetry = "onboarding.plan.retry"

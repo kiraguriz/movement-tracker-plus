@@ -8,6 +8,14 @@ struct PlanSummaryView: View {
     var compact = false
     /// Extra sentences for the amber area, for example what the device-side guard changed in a Muse plan.
     var notices: [String] = []
+    /// Muse's reason for its plan, shown with the formula's own reasoning.
+    var muse: MuseNote?
+
+    struct MuseNote {
+        var rationale: String
+        /// Muse's caution, when it raised one.
+        var caution: String?
+    }
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .largeTitle) private var calorieSize = 150.0
@@ -74,19 +82,43 @@ struct PlanSummaryView: View {
 
     private var rationaleCard: some View {
         Card {
-            DisclosureGroup("Why these numbers") {
-                VStack(alignment: .leading, spacing: 12) {
-                    ForEach(Array(plan.rationale.enumerated()), id: \.offset) { _, line in
-                        Text(PlannerText.rationale(line, units: units))
-                            .font(.subheadline)
-                            .foregroundStyle(TraceTheme.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: 16) {
+                if let muse { museNote(muse) }
+                DisclosureGroup("Why these numbers") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(Array(plan.rationale.enumerated()), id: \.offset) { _, line in
+                            Text(PlannerText.rationale(line, units: units))
+                                .font(.subheadline)
+                                .foregroundStyle(TraceTheme.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
                     }
+                    .padding(.top, 12)
                 }
-                .padding(.top, 12)
             }
             .frame(maxHeight: .infinity, alignment: .top)
         }
+    }
+
+    private func museNote(_ muse: MuseNote) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("From Muse", systemImage: "sparkles")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(TraceTheme.blue)
+            StubBadge()
+            Text(muse.rationale)
+                .font(.body)
+                .fixedSize(horizontal: false, vertical: true)
+            if let caution = muse.caution {
+                Label(caution, systemImage: "exclamationmark.triangle.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(TraceTheme.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier(AccessibilityID.onboardingPlanMuse)
     }
 
     private var hero: some View {
@@ -98,7 +130,7 @@ struct PlanSummaryView: View {
                     .minimumScaleFactor(0.4)
                     .lineLimit(1)
                     .accessibilityIdentifier(AccessibilityID.planKcal)
-                Text("kcal a day")
+                Text("kcal to eat each day")
                     .traceMetricLabel()
             }
             ViewThatFits(in: .horizontal) {
@@ -165,7 +197,7 @@ struct PlanSummaryView: View {
                 calculationRow(plan.tdeeKcal.formatted(), title: Text("Daily burn"))
                 calculationRow(adjustmentText, title: Text(plan.kind == .maintain ? String(localized: "Maintain") : paceText))
                 Divider().overlay(TraceTheme.ink)
-                calculationRow(plan.kcal.formatted(), title: Text("kcal"), isTotal: true)
+                calculationRow(plan.kcal.formatted(), title: Text("To eat each day"), isTotal: true)
             }
             .frame(maxHeight: compact ? .infinity : nil)
         }

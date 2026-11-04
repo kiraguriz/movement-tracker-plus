@@ -13,10 +13,6 @@ import SwiftUI
 final class TodayPlanModel {
     private(set) var plan: TodayPlan?
     private(set) var isBusy = false
-    /// Muse's one sentence for today, when the user allowed Muse and it answered. Otherwise the card shows its own words.
-    var tip: String? { tipKind == plan?.recommendation.kind ? tipText : nil }
-    private var tipText: String?
-    private var tipKind: TodayRecommendation.Kind?
     var errorMessage: String?
 
     @ObservationIgnored private let environment: AppEnvironment
@@ -24,6 +20,8 @@ final class TodayPlanModel {
     @ObservationIgnored private var allowRest = true
     @ObservationIgnored private var generation = 0
     @ObservationIgnored private var tipAttempt: LocalDay?
+    /// True while Muse is writing today's sentence, so the Coach card waits for it instead of showing its fallback.
+    private(set) var isWritingTip = false
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -81,9 +79,9 @@ final class TodayPlanModel {
         }
     }
 
-    /// Asks Muse for today's sentence: only with Coach on, a real Muse behind it, and a plan worth explaining. Muse
-    /// answers at most once per local day (CoachKit keeps the answer); a failure is not retried until the next launch,
-    /// and the card keeps its own words. Recovery reaches Muse only as coarse words, and only behind its own switch.
+    /// Asks Muse for today's sentence, which the Coach card above shows: only with Coach on, a real Muse behind it, and
+    /// a plan worth explaining. Muse answers at most once per local day (CoachKit keeps the answer); a failure is not
+    /// retried until the next launch. Recovery reaches Muse only as coarse words, and only behind its own switch.
     private func refreshTip(for plan: TodayPlan) async {
         guard [.train, .easy, .rest].contains(plan.recommendation.kind) else { clearTip(); return }
         guard let coach = environment.coach, !environment.coachIsStub, await environment.isAIOptedIn() else { clearTip(); return }
@@ -96,15 +94,12 @@ final class TodayPlanModel {
             day: plan.day, recommendation: plan.recommendation, names: names,
             readiness: shares && plan.readiness.usesRecoveryData ? plan.readiness : nil
         )
-        if let sentence = (try? await coach.dailyTip(input, locale: .app))?.output.sentence {
-            tipText = sentence
-            tipKind = plan.recommendation.kind
-        }
+        isWritingTip = true
+        defer { isWritingTip = false }
+        _ = try? await coach.dailyTip(input, locale: .app)
     }
 
     private func clearTip() {
-        tipText = nil
-        tipKind = nil
         tipAttempt = nil
     }
 

@@ -70,7 +70,7 @@ struct GoalPlanServiceTests {
         #expect(saw.feature == "goal_plan")
         #expect(saw.images.isEmpty)
         #expect(await store.saved.first?.kind == .goalPlan)
-        #expect(await store.saved.first?.promptVersion == "goal-plan.v1")
+        #expect(await store.saved.first?.promptVersion == "goal-plan.v2")
     }
 
     @Test func theSameInputIsAnsweredFromTheStoreWithoutANetworkCall() async throws {

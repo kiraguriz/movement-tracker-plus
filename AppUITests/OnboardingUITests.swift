@@ -20,22 +20,33 @@ final class OnboardingUITests: AppUITestCase {
         attachScreenshot("onboarding-muse-en")
         museOff.tap()
 
+        let manual = app.buttons[ID.onboardingHealthSkip]
+        XCTAssertTrue(manual.waitForExistence(timeout: 10), "the Health step did not follow the Muse choice")
+        XCTAssertEqual(manual.label, "Enter manually")
+        XCTAssertGreaterThanOrEqual(manual.frame.height, 44)
+        attachScreenshot("onboarding-health-en")
+        manual.tap()
+
         let year = "\(Self.currentYear - 30)"
         enter(year, into: app.textFields[ID.birthYear])
         choose("Male", fromPicker: ID.sexPicker, in: app)
         // Back to the Muse choice: the answers stay, and the choice can be made again.
+        app.navigationBars.buttons["Apple Health"].tap()
         app.navigationBars.buttons["Muse"].tap()
         XCTAssertTrue(museOff.waitForExistence(timeout: 10))
         museOff.tap()
+        manual.tap()
         XCTAssertEqual(text(of: app.textFields[ID.birthYear]), year)
         XCTAssertTrue(app.buttons[ID.onboardingNext].isEnabled, "returning to the Muse choice must not reset the draft")
 
+        app.navigationBars.buttons["Apple Health"].tap()
         app.navigationBars.buttons["Muse"].tap()
         XCTAssertTrue(museOff.waitForExistence(timeout: 10))
         app.navigationBars.buttons["Welcome"].tap()
         XCTAssertTrue(begin.waitForExistence(timeout: 10))
         begin.tap()
         museOff.tap()
+        manual.tap()
         XCTAssertEqual(text(of: app.textFields[ID.birthYear]), year, "returning to the welcome must not reset the draft")
     }
 
@@ -50,6 +61,10 @@ final class OnboardingUITests: AppUITestCase {
         XCTAssertEqual(app.buttons[ID.onboardingMuseOff].label, "用标准计划")
         capture("muse")
         tap(ID.onboardingMuseOff, in: app)
+        XCTAssertTrue(app.buttons[ID.onboardingHealthSkip].waitForExistence(timeout: 10))
+        XCTAssertEqual(app.buttons[ID.onboardingHealthSkip].label, "手动填写")
+        capture("health")
+        tap(ID.onboardingHealthSkip, in: app)
         capture("about-empty")
         app.segmentedControls[ID.unitsPicker].buttons["公制"].tap()
         enter("\(Self.currentYear - 30)", into: app.textFields[ID.birthYear])
@@ -98,6 +113,13 @@ final class OnboardingUITests: AppUITestCase {
         XCTAssertTrue(app.windows.firstMatch.frame.contains(museOff.frame))
         attachScreenshot("onboarding-muse-landscape-ax5")
         museOff.tap()
+
+        let manual = app.buttons[ID.onboardingHealthSkip]
+        XCTAssertTrue(manual.waitForExistence(timeout: 10))
+        XCTAssertTrue(waitUntil { manual.isHittable }, "typing the answers is not reachable")
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(manual.frame))
+        attachScreenshot("onboarding-health-landscape-ax5")
+        manual.tap()
         XCTAssertTrue(app.textFields[ID.birthYear].waitForExistence(timeout: 10))
     }
 
@@ -109,6 +131,7 @@ final class OnboardingUITests: AppUITestCase {
         let app = launchApp(seed: .none, showWelcome: true)
         tap(ID.onboardingBegin, in: app)
         tap(ID.onboardingMuseOn, in: app)
+        skipHealthIfAsked(in: app)
         answerQuestions(in: app, goal: "Lose")
         XCTAssertEqual(app.buttons[ID.onboardingNext].label, "Plan with Muse")
         tap(ID.onboardingNext, in: app)
@@ -138,6 +161,7 @@ final class OnboardingUITests: AppUITestCase {
         let app = launchApp(seed: .none, showWelcome: true, extraArguments: ["-MTCoachStubPlan", "adjusted"])
         tap(ID.onboardingBegin, in: app)
         tap(ID.onboardingMuseOn, in: app)
+        skipHealthIfAsked(in: app)
         answerQuestions(in: app, goal: "Lose")
         tap(ID.onboardingNext, in: app)
         XCTAssertTrue(element(ID.onboardingPlanMuse, in: app).waitForExistence(timeout: 20))
@@ -153,6 +177,7 @@ final class OnboardingUITests: AppUITestCase {
         let app = launchApp(seed: .none, showWelcome: true, extraArguments: ["-MTCoachStubFail", "offline"])
         tap(ID.onboardingBegin, in: app)
         tap(ID.onboardingMuseOn, in: app)
+        skipHealthIfAsked(in: app)
         answerQuestions(in: app, goal: "Lose")
         tap(ID.onboardingNext, in: app)
         XCTAssertTrue(app.staticTexts["You're offline. Using the standard plan."].waitForExistence(timeout: 20))
@@ -169,6 +194,7 @@ final class OnboardingUITests: AppUITestCase {
         let app = launchApp(seed: .none, showWelcome: true, extraArguments: ["-MTCoachStubFail", "budget"])
         tap(ID.onboardingBegin, in: app)
         tap(ID.onboardingMuseOn, in: app)
+        skipHealthIfAsked(in: app)
         answerQuestions(in: app, goal: "Lose")
         tap(ID.onboardingNext, in: app)
         XCTAssertTrue(app.staticTexts["You've reached today's Muse limit. Using the standard plan."].waitForExistence(timeout: 20))
@@ -182,6 +208,7 @@ final class OnboardingUITests: AppUITestCase {
         let app = launchApp(seed: .none, showWelcome: true, extraArguments: ["-MTCoachStubPlan", "slow"])
         tap(ID.onboardingBegin, in: app)
         tap(ID.onboardingMuseOn, in: app)
+        skipHealthIfAsked(in: app)
         answerQuestions(in: app, goal: "Lose")
         tap(ID.onboardingNext, in: app)
         XCTAssertTrue(element(ID.onboardingPlanWaiting, in: app).waitForExistence(timeout: 10))
@@ -199,6 +226,7 @@ final class OnboardingUITests: AppUITestCase {
         let app = launchApp(seed: .none, showWelcome: true, extraArguments: ["-MTCoachStubPlan", "unsafe"])
         tap(ID.onboardingBegin, in: app)
         tap(ID.onboardingMuseOn, in: app)
+        skipHealthIfAsked(in: app)
         answerQuestions(in: app, goal: "Lose")
         tap(ID.onboardingNext, in: app)
         XCTAssertTrue(app.staticTexts["Muse's plan didn't pass the safety check. Using the standard plan."].waitForExistence(timeout: 20))
@@ -212,9 +240,12 @@ final class OnboardingUITests: AppUITestCase {
         let app = launchApp(seed: .none, showWelcome: true)
         tap(ID.onboardingBegin, in: app)
         tap(ID.onboardingMuseOn, in: app)
+        skipHealthIfAsked(in: app)
         enter("\(Self.currentYear - 30)", into: app.textFields[ID.birthYear])
+        app.navigationBars.buttons["Apple Health"].tap()
         app.navigationBars.buttons["Muse"].tap()
         tap(ID.onboardingMuseOff, in: app)
+        skipHealthIfAsked(in: app)
         XCTAssertEqual(text(of: app.textFields[ID.birthYear]), "\(Self.currentYear - 30)")
         answerQuestions(in: app, goal: "Lose", birthYearEntered: true)
         XCTAssertEqual(app.buttons[ID.onboardingNext].label, "See my plan")
@@ -234,6 +265,7 @@ final class OnboardingUITests: AppUITestCase {
     func testNoMuseStepWithoutACoach() {
         let app = launchApp(seed: .none, showWelcome: true, extraArguments: ["-MTNoCoach"])
         tap(ID.onboardingBegin, in: app)
+        skipHealthIfAsked(in: app)
         XCTAssertTrue(app.textFields[ID.birthYear].waitForExistence(timeout: 10))
         XCTAssertFalse(app.buttons[ID.onboardingMuseOn].exists)
     }

@@ -323,6 +323,16 @@
         }
       }
     },
+    "Active energy" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "活动能量"
+          }
+        }
+      }
+    },
     "Add exercise" : {
       "localizations" : {
         "en" : {
@@ -729,6 +739,16 @@
         }
       }
     },
+    "Breathing rate" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "呼吸频率"
+          }
+        }
+      }
+    },
     "Calorie estimate" : {
       "localizations" : {
         "en" : {
@@ -1097,6 +1117,16 @@
         }
       }
     },
+    "Connect Apple Health" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连接 Apple 健康"
+          }
+        }
+      }
+    },
     "Continue" : {
       "localizations" : {
         "en" : {
@@ -1161,6 +1191,16 @@
         }
       }
     },
+    "Enter manually" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手动填写"
+          }
+        }
+      }
+    },
     "Every rep.\nMade visible." : {
       "localizations" : {
         "en" : {
@@ -1173,6 +1213,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "每次动作，\n都有迹可循。"
+          }
+        }
+      }
+    },
+    "HRV" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HRV"
+          }
+        }
+      }
+    },
+    "kcal to eat each day" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每天摄入千卡"
           }
         }
       }
@@ -1193,6 +1253,26 @@
         }
       }
     },
+    "Reads" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "读取"
+          }
+        }
+      }
+    },
+    "Resting heart rate" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "静息心率"
+          }
+        }
+      }
+    },
     "Set up my plan" : {
       "localizations" : {
         "en" : {
@@ -1205,6 +1285,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置我的计划"
+          }
+        }
+      }
+    },
+    "Sleep" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "睡眠"
           }
         }
       }
@@ -1237,6 +1327,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "深蹲演示：8 次。动作轨迹示例。"
+          }
+        }
+      }
+    },
+    "To eat each day" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每天摄入"
           }
         }
       }
@@ -1285,6 +1385,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "欢迎"
+          }
+        }
+      }
+    },
+    "Writes" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "写入"
           }
         }
       }
@@ -5903,22 +6013,6 @@
         }
       }
     },
-    "kcal a day" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "kcal a day"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每日千卡"
-          }
-        }
-      }
-    },
     "Step %lld of 4" : {
       "localizations" : {
         "en" : {
@@ -6717,22 +6811,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "开始%@"
-          }
-        }
-      }
-    },
-    "Muse: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Muse: %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Muse：%@"
           }
         }
       }

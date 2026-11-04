@@ -41,34 +41,6 @@ struct MusePlanWaiting: View {
     }
 }
 
-/// Muse's reason for its plan, and its caution when it raised one.
-struct MusePlanNote: View {
-    let rationale: String
-    let caution: String?
-
-    var body: some View {
-        Card {
-            VStack(alignment: .leading, spacing: 10) {
-                Label("From Muse", systemImage: "sparkles")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(TraceTheme.blue)
-                StubBadge()
-                Text(rationale)
-                    .font(.body)
-                    .fixedSize(horizontal: false, vertical: true)
-                if let caution {
-                    Label(caution, systemImage: "exclamationmark.triangle.fill")
-                        .font(.subheadline)
-                        .foregroundStyle(TraceTheme.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier(AccessibilityID.onboardingPlanMuse)
-    }
-}
-
 /// Why the standard plan is on screen when Muse was chosen, with a retry where one can work.
 struct MusePlanFallbackNotice: View {
     let message: String

@@ -35,6 +35,8 @@ struct AppEnvironment: Sendable {
     /// Sleep, HRV and resting heart rate for Today's readiness. Separate from `health` so its authorization never
     /// touches the export's. `-MTReadiness` swaps in a fake in Debug builds.
     var recovery: any RecoveryReading
+    /// Setup's Health step: one sheet for everything the app reads and writes, then sex, birth year, height and weight.
+    var healthProfile: any HealthProfileReading = HealthKitProfileReader()
     #if DEBUG
     /// What the fake Health bridge recorded; nil unless the app runs with `-MTHealthStub`. Not compiled into Release.
     var healthStub: HealthStubLog?

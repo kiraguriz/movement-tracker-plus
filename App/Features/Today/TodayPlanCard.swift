@@ -8,11 +8,14 @@ struct TodayPlanCard: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.scenePhase) private var scenePhase
     @State private var model: TodayPlanModel
+    /// Tells the Coach card above while Muse writes today's sentence.
+    @Binding private var isWritingTip: Bool
     private let day: LocalDay
     private let wide: Bool
 
-    init(environment: AppEnvironment, day: LocalDay, wide: Bool) {
+    init(environment: AppEnvironment, day: LocalDay, wide: Bool, isWritingTip: Binding<Bool> = .constant(false)) {
         _model = State(initialValue: TodayPlanModel(environment: environment))
+        _isWritingTip = isWritingTip
         self.day = day
         self.wide = wide
     }
@@ -26,6 +29,7 @@ struct TodayPlanCard: View {
             }
         }
         .task(id: day) { await model.run() }
+        .onChange(of: model.isWritingTip, initial: true) { isWritingTip = model.isWritingTip }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.reload() } }
         }
@@ -166,18 +170,7 @@ struct TodayPlanCard: View {
                 .foregroundStyle(TraceTheme.ink)
         default:
             let text = TodayPlanText.reasons(recommendation.reasons)
-            if let tip = model.tip {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    TraceCoachGlyph(size: 18)
-                    Text(tip)
-                        .font(.headline)
-                        .foregroundStyle(TraceTheme.ink)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(String(localized: "Muse: \(tip)"))
-                .accessibilityIdentifier(AccessibilityID.todayPlanTip)
-            } else if !text.isEmpty {
+            if !text.isEmpty {
                 Text(text)
                     .font(.headline)
                     .foregroundStyle(TraceTheme.ink)

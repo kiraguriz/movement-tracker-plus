@@ -1,5 +1,6 @@
 import AppLogic
 import Domain
+import HealthBridge
 import SwiftUI
 
 /// The answers of the profile form while the user is still typing, shared by onboarding and the profile editor.
@@ -66,6 +67,25 @@ final class ProfileDraft {
             } else {
                 ratePercent = Self.defaultRate(for: goal.kind)
             }
+        }
+    }
+
+    /// Fills in what Health knows. A field the user already answered stays as it is.
+    func prefill(from health: HealthProfile) {
+        if birthYearText.isEmpty, let year = health.birthYear { birthYearText = String(year) }
+        if sex == nil { sex = health.sex }
+        if heightText.isEmpty, heightInchesText.isEmpty, let height = health.height {
+            switch unitSystem {
+            case .metric:
+                heightText = NumberInput.text(height.centimeters.rounded())
+            case .imperial:
+                let parts = height.feetAndInches
+                heightText = String(parts.feet)
+                heightInchesText = String(parts.inches)
+            }
+        }
+        if weightText.isEmpty, let weight = health.weight {
+            weightText = NumberInput.text((weight.value(in: unitSystem) * 10).rounded() / 10)
         }
     }
 

@@ -28,6 +28,7 @@ class AppUITestCase: XCTestCase {
         static let onboardingMuse = "onboarding.muse"
         static let onboardingMuseOn = "onboarding.muse.on"
         static let onboardingMuseOff = "onboarding.muse.off"
+        static let onboardingHealthSkip = "onboarding.health.skip"
         static let onboardingPlanWaiting = "onboarding.plan.waiting"
         static let onboardingPlanUseStandard = "onboarding.plan.useStandard"
         static let onboardingPlanRetry = "onboarding.plan.retry"
@@ -127,13 +128,24 @@ class AppUITestCase: XCTestCase {
     }
 
     /// With the coach available setup opens on the Muse choice. Tests that are not about Muse take the standard plan
-    /// (without `-MTNoCoach` the step is absent, so this does nothing).
+    /// (with `-MTNoCoach` the step is absent), then type their answers instead of reading them from Health.
     @MainActor
     func chooseStandardPlanIfAsked(in app: XCUIApplication) {
         let standard = app.buttons[ID.onboardingMuseOff]
-        guard standard.waitForExistence(timeout: 3) else { return }
-        _ = waitUntil(timeout: 5) { standard.isHittable }
-        standard.tap()
+        if standard.waitForExistence(timeout: 3) {
+            _ = waitUntil(timeout: 5) { standard.isHittable }
+            standard.tap()
+        }
+        skipHealthIfAsked(in: app)
+    }
+
+    /// Setup's Health step, present where the device has Health: the tests type their answers.
+    @MainActor
+    func skipHealthIfAsked(in app: XCUIApplication) {
+        let manual = app.buttons[ID.onboardingHealthSkip]
+        guard manual.waitForExistence(timeout: 3) else { return }
+        _ = waitUntil(timeout: 5) { manual.isHittable }
+        manual.tap()
     }
 
     // MARK: Lookups

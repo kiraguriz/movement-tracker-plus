@@ -1,13 +1,15 @@
 import Domain
+import HealthBridge
 import SwiftUI
 
 /// The welcome introduces the motion loop; the four setup steps share one draft until it is saved. When the coach is
 /// available, a Muse step comes first: it asks whether Muse makes the calorie plan, and the Plan page then shows
-/// Muse's plan (fitted into the phone's own ranges) or the standard plan.
+/// Muse's plan (fitted into the phone's own ranges) or the standard plan. Where the device has Health, a Health step
+/// before the questions connects it once for the whole app and fills them in from it.
 struct OnboardingView: View {
     private enum Step: Int, Hashable {
         /// Not counted in the progress bar.
-        case muse = 0
+        case muse = -1, health = 0
         case about = 1, body, goal, plan
     }
 
@@ -17,6 +19,7 @@ struct OnboardingView: View {
     @State private var path: [Step] = []
     @State private var isSaving = false
     @State private var isChoosingMuse = false
+    @State private var isReadingHealth = false
     @State private var musePlan = MusePlanModel()
     @State private var errorMessage: String?
     @FocusState private var birthYearFocused: Bool
@@ -33,7 +36,7 @@ struct OnboardingView: View {
     var body: some View {
         GeometryReader { geometry in
             NavigationStack(path: $path) {
-                OnboardingWelcomeView { path.append(environment.coach == nil ? Step.about : Step.muse) }
+                OnboardingWelcomeView { path.append(environment.coach == nil ? firstQuestion : Step.muse) }
                     .navigationTitle("Welcome")
                     .toolbar(.hidden, for: .navigationBar)
                     .navigationDestination(for: Step.self) { step in
@@ -55,6 +58,12 @@ struct OnboardingView: View {
                 Task { await chooseMuse(wantsMuse) }
             }
             .navigationTitle("Muse")
+            .navigationBarTitleDisplayMode(.large)
+        case .health:
+            OnboardingHealthStep(isBusy: isReadingHealth) { connect in
+                Task { await chooseHealth(connect) }
+            }
+            .navigationTitle("Apple Health")
             .navigationBarTitleDisplayMode(.large)
         case .about:
             form("About you", step: step, canContinue: draft.isAboutValid, next: .body) {
@@ -191,8 +200,10 @@ struct OnboardingView: View {
         case .waiting:
             MusePlanWaiting { musePlan.useStandard() }
         case .muse(let muse):
-            MusePlanNote(rationale: muse.rationale, caution: muse.caution)
-            PlanSummaryView(plan: muse.plan, units: units, compact: wide, notices: muse.adjustments.map(PlannerText.adjustment))
+            PlanSummaryView(
+                plan: muse.plan, units: units, compact: wide, notices: muse.adjustments.map(PlannerText.adjustment),
+                muse: .init(rationale: muse.rationale, caution: muse.caution)
+            )
         case .standard:
             standardSummary(units: units, wide: wide)
         case .rejected:
@@ -240,6 +251,26 @@ struct OnboardingView: View {
         }
     }
 
+    /// The Health step where the device has Health, otherwise the questions themselves.
+    private var firstQuestion: Step { environment.healthProfile.isAvailable ? .health : .about }
+
+    /// Asks Health for everything the app uses, fills in what it knows, then opens the questions. Readiness turns on
+    /// as it does from Today's own connect; the export turns on only where Health allows writing. A refusal or an
+    /// unreachable Health leaves the questions empty.
+    private func chooseHealth(_ connect: Bool) async {
+        guard !isReadingHealth else { return }
+        if connect {
+            isReadingHealth = true
+            defer { isReadingHealth = false }
+            if let profile = try? await environment.healthProfile.connect() {
+                draft.prefill(from: profile)
+                try? await environment.settings.set(SettingKey.readinessEnabled, to: true)
+                _ = try? await environment.health.enable()
+            }
+        }
+        path.append(.about)
+    }
+
     private func dismissKeyboard() {
         birthYearFocused = false
         heightFocused = false
@@ -255,7 +286,7 @@ struct OnboardingView: View {
         do {
             try await environment.commitAIOptIn(wantsMuse)
             draft.museChoice = wantsMuse
-            path.append(.about)
+            path.append(firstQuestion)
         } catch {
             errorMessage = error.localizedDescription
         }

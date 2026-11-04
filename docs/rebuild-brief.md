@@ -205,10 +205,12 @@ card in the meal-list column. Eat summary margins match the 20 pt dashboard inse
 and food search use adaptive page sheets, with two-column content at 640 pt and up and a single
 column for compact or accessibility sizes. Recent foods stay visible without automatic keyboard focus.
 
-First launch opens with a labelled squat-counting example, followed by Muse → About you → Body → Goal →
-Your plan. Setup uses ink capsule actions and keeps the same draft when navigating back or editing
-the goal from the plan preview. Only Start saves the profile and calculated plan. Camera and Health
-permissions stay in their existing feature flows; onboarding requests neither.
+First launch opens with a labelled squat-counting example, followed by Muse → Apple Health → About you →
+Body → Goal → Your plan. Setup uses ink capsule actions and keeps the same draft when navigating back or editing
+the goal from the plan preview. Only Start saves the profile and calculated plan. The camera permission stays in
+its feature flow. The Apple Health step (only where the device has Health) asks in one sheet for everything the
+app reads and writes: profile, readiness and export. It fills in sex, birth year, height and weight, switches
+readiness on and, where writing is allowed, the export. Enter manually skips it; Today and Me then ask later.
 
 The Muse step comes first (only when the coach is available) and asks one question: plan with Muse or use
 the standard plan. Its card lists exactly what Muse would receive (age in years, sex, height and weight,
@@ -476,8 +478,9 @@ records that were created while export was disabled.
   MET-based energy marked as an estimate); dietary energy + macros per meal entry (optionally grouped
   in a food `HKCorrelation`). Every sample carries `HKMetadataKeySyncIdentifier` = our id and
   `HKMetadataKeySyncVersion` = revision, so re-saves update instead of duplicating.
-- The body-mass and steps read adapters exist, but no current app feature consumes them. Authorization requests
-  are write-only; add each read scope when a feature actually uses it.
+- The body-mass and steps read adapters exist, but no current app feature consumes them. Setup's Health step
+  requests the export's write types with the readiness and profile read types; add any other read scope only
+  when a feature actually uses it.
 - Partial write access exports the allowed types and leaves the entity outstanding without counting a failed
   attempt. A later foreground drain retries stable sync identifiers/versions after access is granted. Workout
   and estimated energy may be authorized separately; energy alone never becomes the session's workout UUID.

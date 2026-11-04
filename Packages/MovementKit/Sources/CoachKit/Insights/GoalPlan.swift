@@ -37,7 +37,7 @@ public struct GoalPlan: Codable, Sendable, Equatable {
         GoalPlanGuard.Suggestion(kcal: kcal, proteinG: proteinG, carbsG: carbsG, fatG: fatG, workoutsPerWeek: workoutsPerWeek)
     }
 
-    public static let maximumRationaleLength = 240
+    public static let maximumRationaleLength = 300
 
     public static let schema: JSONValue = Schema.object([
         "kcal": Schema.integer("Daily calories, inside the device's kcalMin to kcalMax."),
@@ -46,7 +46,7 @@ public struct GoalPlan: Codable, Sendable, Equatable {
         "fatG": Schema.integer("Daily fat in grams, inside the device's fatGMin to fatGMax."),
         "weeklyRatePercent": Schema.number("Body mass change per week in percent, never above the user's preferred pace; 0 to maintain."),
         "workoutsPerWeek": Schema.integer("Planned workouts per week, inside the device's workoutsMin to workoutsMax."),
-        "rationale": Schema.string("One or two plain sentences, at most 220 characters, that cite the user's own numbers."),
+        "rationale": Schema.string("One or two plain sentences, at most 260 characters: the daily intake and why this protein, carbs and fat split suits the user, citing their own numbers."),
         "safetyFlag": Schema.object([
             "level": Schema.string("none, caution or stop.", cases: ["none", "caution", "stop"]),
             "note": Schema.string("Short note; empty when level is none."),

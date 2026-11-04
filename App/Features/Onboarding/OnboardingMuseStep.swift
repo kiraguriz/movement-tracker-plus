@@ -10,11 +10,13 @@ struct OnboardingMuseStep: View {
         ScrollView {
             VStack(spacing: 16) {
                 OnboardingColumns {
-                    list("Muse sees", symbol: "arrow.up.right", rows: [
-                        "Age", "Sex", "Height and weight", "Goal, pace and workouts", "Training level",
+                    list("Muse sees", rows: [
+                        ("Age", "birthday.cake"), ("Sex", "figure.dress.line.vertical.figure"),
+                        ("Height and weight", "scalemass"), ("Goal, pace and workouts", "target"),
+                        ("Training level", "dumbbell"),
                     ])
-                    list("Stays on this phone", symbol: "lock", rows: [
-                        "Your name", "Birth year", "Camera video",
+                    list("Stays on this phone", rows: [
+                        ("Your name", "person.crop.circle"), ("Birth year", "calendar"), ("Camera video", "video"),
                     ])
                 }
                 Text("Also lets Coach use Muse. Change it in Me.")
@@ -62,7 +64,7 @@ struct OnboardingMuseStep: View {
         .testIdentifier(AccessibilityID.onboardingMuse)
     }
 
-    private func list(_ title: LocalizedStringKey, symbol: String, rows: [LocalizedStringKey]) -> some View {
+    private func list(_ title: LocalizedStringKey, rows: [(text: LocalizedStringKey, symbol: String)]) -> some View {
         TraceSheetCard(radius: 32) {
             VStack(alignment: .leading, spacing: 14) {
                 Text(title)
@@ -71,11 +73,11 @@ struct OnboardingMuseStep: View {
                     .accessibilityAddTraits(.isHeader)
                 ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
                     Label {
-                        Text(row)
+                        Text(row.text)
                             .font(.body.weight(.medium))
                             .fixedSize(horizontal: false, vertical: true)
                     } icon: {
-                        Image(systemName: symbol)
+                        Image(systemName: row.symbol)
                             .font(.footnote.weight(.bold))
                             .foregroundStyle(TraceTheme.secondary)
                             .frame(width: 20)

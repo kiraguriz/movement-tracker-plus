@@ -8,7 +8,7 @@ public enum PromptVersion {
     public static let debrief = "debrief.v1"
     public static let chat = "chat.v1"
     public static let mealPhoto = "meal-photo.v1"
-    public static let goalPlan = "goal-plan.v1"
+    public static let goalPlan = "goal-plan.v2"
     public static let dailyTip = "daily-tip.v1"
     public static let specAuthor = "spec-author.v1"
 }
@@ -165,8 +165,9 @@ public enum Prompts {
         - workoutsPerWeek is inside [workoutsMin, workoutsMax].
         - `standardPlan` is the plain formula result. Move away from it only when the user's data gives a reason \
         (training level, age, pace) and say why.
-        - rationale: one or two plain sentences, at most 220 characters, that cite the user's own numbers. No medical \
-        claims and no diagnosis.
+        - rationale: one or two plain sentences, at most 260 characters, in everyday words: what the user eats each day \
+        and why this protein, carbs and fat split suits them. Cite the user's own numbers; no terms such as TDEE or BMR. \
+        No medical claims and no diagnosis.
         - safetyFlag: level none, caution or stop with a short note (empty when none). For a user under 18 or a very fast \
         pace use caution with a short note.
         - confidence: 0 to 1.
