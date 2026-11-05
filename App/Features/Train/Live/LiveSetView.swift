@@ -102,11 +102,9 @@ struct LiveSetView: View {
     private func tallLayout(height: CGFloat) -> some View {
         VStack(spacing: 12) {
             GlassEffectContainer(spacing: 8) {
-                HStack(spacing: 12) {
+                CentredBar(spacing: 12) {
                     closeButton
-                    Spacer(minLength: 0)
                     title
-                    Spacer(minLength: 0)
                     sideButtons()
                 }
             }
@@ -431,6 +429,39 @@ struct LiveSetView: View {
                 .frame(maxWidth: .infinity)
             }
         }
+    }
+}
+
+/// Three views in a row: the first and last hug the edges and the middle one stays on the row's centre line,
+/// as wide as the wider side leaves room for, whichever side holds more buttons.
+private struct CentredBar: Layout {
+    var spacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        guard subviews.count == 3 else { return .zero }
+        let inset = sideInset(subviews)
+        let width = proposal.width.flatMap { $0.isFinite ? $0 : nil }
+            ?? 2 * inset + subviews[1].sizeThatFits(.unspecified).width
+        let middle = subviews[1].sizeThatFits(ProposedViewSize(width: max(0, width - 2 * inset), height: nil))
+        let sides = max(subviews[0].sizeThatFits(.unspecified).height, subviews[2].sizeThatFits(.unspecified).height)
+        return CGSize(width: width, height: max(sides, middle.height))
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard subviews.count == 3 else { return }
+        let inset = sideInset(subviews)
+        subviews[0].place(at: CGPoint(x: bounds.minX, y: bounds.midY), anchor: .leading, proposal: .unspecified)
+        subviews[1].place(
+            at: CGPoint(x: bounds.midX, y: bounds.midY),
+            anchor: .center,
+            proposal: ProposedViewSize(width: max(0, bounds.width - 2 * inset), height: nil)
+        )
+        subviews[2].place(at: CGPoint(x: bounds.maxX, y: bounds.midY), anchor: .trailing, proposal: .unspecified)
+    }
+
+    /// The room kept clear on each side of the middle view: the wider side and the gap after it.
+    private func sideInset(_ subviews: Subviews) -> CGFloat {
+        max(subviews[0].sizeThatFits(.unspecified).width, subviews[2].sizeThatFits(.unspecified).width) + spacing
     }
 }
 

@@ -505,7 +505,7 @@ private struct TrainScreen: View {
             Button {
                 model.startLiveSet(for: entry)
             } label: {
-                Label("Live set", systemImage: "camera.viewfinder")
+                Text("Live set")
                     .font(.headline)
                     .frame(maxWidth: .infinity, minHeight: 52)
             }
