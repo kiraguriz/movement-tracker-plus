@@ -67,7 +67,7 @@ struct RootView: View {
                     .padding(.trailing, 24)
                     .padding(.bottom, 212)
                     .offset(x: geometry.safeAreaInsets.trailing)
-                    .accessibilityLabel("Ask Coach")
+                    .accessibilityLabel("Coach")
                     .accessibilityIdentifier(AccessibilityID.askCoach)
                 }
             }
@@ -143,7 +143,7 @@ struct RootView: View {
         }
         .buttonStyle(.plain)
         .glassEffect(.regular.interactive(), in: .capsule)
-        .accessibilityLabel("Ask Coach")
+        .accessibilityLabel("Coach")
         .accessibilityIdentifier(AccessibilityID.askCoach)
     }
 }

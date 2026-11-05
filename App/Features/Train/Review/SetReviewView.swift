@@ -16,6 +16,7 @@ struct SetReviewView: View {
     @ScaledMetric(relativeTo: .title) private var metricSize = 28.0
 
     private var isWide: Bool { verticalSizeClass == .compact || horizontalSizeClass == .regular }
+    private var actionsInToolbar: Bool { verticalSizeClass == .compact || dynamicTypeSize.isAccessibilitySize }
 
     var body: some View {
         NavigationStack {
@@ -47,7 +48,7 @@ struct SetReviewView: View {
                     Button(role: .close, action: onClose)
                         .accessibilityIdentifier(AccessibilityID.reviewClose)
                 }
-                if !isHistorical, verticalSizeClass == .compact {
+                if !isHistorical, actionsInToolbar {
                     ToolbarItem(placement: .primaryAction) {
                         Button("Next set", action: onNextSet)
                             .accessibilityIdentifier(AccessibilityID.reviewNextSet)
@@ -60,7 +61,7 @@ struct SetReviewView: View {
                 }
             }
             .safeAreaInset(edge: .bottom) {
-                if !isHistorical, verticalSizeClass != .compact { actions }
+                if !isHistorical, !actionsInToolbar { actions }
             }
         }
         .task { if !isHistorical { model.start() } }
@@ -196,13 +197,9 @@ struct SetReviewView: View {
 
     private var actions: some View {
         GlassEffectContainer(spacing: 8) {
-            if dynamicTypeSize.isAccessibilitySize {
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) { nextSetButton; finishButton }
                 VStack(spacing: 10) { finishButton; nextSetButton }
-            } else {
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 10) { nextSetButton; finishButton }
-                    VStack(spacing: 10) { finishButton; nextSetButton }
-                }
             }
         }
         .padding(.horizontal, 16)

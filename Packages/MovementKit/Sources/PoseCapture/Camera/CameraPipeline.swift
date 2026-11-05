@@ -711,7 +711,11 @@ private final class PreviewBinding {
         self.coordinator = coordinator
         observation = coordinator.observe(\.videoRotationAngleForHorizonLevelPreview, options: [.initial, .new]) { [weak self] coordinator, _ in
             let angle = coordinator.videoRotationAngleForHorizonLevelPreview
-            MainActor.assumeIsolated { self?.apply(angle) }
+            if Thread.isMainThread {
+                MainActor.assumeIsolated { self?.apply(angle) }
+            } else {
+                Task { @MainActor [weak self] in self?.apply(angle) }
+            }
         }
     }
 

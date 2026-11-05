@@ -121,6 +121,22 @@ struct ClientStreamTests {
         #expect(error as? CoachError == .failed(code: "invalid_prompt", message: "bad"))
     }
 
+    @Test func aStreamOpenThatTimesOutIsNotRetried() async {
+        let rig = ClientRig(sequence([.failure(URLError(.timedOut)), Wire.streamReply(text: "ok")]))
+        let error = await caught { try await rig.client.send(Fixture.request(stream: true), feature: .chat) }
+        guard case .network? = error as? CoachError else { Issue.record("got \(String(describing: error))"); return }
+        #expect(rig.transport.requests.count == 1)
+        #expect(rig.clock.sleeps.isEmpty)
+    }
+
+    @Test func aStreamThatTimesOutBeforeAnyTextIsNotRetried() async {
+        let rig = ClientRig(sequence([.sse(chunks: [], failure: URLError(.timedOut)), Wire.streamReply(text: "ok")]))
+        let error = await caught { try await rig.client.send(Fixture.request(stream: true), feature: .chat) }
+        guard case .network? = error as? CoachError else { Issue.record("got \(String(describing: error))"); return }
+        #expect(rig.transport.requests.count == 1)
+        #expect(rig.clock.sleeps.isEmpty)
+    }
+
     @Test func neverRetriesOnceTextHasBeenDelivered() async {
         let rig = ClientRig(sequence([
             .sse(chunks: [delta("part")], failure: URLError(.networkConnectionLost)), Wire.streamReply(text: "ok"),

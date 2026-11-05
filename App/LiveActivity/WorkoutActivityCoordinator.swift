@@ -15,6 +15,8 @@ actor WorkoutActivityCoordinator {
     private var shown: WorkoutActivityPlan?
     private var hasReconciled = false
     private var restTimer: Task<Void, Never>?
+    /// The last `sync` or `workoutEnded` call; each waits for the one before, so their awaits never interleave.
+    private var tail: Task<Void, Never>?
 
     /// How long a finished workout stays on the Lock Screen.
     static let finishedLinger: TimeInterval = 10 * 60
@@ -24,6 +26,25 @@ actor WorkoutActivityCoordinator {
     }
 
     func sync(_ plan: WorkoutActivityPlan?, exerciseName: String?, now: Date) async {
+        await serialized { await $0.performSync(plan, exerciseName: exerciseName, now: now) }
+    }
+
+    /// The workout is no longer a draft: a saved one shows its totals for a while, a discarded one goes at once.
+    func workoutEnded(_ workout: Workout?) async {
+        await serialized { await $0.performWorkoutEnded(workout) }
+    }
+
+    private func serialized(_ body: @escaping @Sendable (isolated WorkoutActivityCoordinator) async -> Void) async {
+        let previous = tail
+        let task = Task {
+            await previous?.value
+            await body(self)
+        }
+        tail = task
+        await task.value
+    }
+
+    private func performSync(_ plan: WorkoutActivityPlan?, exerciseName: String?, now: Date) async {
         if !hasReconciled {
             hasReconciled = true
             await reconcile(keeping: plan.flatMap { $0.isIdle(at: now) ? nil : $0.sessionID.rawValue })
@@ -47,8 +68,7 @@ actor WorkoutActivityCoordinator {
         scheduleRestTimer()
     }
 
-    /// The workout is no longer a draft: a saved one shows its totals for a while, a discarded one goes at once.
-    func workoutEnded(_ workout: Workout?) async {
+    private func performWorkoutEnded(_ workout: Workout?) async {
         restTimer?.cancel()
         restTimer = nil
         if !hasReconciled {

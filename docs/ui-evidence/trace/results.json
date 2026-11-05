@@ -20,7 +20,7 @@
   "attempts": [
     {
       "label": "shell-localization-accessibility",
-      "log_path": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T00-28-14-240Z_pid70014_b69a60f4.log",
+      "log_path": "a local XcodeBuildMCP simulator test log",
       "counts": {
         "passed": 8,
         "failed": 0
@@ -78,7 +78,7 @@
     },
     {
       "label": "train-coach-cards",
-      "log_path": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T00-33-39-339Z_pid70014_d26f679d.log",
+      "log_path": "a local XcodeBuildMCP simulator test log",
       "counts": {
         "passed": 25,
         "failed": 2

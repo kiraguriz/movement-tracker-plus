@@ -11,7 +11,7 @@ Flutter plan. User-facing reports: `docs/ios-architecture.html` (this design) an
 - **Clean room.** Do not copy legacy code, names, SQL, strings, or assets (including the group logo).
   This brief records behavior, facts, and defects. Implement from it. Open legacy files only to settle a
   behavioral question, then re-derive. Legacy repo (read-only, iCloud, slow; avoid `git`/recursive
-  `find`): `/Users/haitianzhu/Library/Mobile Documents/com~apple~CloudDocs/UIC/SP26/CS440/440-Group-6-Spring-2026/Implementation Project/workout_movement_tracker`
+  `find`): the earlier team project's folder
 - Never read the legacy `.env`. Never put any API key in the app bundle, Info.plist, xcconfig, or git.
 - New dependencies, staging, commits, and pushes need the user's explicit OK (global CLAUDE.md).
   Proposed dependencies are listed in §4.

@@ -5,12 +5,18 @@ import SwiftUI
 // MARK: - Text
 
 extension AttributedString {
-    /// Assistant text with inline Markdown (bold, italics, code) and its own line breaks kept. Text that is not
-    /// valid Markdown, or is cut mid-marker while streaming, shows as written.
+    /// Assistant text with inline Markdown (bold, italics, code) and its own line breaks kept. A line that starts
+    /// with a list marker (`* `, `- `, `+ `) gets a bullet. Text that is not valid Markdown, or is cut mid-marker
+    /// while streaming, shows as written.
     init(coachText text: String) {
+        let bulleted = text.split(separator: "\n", omittingEmptySubsequences: false).map { line -> String in
+            let item = line.drop { $0 == " " || $0 == "\t" }
+            guard let marker = item.first, "*-+".contains(marker), item.dropFirst().first == " " else { return String(line) }
+            return String(line.prefix(line.count - item.count)) + "• " + String(item.dropFirst(2))
+        }.joined(separator: "\n")
         var options = AttributedString.MarkdownParsingOptions()
         options.interpretedSyntax = .inlineOnlyPreservingWhitespace
-        self = (try? AttributedString(markdown: text, options: options)) ?? AttributedString(text)
+        self = (try? AttributedString(markdown: bulleted, options: options)) ?? AttributedString(bulleted)
         // Links in a model reply stay plain text, so a reply cannot send the user anywhere.
         for run in runs where run.link != nil { self[run.range].link = nil }
     }

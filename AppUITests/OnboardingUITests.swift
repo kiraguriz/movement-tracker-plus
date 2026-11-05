@@ -164,10 +164,11 @@ final class OnboardingUITests: AppUITestCase {
         skipHealthIfAsked(in: app)
         answerQuestions(in: app, goal: "Lose")
         tap(ID.onboardingNext, in: app)
-        XCTAssertTrue(element(ID.onboardingPlanMuse, in: app).waitForExistence(timeout: 20))
+        XCTAssertTrue(element(ID.planKcal, in: app).waitForExistence(timeout: 20), "the Muse plan did not appear")
         let adjustment = app.staticTexts["Muse suggested 2,199 kcal. Raised to 2,319 kcal for your pace."]
         XCTAssertTrue(adjustment.waitForExistence(timeout: 5), "the guard's change is not explained")
         XCTAssertEqual(element(ID.planKcal, in: app).label, "2,319")
+        XCTAssertFalse(element(ID.onboardingPlanMuse, in: app).exists, "Muse's reasoning no longer matches the adjusted numbers")
         attachScreenshot("onboarding-plan-muse-adjusted")
     }
 

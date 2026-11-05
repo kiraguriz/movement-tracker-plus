@@ -15,11 +15,11 @@
     },
     "AccessibilityUITests/testMainControlsAreAtLeast44PointsTall": {
       "status": "passed",
-      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+      "log": "a local XcodeBuildMCP simulator test log"
     },
     "AccessibilityUITests/testOnboardingWorksAtTheLargestTextSize": {
       "status": "passed",
-      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+      "log": "a local XcodeBuildMCP simulator test log"
     },
     "OtherScreensUITests/testDeniedCameraLandscapeActionsRemainReachableAndManualFallbackWorks": {
       "status": "passed",
@@ -39,43 +39,43 @@
     },
     "ProfileFlowUITests/testChangingUnitsConvertsTheBodyValues": {
       "status": "passed",
-      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+      "log": "a local XcodeBuildMCP simulator test log"
     },
     "ProfileFlowUITests/testCoachSwitchAsksBeforeSendingData": {
       "status": "passed",
-      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+      "log": "a local XcodeBuildMCP simulator test log"
     },
     "ProfileFlowUITests/testDatabaseFailureOffersRetry": {
       "status": "passed",
-      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+      "log": "a local XcodeBuildMCP simulator test log"
     },
     "ProfileFlowUITests/testEditingTheGoalSetsANewActiveGoal": {
       "status": "passed",
-      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+      "log": "a local XcodeBuildMCP simulator test log"
     },
     "ProfileFlowUITests/testOnboardingLandsOnTodayWithPlannedTargets": {
       "status": "passed",
-      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+      "log": "a local XcodeBuildMCP simulator test log"
     },
     "ProfileFlowUITests/testPreferNotToSayAsksForTheEquation": {
       "status": "passed",
-      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+      "log": "a local XcodeBuildMCP simulator test log"
     },
     "ProfileFlowUITests/testPrivacyScreenStatesWhatLeavesThePhone": {
       "status": "failed",
-      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+      "log": "a local XcodeBuildMCP simulator test log"
     },
     "ProfileFlowUITests/testTrainingLevelIsEditableAndSaved": {
       "status": "passed",
-      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+      "log": "a local XcodeBuildMCP simulator test log"
     },
     "ProfileFlowUITests/testUnderSixteenIsRejectedAndUnderEighteenIsWarned": {
       "status": "passed",
-      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+      "log": "a local XcodeBuildMCP simulator test log"
     },
     "ProfileFlowUITests/testUnitsApplyEverywhereAndPrivacyScreenOpens": {
       "status": "passed",
-      "log": "/Users/haitianzhu/Library/Developer/XcodeBuildMCP/workspaces/Workout_movement_tracker-cb18a726839a/logs/test_sim_2026-11-02T15-29-44-109Z_pid79876_4129244a.log"
+      "log": "a local XcodeBuildMCP simulator test log"
     },
     "MealFlowUITests/testAddEditAndDeleteAMealChangesTodaysTotals": {
       "status": "passed",

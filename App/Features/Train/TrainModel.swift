@@ -143,6 +143,8 @@ final class TrainModel {
     /// and its camera set starts (a manual set for a manual-only exercise). Unknown exercises are ignored.
     func startSet(of exerciseID: ExerciseID) {
         perform {
+            // A set already on screen keeps running.
+            guard self.liveSet == nil else { return }
             guard self.catalog[exerciseID] != nil || BuiltInCatalog.exercises.contains(where: { $0.id == exerciseID }) else { return }
             try await self.adoptLatestDraft()
             if self.workout == nil {
@@ -153,7 +155,8 @@ final class TrainModel {
             if !self.exerciseEntries.contains(where: { $0.entry.exerciseID == exerciseID }) {
                 try await self.apply(.addExercise(exerciseID))
             }
-            guard let entry = self.exerciseEntries.last(where: { $0.entry.exerciseID == exerciseID })?.entry else { return }
+            guard let entry = self.exerciseEntries.last(where: { $0.entry.exerciseID == exerciseID })?.entry,
+                  self.liveSet == nil else { return }
             if let request = self.liveSetRequest(for: entry) {
                 self.liveSet = request
             } else {

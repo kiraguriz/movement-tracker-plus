@@ -12,7 +12,8 @@ struct PlanSummaryView: View {
     var muse: MuseNote?
 
     struct MuseNote {
-        var rationale: String
+        /// Nil when the device-side guard changed Muse's numbers, so its reasoning no longer matches the plan.
+        var rationale: String?
         /// Muse's caution, when it raised one.
         var caution: String?
     }
@@ -83,7 +84,7 @@ struct PlanSummaryView: View {
     private var rationaleCard: some View {
         Card {
             VStack(alignment: .leading, spacing: 16) {
-                if let muse { museNote(muse) }
+                if let muse, muse.rationale != nil || muse.caution != nil { museNote(muse) }
                 DisclosureGroup("Why these numbers") {
                     VStack(alignment: .leading, spacing: 12) {
                         ForEach(Array(plan.rationale.enumerated()), id: \.offset) { _, line in
@@ -106,9 +107,11 @@ struct PlanSummaryView: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(TraceTheme.blue)
             StubBadge()
-            Text(muse.rationale)
-                .font(.body)
-                .fixedSize(horizontal: false, vertical: true)
+            if let rationale = muse.rationale {
+                Text(rationale)
+                    .font(.body)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             if let caution = muse.caution {
                 Label(caution, systemImage: "exclamationmark.triangle.fill")
                     .font(.subheadline)

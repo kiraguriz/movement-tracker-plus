@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 
 extension View {
@@ -6,8 +7,8 @@ extension View {
     /// `scenePhase` observers.
     func onDayChange(perform action: @escaping () -> Void) -> some View {
         self
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in action() }
-            .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in action() }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification).receive(on: DispatchQueue.main)) { _ in action() }
+            .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged).receive(on: DispatchQueue.main)) { _ in action() }
             .onReceive(NotificationCenter.default.publisher(for: .NSSystemTimeZoneDidChange)) { _ in action() }
     }
 }

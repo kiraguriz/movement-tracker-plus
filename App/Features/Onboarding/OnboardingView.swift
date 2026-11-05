@@ -197,7 +197,7 @@ struct OnboardingView: View {
         case .muse(let muse):
             PlanSummaryView(
                 plan: muse.plan, units: units, compact: wide, notices: muse.adjustments.map(PlannerText.adjustment),
-                muse: .init(rationale: muse.rationale, caution: muse.caution)
+                muse: .init(rationale: muse.adjustments.isEmpty ? muse.rationale : nil, caution: muse.caution)
             )
         case .standard:
             standardSummary(units: units, wide: wide)

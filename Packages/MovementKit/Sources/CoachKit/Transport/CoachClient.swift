@@ -178,7 +178,13 @@ public actor CoachClient {
             var emitted = false
             do {
                 let opened: HTTPStreamResponse = try await execute(authorized: true) { token in
-                    let stream = try await transport.openStream(Self.authorized(http, token: token))
+                    let stream: HTTPStreamResponse
+                    do {
+                        stream = try await transport.openStream(Self.authorized(http, token: token))
+                    } catch let urlError as URLError where urlError.code == .timedOut {
+                        // Surfaced here so `execute` does not retry it: see `isRetryableStreamFailure`.
+                        throw Self.surface(urlError)
+                    }
                     if (200..<300).contains(stream.status) { return .success(stream) }
                     return .failure(status: stream.status, headers: stream.headers, body: try await Self.collect(stream.body, limit: 65_536))
                 }
@@ -226,9 +232,10 @@ public actor CoachClient {
     }
 
     /// Failures worth another try before any text was delivered: Meta's transient in-stream codes, a stream that
-    /// closed early, a connection that dropped.
+    /// closed early, a connection that dropped. Not a timeout: a stream already waited a full minute, and each try
+    /// spends another unit of the proxy's daily budget.
     private static func isRetryableStreamFailure(_ error: any Error) -> Bool {
-        if let urlError = error as? URLError { return isTransient(urlError) }
+        if let urlError = error as? URLError { return urlError.code != .timedOut && isTransient(urlError) }
         guard let coachError = error as? CoachError else { return false }
         switch coachError {
         case .streamEnded: return true

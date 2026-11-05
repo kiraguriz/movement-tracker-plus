@@ -135,6 +135,7 @@ final class LiveSetModel: Identifiable {
     @ObservationIgnored private var startedAt: Date?
     @ObservationIgnored private var finalSummary: SetSummary?
     @ObservationIgnored private var finalResult: LiveSetResult?
+    @ObservationIgnored private var endTask: Task<LiveSetResult?, Never>?
     @ObservationIgnored private var recordingFailure: String?
     @ObservationIgnored private var counted: [RepRecord] = []
     @ObservationIgnored private var bottomFrames: [Int: PoseFrame] = [:]
@@ -491,6 +492,14 @@ final class LiveSetModel: Identifiable {
     /// this result and its recording rather than losing the capture or making another copy.
     func endSet() async -> LiveSetResult? {
         if let finalResult { return finalResult }
+        // Overlapping calls share one ending, so the recording is finished once.
+        if endTask == nil {
+            endTask = Task { await self.performEnd() }
+        }
+        return await endTask?.value
+    }
+
+    private func performEnd() async -> LiveSetResult? {
         await halt()
         let summary = finalSummary ?? SetSummary()
         let finishedAt = environment.now()

@@ -70,7 +70,7 @@ final class MovementTrackerUITests: AppUITestCase {
         }
         let askCoach = app.buttons[ID.askCoach]
         XCTAssertTrue(askCoach.waitForExistence(timeout: 10))
-        XCTAssertEqual(askCoach.label, "问教练")
+        XCTAssertEqual(askCoach.label, "教练")
     }
 
     // MARK: Helpers

@@ -4,14 +4,14 @@ Date: 2026-11-02. Scope: implement the selected direction in the existing native
 
 **Source and implementation evidence**
 
-- Selected visual: [onboarding-reference.png](/Users/haitianzhu/Projects/Workout_movement_tracker+/docs/onboarding-reference.png), the first displayed design option.
+- Selected visual: [onboarding-reference.png](docs/onboarding-reference.png), the first displayed design option.
 - Implementation: Welcome → Muse (when the coach is available; added 2026-11-03, see the last section) → About you → Body → Goal → Your plan → Today. The existing profile draft, validation, goal planner and persistence remain the source of the actual plan.
 - Simulator: iPhone 17 Pro Max, iOS 27.0, 440 × 956 points, screenshots at 1320 × 2868 pixels (@3x). No iPhone Duo result is claimed.
 - Reference: 852 × 1846 pixels, approximately a 390 × 845 content-only artboard. It omits system chrome. The native implementation uses the real status bar, safe areas, navigation and home indicator. This is a style implementation on the user's chosen simulator, not a claim of pixel identity across different viewport sizes.
-- Full-view comparison: [initial](/Users/haitianzhu/.codex/visualizations/2026/11/02/01a19da3-14bd-73e0-ba63-c8c920185668/onboarding-comparison-initial.png) and [revised](/Users/haitianzhu/.codex/visualizations/2026/11/02/01a19da3-14bd-73e0-ba63-c8c920185668/onboarding-comparison-final.png).
-- Focused comparison: [hero typography, count, trace and legend](/Users/haitianzhu/.codex/visualizations/2026/11/02/01a19da3-14bd-73e0-ba63-c8c920185668/onboarding-hero-comparison.png).
-- Native welcome capture: [welcome-zh-final.png](/Users/haitianzhu/.codex/visualizations/2026/11/02/01a19da3-14bd-73e0-ba63-c8c920185668/welcome-zh-final.png).
-- Final five-page captures: [light](/Users/haitianzhu/.codex/visualizations/2026/11/02/01a19da3-14bd-73e0-ba63-c8c920185668/onboarding-flow-light.png) and [dark](/Users/haitianzhu/.codex/visualizations/2026/11/02/01a19da3-14bd-73e0-ba63-c8c920185668/onboarding-flow-dark.png). Individual full-resolution captures are in the adjacent `light-screens/` and `dark-screens/` directories. Both sets were opened and visually reviewed.
+- Full-view comparison: initial and revised (local Codex visualization files).
+- Focused comparison: hero typography, count, trace and legend (a local Codex visualization file).
+- Native welcome capture: welcome-zh-final.png (a local Codex visualization file).
+- Final five-page captures: light and dark (local Codex visualization files). Individual full-resolution captures are in the adjacent `light-screens/` and `dark-screens/` directories. Both sets were opened and visually reviewed.
 
 The comparison images contain both artifacts in the same input. Copies were normalized to 390 pixels wide without vertical stretching. Native status/home regions were cropped by 186/102 physical pixels; its remaining 440 × 860 point content becomes 390 × 762 pixels. The reference remains 390 × 845. The unused bottom area in the comparison is explicitly a viewport difference, not missing app content. The hero crop comparison separately normalizes each actual hero to 500 pixels wide.
 
@@ -37,8 +37,8 @@ The comparison images contain both artifacts in the same input. Copies were norm
 - Proxy: 146 tests passed; dry-run build passed, with no deployment.
 - Debug simulator build passed. Release simulator and unsigned Release device builds passed. A device build is compile evidence, not a physical-device acceptance test.
 - iPhone 17 Pro Max: ten onboarding UI regressions passed with zero failures, including English and Chinese, the complete plan save, goal revision, preserved answers, unit conversion, age rejection/under-18 warnings, the optional equation selection, weight nudges, largest text and landscape welcome reachability.
-- Full UI result: [onboarding-ui-final.xcresult](/Users/haitianzhu/.codex/visualizations/2026/11/02/01a19da3-14bd-73e0-ba63-c8c920185668/onboarding-ui-final.xcresult). The command exited successfully. Xcode's verbose simulator diagnostic subprocess stalled after all tests passed; stopping that subprocess allowed the result bundle to close. Subsequent screenshot checks disable verbose diagnostic collection.
-- Final light/dark Chinese completion and stable screenshot captures each passed on a fresh iPhone 17 Pro Max instance, `B6F75570-FEA0-4998-8940-30E47C8D888A`, named `iPhone 17 Pro Max — Onboarding`. Both modes complete goal revision and save the reviewed target to Today. The fresh instance was necessary because the original simulator stopped responding and the existing Duo's data directory was missing; neither original device was erased. Final capture dimensions remain 1320 × 2868 pixels. Results: [light](/Users/haitianzhu/.codex/visualizations/2026/11/02/01a19da3-14bd-73e0-ba63-c8c920185668/onboarding-light-verified.xcresult), [dark](/Users/haitianzhu/.codex/visualizations/2026/11/02/01a19da3-14bd-73e0-ba63-c8c920185668/onboarding-dark-verified.xcresult).
+- Full UI result: onboarding-ui-final.xcresult (a local Codex result bundle). The command exited successfully. Xcode's verbose simulator diagnostic subprocess stalled after all tests passed; stopping that subprocess allowed the result bundle to close. Subsequent screenshot checks disable verbose diagnostic collection.
+- Final light/dark Chinese completion and stable screenshot captures each passed on a fresh iPhone 17 Pro Max instance, `B6F75570-FEA0-4998-8940-30E47C8D888A`, named `iPhone 17 Pro Max — Onboarding`. Both modes complete goal revision and save the reviewed target to Today. The fresh instance was necessary because the original simulator stopped responding and the existing Duo's data directory was missing; neither original device was erased. Final capture dimensions remain 1320 × 2868 pixels. Results: light and dark (local Codex result bundles).
 - `git diff --check` passed. `AGENTS.md` and `CLAUDE.md` remain byte-identical. No dependency was added.
 
 **Open questions and follow-up polish**

@@ -58,11 +58,23 @@ struct CameraCapture: UIViewControllerRepresentable {
         }
 
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-            if let image = info[.originalImage] as? UIImage, let data = image.jpegData(compressionQuality: 0.9) {
-                onCapture(data)
-            } else {
+            guard let image = info[.originalImage] as? UIImage else {
                 onCancel()
+                return
             }
+            Task {
+                if let data = await Self.encode(image) {
+                    onCapture(data)
+                } else {
+                    onCancel()
+                }
+            }
+        }
+
+        /// A full-size photo takes a while to encode, so it is done off the main thread.
+        @concurrent
+        private nonisolated static func encode(_ image: UIImage) async -> Data? {
+            image.jpegData(compressionQuality: 0.9)
         }
 
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
