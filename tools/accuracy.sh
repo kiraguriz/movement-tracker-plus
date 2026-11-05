@@ -320,7 +320,7 @@ out.append("")
 # Replay clips
 out.append("## Bundled replay clips")
 out.append("")
-out.append("`motion-eval App/Resources/ReplayPoses`. **Generated motion, not people.** The two clips the app replays on the Simulator, made by `tools/replay-fixtures` from `SyntheticMotion` with the same noise model. Their labels are the truth the generator scripted. They are not recordings.")
+out.append("`motion-eval App/Resources/ReplayPoses`. **Generated motion, not people.** The three clips the app replays on the Simulator, made by `tools/replay-fixtures` from `SyntheticMotion` with the same noise model. Their labels are the truth the generator scripted. They are not recordings.")
 out.append("")
 out.append(replay["text"])
 out.append("")

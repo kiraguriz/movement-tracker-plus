@@ -92,7 +92,7 @@ struct TodayPlanCard: View {
             Label {
                 Text("Rest day")
             } icon: {
-                Image(systemName: "bed.double").foregroundStyle(TraceTheme.amber)
+                Image(systemName: "bed.double").foregroundStyle(TraceTheme.amberInk)
             }
             .font(.title2.weight(.heavy))
             .foregroundStyle(TraceTheme.ink)

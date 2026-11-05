@@ -42,9 +42,12 @@ From `proxy/`, redeploy with `npx wrangler deploy`. Secret values remain separat
 To rotate one, use `npx wrangler secret put MODEL_API_KEY` or `npx wrangler secret put USDA_API_KEY` and
 enter it in the hidden prompt. Use the same account as this deployment.
 
-Current UTC-day caps: 500 accepted upstream reservations, 200 installations, 2,000 upstream attempts;
-per-token/feature budgets and five installations per network/hour also apply. Refunds do not restore the
-hard attempt cap. The limits count requests, not exact dollar charges.
+Current UTC-day caps: 500 accepted Muse reservations (`GLOBAL_DAILY_REQUESTS`), 2,000 Muse upstream attempts
+(`GLOBAL_DAILY_ATTEMPTS`), 2,000 USDA food searches in a separate pool (`GLOBAL_DAILY_FOOD`), 200
+installations (`GLOBAL_DAILY_INSTALLS`). Each token gets 100 Muse requests in total across all coach features
+and voice (`TOKEN_DAILY_REQUESTS`; food is excluded), on top of its per-feature budgets. Installs are limited
+to five per network/hour: per IPv4 address, per IPv6 /56. Refunds do not restore the hard attempt cap. The
+limits count requests, not exact dollar charges.
 
 Pause with `npx wrangler deploy --var KILL_SWITCH:1`; restore the committed configuration with
 `npx wrangler deploy`. `tools/muse-smoke.sh` makes one real model request and can verify connectivity

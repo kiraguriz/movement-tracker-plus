@@ -10,6 +10,20 @@ enum TrainCoachAccess {
         guard let coach = environment.coach else { return nil }
         return await environment.isAIOptedIn() ? coach : nil
     }
+
+    /// The coach exists but the user has not opted in: the place for the consent card.
+    static func needsConsent(in environment: AppEnvironment) async -> Bool {
+        guard environment.coach != nil else { return false }
+        return !(await environment.isAIOptedIn())
+    }
+
+    /// Waits briefly for a consent just given to reach the store, which every Muse call reads.
+    static func awaitStoredConsent(in environment: AppEnvironment) async {
+        for _ in 0..<20 {
+            if await environment.isAIOptedIn() || Task.isCancelled { return }
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+    }
 }
 
 /// Translated sentences for the engine's keys. The keys live in `Localizable.xcstrings` (`cue.*`, `framing.*`).

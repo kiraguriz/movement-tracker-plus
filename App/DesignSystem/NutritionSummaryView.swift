@@ -89,15 +89,9 @@ struct NutritionSummaryView: View {
         let marker = (total.map { macro.entriesMissing(in: $0) } ?? 0) > 0 && eaten != nil
         let eatenText = (hasEntries && eaten == nil) ? "–" : UnitFormatter.number(eaten ?? 0)
         return VStack(alignment: .leading, spacing: 6) {
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .firstTextBaseline, spacing: 3) {
-                    macroAmount((marker ? "≥ " : "") + eatenText)
-                    if let target { macroTarget(target) }
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    macroAmount((marker ? "≥ " : "") + eatenText)
-                    if let target { macroTarget(target) }
-                }
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                macroAmount((marker ? "≥ " : "") + eatenText)
+                if let target { macroTarget(target) }
             }
             HStack(spacing: 6) {
                 RoundedRectangle(cornerRadius: 2).fill(macro.color).frame(width: 8, height: 8)

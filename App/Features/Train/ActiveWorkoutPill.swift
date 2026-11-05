@@ -27,30 +27,37 @@ final class ActiveWorkoutModel {
 
     func run() async {
         await liveActivity.setRestOverHandler { [weak self] in await self?.refresh() }
-        do {
-            for try await drafts in environment.workouts.observeHistory(WorkoutHistoryQuery(statuses: [.draft], limit: 1)) {
-                guard let id = drafts.first?.id, let draft = try await environment.workouts.workout(id: id) else {
-                    let ended = workout
-                    workout = nil
-                    exerciseName = nil
-                    hasSeenDraftState = true
-                    restAlerts.cancel()
-                    var saved: Workout?
-                    if let ended { saved = try await environment.workouts.workout(id: ended.id) }
-                    await liveActivity.workoutEnded(saved)
-                    continue
+        // The pill is a shortcut; Train reports workout errors where they can be acted on. A failed update is skipped,
+        // and an observation that ends or fails starts again a second later.
+        while !Task.isCancelled {
+            do {
+                for try await drafts in environment.workouts.observeHistory(WorkoutHistoryQuery(statuses: [.draft], limit: 1)) {
+                    try? await update(drafts)
                 }
-                // A draft that appears after the app has seen there was none is a workout the user just started.
-                let began = hasSeenDraftState && workout == nil
-                workout = draft
-                hasSeenDraftState = true
-                exerciseName = try await currentExerciseName(in: draft)
-                if began || environment.launch.promptsForOpenWorkout, environment.launch.allowsNotificationPrompt { await restAlerts.requestAuthorizationIfNeeded() }
-                await syncSystem(for: draft)
-            }
-        } catch {
-            // The pill is a shortcut; Train reports workout errors where they can be acted on.
+            } catch {}
+            try? await Task.sleep(for: .seconds(1))
         }
+    }
+
+    private func update(_ drafts: [WorkoutSummary]) async throws {
+        guard let id = drafts.first?.id, let draft = try await environment.workouts.workout(id: id) else {
+            let ended = workout
+            workout = nil
+            exerciseName = nil
+            hasSeenDraftState = true
+            restAlerts.cancel()
+            var saved: Workout?
+            if let ended { saved = try await environment.workouts.workout(id: ended.id) }
+            await liveActivity.workoutEnded(saved)
+            return
+        }
+        // A draft that appears after the app has seen there was none is a workout the user just started.
+        let began = hasSeenDraftState && workout == nil
+        workout = draft
+        hasSeenDraftState = true
+        exerciseName = try await currentExerciseName(in: draft)
+        if began || environment.launch.promptsForOpenWorkout, environment.launch.allowsNotificationPrompt { await restAlerts.requestAuthorizationIfNeeded() }
+        await syncSystem(for: draft)
     }
 
     /// Looks at the workout again, for what changes with time alone: the rest ending, or the app coming back to the

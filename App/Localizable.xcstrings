@@ -1085,6 +1085,22 @@
         }
       }
     },
+    "May leave your phone" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "May leave your phone"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可能会离开你的手机"
+          }
+        }
+      }
+    },
     "Coffee" : {
       "localizations" : {
         "en" : {
@@ -1253,12 +1269,44 @@
         }
       }
     },
+    "No Results for “%@”" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Results for “%@”"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无“%@”的结果"
+          }
+        }
+      }
+    },
     "Reads" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "读取"
+          }
+        }
+      }
+    },
+    "Reps, depth, tempo, fatigue, daily totals, weight trend" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reps, depth, tempo, fatigue, daily totals, weight trend"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次数、深度、节奏、疲劳度、每日合计、体重趋势"
           }
         }
       }
@@ -1389,28 +1437,28 @@
         }
       }
     },
+    "Workout and nutrition numbers" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout and nutrition numbers"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "训练和饮食数据"
+          }
+        }
+      }
+    },
     "Writes" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "写入"
-          }
-        }
-      }
-    },
-    "You can change your plan in Me." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You can change your plan in Me."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "稍后可在「我」中修改计划。"
           }
         }
       }
@@ -2266,6 +2314,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "食物搜索暂时无法使用，请稍后再试。"
+          }
+        }
+      }
+    },
+    "Food search uses USDA names in English." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Food search uses USDA names in English."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "食物搜索使用 USDA 的英文名称，请用英文搜索。"
           }
         }
       }
@@ -5277,18 +5341,18 @@
         }
       }
     },
-    "Weight and body fat history, calorie targets, age, height, training level" : {
+    "Weight and body fat history, calorie targets, sex, age, height, training level" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Weight and body fat history, calorie targets, age, height, training level"
+            "value" : "Weight and body fat history, calorie targets, sex, age, height, training level"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "体重和体脂历史、热量目标、年龄、身高、训练水平"
+            "value" : "体重和体脂历史、热量目标、性别、年龄、身高、训练水平"
           }
         }
       }
@@ -6493,18 +6557,66 @@
         }
       }
     },
-    "%@ rested" : {
+    "Legs rested" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ rested"
+            "value" : "Legs rested"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@已恢复"
+            "value" : "腿部已恢复"
+          }
+        }
+      }
+    },
+    "Push muscles rested" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Push muscles rested"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "推类肌群已恢复"
+          }
+        }
+      }
+    },
+    "Pull muscles rested" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pull muscles rested"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拉类肌群已恢复"
+          }
+        }
+      }
+    },
+    "Core rested" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Core rested"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "核心已恢复"
           }
         }
       }

@@ -6,6 +6,8 @@ import SwiftUI
 struct SessionSummaryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @ScaledMetric(relativeTo: .title) private var summaryMetricSize = 40.0
     @ScaledMetric(relativeTo: .body) private var setNumberSize = 20.0
     @Environment(UserSession.self) private var session
@@ -24,16 +26,15 @@ struct SessionSummaryView: View {
                 Group {
                     if case .off = model.debrief {
                         sets
+                    } else if isWide {
+                        HStack(alignment: .top, spacing: 12) {
+                            sets.fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity)
+                            debrief.fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity)
+                        }
                     } else {
-                        ViewThatFits(in: .horizontal) {
-                            HStack(alignment: .top, spacing: 12) {
-                                sets.frame(minWidth: 320, maxWidth: .infinity)
-                                debrief.frame(minWidth: 320, maxWidth: .infinity)
-                            }
-                            VStack(spacing: 12) {
-                                sets
-                                debrief
-                            }
+                        VStack(spacing: 12) {
+                            sets
+                            debrief
                         }
                     }
                 }
@@ -48,17 +49,38 @@ struct SessionSummaryView: View {
                     Button(role: .close) { dismiss() }
                         .accessibilityIdentifier(AccessibilityID.summaryClose)
                 }
+                if verticalSizeClass == .compact {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button {
+                            Task { await model.save() }
+                        } label: {
+                            if model.isSaving {
+                                ProgressView()
+                            } else {
+                                Text("Save workout")
+                            }
+                        }
+                        .disabled(model.isSaving)
+                        .accessibilityIdentifier(AccessibilityID.summarySave)
+                    }
+                }
             }
             .safeAreaInset(edge: .bottom) {
-                saveButton
+                if verticalSizeClass != .compact { saveButton }
             }
         }
         .task { model.start() }
+        .task { await model.consent.run() }
+        .onChange(of: model.consent.isOn) { _, isOn in
+            if isOn == true { model.consentGranted() }
+        }
         .onDisappear { model.cancel() }
         .interactiveDismissDisabled(model.isSaving)
         .errorAlert($model.errorMessage)
         .testIdentifier(AccessibilityID.sessionSummary)
     }
+
+    private var isWide: Bool { verticalSizeClass == .compact || horizontalSizeClass == .regular }
 
     // MARK: Sets
 
@@ -206,6 +228,8 @@ struct SessionSummaryView: View {
         switch model.debrief {
         case .off:
             EmptyView()
+        case .needsConsent:
+            CoachConsentCard(consent: model.consent)
         case .streaming(let json):
             card {
                 if let headline = json["headline"]?.stringValue, !headline.isEmpty { headlineText(headline) }
@@ -268,7 +292,7 @@ struct SessionSummaryView: View {
             Label {
                 Text(concern.detail)
             } icon: {
-                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(TraceTheme.amber)
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(TraceTheme.amberInk)
             }
         }
     }

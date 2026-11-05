@@ -11,7 +11,11 @@ struct SetReviewView: View {
     let onClose: () -> Void
     var isHistorical = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @ScaledMetric(relativeTo: .title) private var metricSize = 28.0
+
+    private var isWide: Bool { verticalSizeClass == .compact || horizontalSizeClass == .regular }
 
     var body: some View {
         NavigationStack {
@@ -19,16 +23,15 @@ struct SetReviewView: View {
                 Group {
                     if case .off = model.muse {
                         numbers
+                    } else if isWide {
+                        HStack(alignment: .top, spacing: 12) {
+                            numbers.frame(maxWidth: .infinity)
+                            coach.frame(maxWidth: .infinity)
+                        }
                     } else {
-                        ViewThatFits(in: .horizontal) {
-                            HStack(alignment: .top, spacing: 12) {
-                                numbers.frame(minWidth: 320, maxWidth: .infinity)
-                                coach.frame(minWidth: 320, maxWidth: .infinity)
-                            }
-                            VStack(spacing: 12) {
-                                numbers
-                                coach
-                            }
+                        VStack(spacing: 12) {
+                            numbers
+                            coach
                         }
                     }
                 }
@@ -44,12 +47,27 @@ struct SetReviewView: View {
                     Button(role: .close, action: onClose)
                         .accessibilityIdentifier(AccessibilityID.reviewClose)
                 }
+                if !isHistorical, verticalSizeClass == .compact {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button("Next set", action: onNextSet)
+                            .accessibilityIdentifier(AccessibilityID.reviewNextSet)
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Finish", action: onFinish)
+                            .tint(TraceTheme.cobalt)
+                            .accessibilityIdentifier(AccessibilityID.reviewFinish)
+                    }
+                }
             }
             .safeAreaInset(edge: .bottom) {
-                if !isHistorical { actions }
+                if !isHistorical, verticalSizeClass != .compact { actions }
             }
         }
         .task { if !isHistorical { model.start() } }
+        .task { if !isHistorical { await model.consent.run() } }
+        .onChange(of: model.consent.isOn) { _, isOn in
+            if isOn == true { model.consentGranted() }
+        }
         .onDisappear { model.cancel() }
         .testIdentifier(AccessibilityID.setReview)
     }
@@ -165,6 +183,8 @@ struct SetReviewView: View {
         switch model.muse {
         case .off:
             EmptyView()
+        case .needsConsent:
+            CoachConsentCard(consent: model.consent)
         case .streaming(let partial, _):
             MuseCard(content: .streaming(partial), images: [], model: model)
         case .finished(let result):
@@ -302,7 +322,7 @@ private struct RepDetail: View {
                     Text(LiveText.cue(issue.cue ?? issue.ruleID))
                 } icon: {
                     Image(systemName: issue.severity == .major ? "exclamationmark.octagon.fill" : "exclamationmark.triangle.fill")
-                        .foregroundStyle(issue.severity == .major ? TraceTheme.vermilion : TraceTheme.amber)
+                        .foregroundStyle(issue.severity == .major ? TraceTheme.vermilion : TraceTheme.amberInk)
                 }
             }
         }
@@ -391,7 +411,7 @@ private struct MuseCard: View {
                     Label {
                         Text(item.cue).fontWeight(.semibold)
                     } icon: {
-                        Image(systemName: "arrow.turn.down.right").foregroundStyle(TraceTheme.amber)
+                        Image(systemName: "arrow.turn.down.right").foregroundStyle(TraceTheme.amberInk)
                     }
                     if !item.why.isEmpty {
                         Text(item.why)

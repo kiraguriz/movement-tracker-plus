@@ -29,6 +29,8 @@ final class SetReviewModel {
     enum Muse {
         /// No coach, or the user has not opted in: only the on-device review is shown.
         case off
+        /// The coach exists but the user has not opted in: the consent card is shown.
+        case needsConsent
         case streaming(SetReview.Partial, isRetrying: Bool)
         case finished(InsightResult<SetReview>)
         case failed(String)
@@ -41,6 +43,7 @@ final class SetReviewModel {
     /// The pictures sent to Muse, kept for "What Muse saw".
     private(set) var sentImages: [SkeletonImage] = []
     var selectedRep: Int?
+    let consent: AIConsent
 
     @ObservationIgnored private let environment: AppEnvironment
     @ObservationIgnored private var museTask: Task<Void, Never>?
@@ -50,6 +53,7 @@ final class SetReviewModel {
     init(environment: AppEnvironment, subject: SetReviewSubject) {
         self.environment = environment
         self.subject = subject
+        consent = AIConsent(environment: environment)
         reps = subject.logged.reps.sorted { $0.index < $1.index }
         // Open on the rep that needs the most attention, when there is one.
         if let weakest = reps.min(by: { $0.measurement.score < $1.measurement.score }), !weakest.measurement.issues.isEmpty {
@@ -78,13 +82,26 @@ final class SetReviewModel {
         museTask = Task { await runMuse() }
     }
 
+    /// Runs the review once the user opts in from the consent card.
+    func consentGranted() {
+        guard case .needsConsent = muse else { return }
+        museTask?.cancel()
+        museTask = Task {
+            await TrainCoachAccess.awaitStoredConsent(in: environment)
+            await runMuse()
+        }
+    }
+
     func cancel() {
         museTask?.cancel()
         voice.stop()
     }
 
     private func runMuse() async {
-        guard let coach = await TrainCoachAccess.coach(in: environment) else { return }
+        guard let coach = await TrainCoachAccess.coach(in: environment) else {
+            if await TrainCoachAccess.needsConsent(in: environment), !Task.isCancelled { muse = .needsConsent }
+            return
+        }
         muse = .streaming(SetReview.Partial(.null), isRetrying: false)
         let input = await makeInput()
         do {

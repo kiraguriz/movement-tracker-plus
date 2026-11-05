@@ -116,4 +116,39 @@ struct MealDraftTests {
         #expect(stored.amountUnit == .milliliters)
         #expect(MealDraft(food: stored, slot: .snack).amountUnit == .milliliters)
     }
+
+    func butter() -> Food {
+        Food(id: "butter", source: .usda, name: "Butter", amountUnit: .grams,
+             per100g: Nutrients(energy: Energy(kilocalories: 717)), createdAt: now)
+    }
+
+    @Test func aSmallAmountKeepsTheFoodsExactBasisInsteadOfTheRoundedField() throws {
+        let draft = MealDraft(food: butter(), amount: 1, slot: .breakfast)
+        #expect(draft.kcalText == "7")
+        let saved = try entry(draft)
+        #expect(saved.per100Amount?.energy?.kilocalories == 717)
+        #expect(saved.nutrients.energy?.kilocalories == 7)
+    }
+
+    @Test func aTypedNutrientSetsTheSavedBasis() throws {
+        let draft = MealDraft(food: butter(), amount: 1, slot: .breakfast)
+        draft.kcalText = "10"
+        let saved = try entry(draft)
+        #expect(saved.per100Amount?.energy?.kilocalories == 1000)
+        #expect(saved.nutrients.energy?.kilocalories == 10)
+    }
+
+    @Test func editingWithoutTouchingNutrientsKeepsTheStoredBasis() throws {
+        let original = MealEntry(
+            id: "meal-1", localDay: LocalDay(now, in: zone), slot: .breakfast, label: "Butter",
+            grams: Mass(grams: 1), amountUnit: .grams, per100Amount: Nutrients(energy: Energy(kilocalories: 717)),
+            nutrients: Nutrients(energy: Energy(kilocalories: 7)),
+            source: .search, loggedAt: now, timeZoneID: zone.identifier
+        )
+        let draft = MealDraft(editing: original)
+        draft.name = "Salted butter"
+        let saved = try entry(draft)
+        #expect(saved.per100Amount?.energy?.kilocalories == 717)
+        #expect(saved.nutrients.energy?.kilocalories == 7)
+    }
 }

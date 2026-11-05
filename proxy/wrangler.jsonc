@@ -29,6 +29,8 @@
     "GLOBAL_DAILY_REQUESTS": "500",
     "GLOBAL_DAILY_INSTALLS": "200",
     "GLOBAL_DAILY_ATTEMPTS": "2000",
+    "GLOBAL_DAILY_FOOD": "2000",
+    "TOKEN_DAILY_REQUESTS": "100",
     "MUSE_BASE_URL": "https://api.meta.ai/v1"
   }
 }

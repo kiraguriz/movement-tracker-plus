@@ -55,14 +55,15 @@ describe("install rate limit", () => {
     assert.equal(results.filter((s) => s === 201).length, INSTALL_LIMIT_PER_HOUR);
   });
 
-  it("counts a whole IPv6 /64 as one network", async () => {
+  it("counts a whole IPv6 /56 as one network", async () => {
     const h = makeHarness();
     for (let i = 0; i < 12; i += 1) {
-      const res = await h.call("/v1/install", { method: "POST", ip: `2001:db8:1:2:${(i + 1).toString(16)}::9` });
+      // Every address is in its own /64 inside 2001:db8:1::/56.
+      const res = await h.call("/v1/install", { method: "POST", ip: `2001:db8:1:${(i + 1).toString(16)}::9` });
       assert.equal(res.status, i < INSTALL_LIMIT_PER_HOUR ? 201 : 429, `address ${i + 1}`);
     }
-    // A different /64 is a different network.
-    assert.equal((await h.call("/v1/install", { method: "POST", ip: "2001:db8:1:3::9" })).status, 201);
+    // A different /56 is a different network.
+    assert.equal((await h.call("/v1/install", { method: "POST", ip: "2001:db8:1:100::9" })).status, 201);
   });
 
   it("derives the network key without being fooled by spelling", () => {
@@ -73,10 +74,14 @@ describe("install rate limit", () => {
       "2001:db8:1:2::",
       "2001:db8:1:2:3:4:5:6%eth0",
       " 2001:db8:1:2::7 ",
+      "2001:db8:1:ff::1",
+      "2001:db8:1::1",
     ];
     const keys = new Set(sameNetwork.map(networkKey));
     assert.equal(keys.size, 1, [...keys].join(" "));
-    assert.notEqual(networkKey("2001:db8:1:3::1"), networkKey("2001:db8:1:2::1"));
+    assert.equal(networkKey("2001:db8:1234:56ab::1"), "2001:db8:1234:5600::/56");
+    assert.equal(networkKey("2001:db8:1:3::1"), networkKey("2001:db8:1:2::1"));
+    assert.notEqual(networkKey("2001:db8:1:100::1"), networkKey("2001:db8:1:2::1"));
     assert.notEqual(networkKey("2001:db8:2:2::1"), networkKey("2001:db8:1:2::1"));
     assert.equal(networkKey("::ffff:203.0.113.5"), "203.0.113.5");
     assert.equal(networkKey("203.0.113.5"), "203.0.113.5");
@@ -365,7 +370,7 @@ describe("route and token hardening", () => {
     await coach(h, token, "chat", { input: "hi" });
     await h.call("/v1/food/search?q=apple%3Aevil%3A20260101", { token });
     for (const key of h.kv.keys()) {
-      assert.match(key, /^(tok:[0-9a-f]{64}|rl:install:[0-9a-f]{24}:\d+|bud:[0-9a-f]{32}:(set_review|debrief|chat|meal_photo|spec_author|goal_plan|voice|food):\d{8})$/, key);
+      assert.match(key, /^(tok:[0-9a-f]{64}|rl:install:[0-9a-f]{24}:\d+|bud:[0-9a-f]{32}:(set_review|debrief|chat|meal_photo|spec_author|goal_plan|voice|food|total):\d{8})$/, key);
     }
   });
 });

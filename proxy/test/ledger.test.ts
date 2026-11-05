@@ -93,6 +93,57 @@ describe("durable budgets", () => {
     assert.equal(upstreamCalls, 4);
   });
 
+  it("caps one token's total across Muse features and gives refunds back to the total", async () => {
+    const { call, reserve } = ledgerHarness();
+    const day = "20261029";
+    for (let i = 0; i < 60; i += 1) assert.equal((await reserve(`bud:aaa:set_review:${day}`, 120)).status, 200);
+    let last: Response | undefined;
+    for (let i = 0; i < 40; i += 1) last = await reserve(`bud:aaa:chat:${day}`, 100);
+    assert.equal(last?.status, 200);
+    const blocked = await reserve(`bud:aaa:chat:${day}`, 100);
+    assert.equal(blocked.status, 429);
+    assert.equal((await blocked.json() as { error: { code: string } }).error.code, "daily_budget_exceeded");
+    assert.equal((await reserve(`bud:aaa:debrief:${day}`, 20)).status, 429);
+    assert.equal((await reserve(`bud:bbb:chat:${day}`, 100)).status, 200, "other tokens are unaffected");
+    await call({ op: "refund", id: (await last!.json() as { id: string }).id });
+    assert.equal((await reserve(`bud:aaa:debrief:${day}`, 20)).status, 200);
+    assert.equal((await reserve(`bud:aaa:debrief:${day}`, 20)).status, 429);
+  });
+
+  it("keeps food in its own global pool, outside the token total", async () => {
+    const { call, reserve } = ledgerHarness({ GLOBAL_DAILY_REQUESTS: "2", GLOBAL_DAILY_ATTEMPTS: "2", GLOBAL_DAILY_FOOD: "3", TOKEN_DAILY_REQUESTS: "1" });
+    const day = "20261029";
+    const food = await Promise.all(Array.from({ length: 3 }, (_, i) => reserve(`bud:t${i}:food:${day}`, 300)));
+    assert.deepEqual(food.map((r) => r.status), [200, 200, 200]);
+    const full = await reserve(`bud:t9:food:${day}`, 300);
+    assert.equal((await full.json() as { error: { code: string } }).error.code, "global_budget_exceeded");
+    assert.equal((await reserve(`bud:t0:chat:${day}`, 100)).status, 200, "food used neither the Muse pool nor the token total");
+    assert.equal((await reserve(`bud:t1:chat:${day}`, 100)).status, 200);
+    assert.equal((await reserve(`bud:t2:chat:${day}`, 100)).status, 429);
+    await call({ op: "refund", id: (await food[0]!.json() as { id: string }).id });
+    assert.equal((await reserve(`bud:t9:food:${day}`, 300)).status, 200, "the refund went back to the food pool");
+    assert.equal((await reserve(`bud:t9:food:${day}`, 300)).status, 429);
+  });
+
+  it("applies the token total in the KV fallback too", async () => {
+    const h = makeHarness({ env: { TOKEN_DAILY_REQUESTS: "3" } });
+    const token = await h.install();
+    h.upstream.handler = () => new Response("{}", { headers: { "content-type": "application/json" } });
+    const coach = (feature: string) => h.call("/v1/coach/responses", {
+      token, method: "POST", body: JSON.stringify({ input: "hi" }),
+      headers: { "content-type": "application/json", "x-coach-feature": feature },
+    });
+    assert.equal((await coach("chat")).status, 200);
+    assert.equal((await coach("goal_plan")).status, 200);
+    h.upstream.handler = () => new Response("{}", { status: 503, headers: { "content-type": "application/json" } });
+    assert.equal((await coach("chat")).status, 503, "refunded");
+    h.upstream.handler = () => new Response("{}", { headers: { "content-type": "application/json" } });
+    assert.equal((await coach("chat")).status, 200);
+    const blocked = await coach("goal_plan");
+    assert.equal(blocked.status, 429);
+    assert.equal((await blocked.json() as { error: { code: string } }).error.code, "daily_budget_exceeded");
+  });
+
   it("fails closed when the required binding is absent or inaccessible", async () => {
     const h = makeHarness({ env: { REQUIRE_DURABLE_BUDGETS: "1" } });
     assert.equal((await h.call("/v1/install", { method: "POST" })).status, 503);

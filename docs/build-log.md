@@ -2,7 +2,7 @@
 
 What was built when, generated from `git log main` by `tools/build-log.sh`. Times are author times in Chicago time (CST/CDT); merge commits are left out.
 
-Source: `main` at `ae9d29d`, 40 commits, 2026-10-29 to 2026-11-01.
+Source: `main` at `aaf44ee`, 99 commits, 2026-10-29 to 2026-11-03.
 
 ## 2026-10-29 (Thu)
 
@@ -52,3 +52,68 @@ Source: `main` at `ae9d29d`, 40 commits, 2026-10-29 to 2026-11-01.
 - 12:58 CST `5761da3` Align UI assertions with lazy forms and mass-safe photo nutrition
 - 13:34 CST `23395a2` Replace UI field text reliably and avoid the predictive keyboard bar
 - 14:31 CST `ae9d29d` Clear onboarding field focus when navigating between steps
+- 14:40 CST `608a1e9` Record live deployment, simulator coverage, and device acceptance boundaries
+- 16:00 CST `cb00e1e` Configure physical-device signing and record install acceptance
+- 16:11 CST `6c01dca` Document Device Hub recovery and physical acceptance boundaries
+- 16:36 CST `6057636` Record physical HealthKit nutrition acceptance and verified cleanup
+- 16:44 CST `d10843d` Correct camera preparation HUD source and record live capture baseline
+- 16:47 CST `61f9d10` Record stable real front-camera delivery and remaining human acceptance gate
+- 17:33 CST `0d7e006` Verify physical workout recovery and fix rest and summary layout
+- 19:27 CST `b3f4402` Implement Trace redesign across the native iOS app
+- 23:16 CST `fef5942` Align native UI with redesign reference
+
+## 2026-11-02 (Mon)
+
+- 10:19 CST `5c21cf4` Complete Trace screens, sheets, and workout states
+
+## 2026-11-03 (Tue)
+
+- 00:21 CST `a7e38ac` Refine adaptive Duo layouts and dashboard design
+- 01:20 CST `636e9ec` Add shared routes, spec lookup and coach features for parallel work
+- 01:26 CST `e184028` Add device-side guard for Muse calorie plans
+- 01:28 CST `f912ffb` Add liftFirst spec field so lift-first movements label eccentric and concentric correctly
+- 01:29 CST `84ead79` Add readiness engine and Today advisor to Domain
+- 01:30 CST `940c862` Add Today plan service and by-id workout plan start
+- 01:32 CST `cfe3dc0` Add teach session, joint trimming and replay verification for taught exercises
+- 01:33 CST `c2b0866` Notify when a rest ends while the app is in the background
+- 01:33 CST `381083e` Add weekly goal row with streak weeks to Today
+- 01:33 CST `e566300` Add taught exercise ids, names, spec candidates and saving
+- 01:34 CST `2b7104f` Add the Muse goal plan request, prompt and deadline to CoachKit
+- 01:36 CST `17daae5` Give the teach session a framing state and explicit takes
+- 01:45 CST `445e353` Add Today plan card with one-tap start and readiness
+- 01:45 CST `237a19f` Add separate HealthKit reader for sleep, HRV and resting heart rate
+- 01:47 CST `1cb7ff2` Resolve stored specs of taught exercises in the spec catalog
+- 01:47 CST `96e6e72` Add the teach flow to the exercise picker
+- 01:53 CST `15828bf` Add front-view jumping jack as a built-in camera exercise, hidden from the picker until released
+- 01:54 CST `a0ed963` Update Health read usage description
+- 01:54 CST `051c942` Add Muse daily tip for Today in CoachKit
+- 02:03 CST `6ca48b9` Speak cues with the best installed voice for the language
+- 02:03 CST `925ca91` Add jumping jack to the synthetic accuracy rows and the recording checklist
+- 02:04 CST `e46d6ab` Keep edge-touching joints out of taught specs and blame hidden joints for short counts
+- 02:08 CST `736ec30` Cover the Muse step and plan states in the onboarding UI tests
+- 02:08 CST `94e2ab9` Ask about Muse first in onboarding and let Muse make the calorie plan
+- 02:10 CST `b866aaa` Add a Live Activity for the workout in progress
+- 02:14 CST `15c73a2` Add App Shortcuts to start a set and log weight
+- 02:19 CST `29d2d8d` Fix teach step labels and add teach UI tests and a recording regression test
+- 02:22 CST `926605d` Dismiss the keyboard between the height and weight fields in the onboarding UI tests
+- 02:24 CST `54cbcfa` [slice B] Add taught form checks: menu, calibration and replay gate
+- 02:28 CST `1f78a94` Show Muse daily tip on Today with a recovery sharing switch
+- 02:33 CST `6987b67` [slice B] Add the spec_author client to CoachKit
+- 02:36 CST `f50ff77` Record the Muse step results in the onboarding design QA
+- 02:50 CST `d236740` Keep the elapsed time on one line and test the Lock Screen and notification flows
+- 02:50 CST `e69817d` Fix the crash when a notification tap opens the app
+- 02:54 CST `ea9b127` Clear rest alerts on skip and describe the Health data read
+- 02:58 CST `1938a25` [slice B] Do not report a rounded threshold as eased
+- 03:05 CST `e803309` [slice B] Let Muse propose form checks for a taught exercise
+- 03:06 CST `682ba4a` Keep the goal plan stub out of Release builds
+- 11:44 CST `c7229a8` Scroll the rulers and unit picker into view on a short landscape window
+- 11:44 CST `b85c1e1` Close the set sheet's keyboard with its Done before the reference capture
+- 11:44 CST `dc158af` Close the keyboard before scrolling the form to a field it covers
+- 11:44 CST `a9034ae` Reveal controls on landscape Today, which has no navigation bar
+- 11:44 CST `4fc7391` Measure clearance during setup from the step's action instead of a share of the window
+- 11:44 CST `c332984` Scroll Train to the last exercise before checking that a chat plan landed
+- 11:44 CST `b36d804` Keep the meal field being typed in clear of the keyboard in a stacked sheet
+- 11:44 CST `0a34fe3` Let the meal editor's keyboard Done close the name field
+- 11:44 CST `b2a9315` Add a keyboard Done to the manual set sheet and center the card being typed in above it
+- 11:44 CST `9b98b5a` Let a tap anywhere on Today's workout card open the history
+- 22:45 CST `125fad2` Connect Apple Health once during setup and polish the Muse onboarding

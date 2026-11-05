@@ -187,7 +187,13 @@ public final class MealDraft: Identifiable {
         guard isValid else { return nil }
         let grams = input(.grams).value ?? 0
         let nutrients = enteredNutrients
-        let savedBasis = grams > 0 ? nutrients.scaled(by: 100 / grams) : basis
+        // Untouched fields hold rounded display values of `basis`, so the basis itself is kept; typed numbers set it.
+        let savedBasis: Nutrients?
+        if let basis, lastNutrients == nutrients {
+            savedBasis = basis
+        } else {
+            savedBasis = grams > 0 ? nutrients.scaled(by: 100 / grams) : basis
+        }
         if var meal = original {
             meal.label = trimmedName
             meal.slot = slot

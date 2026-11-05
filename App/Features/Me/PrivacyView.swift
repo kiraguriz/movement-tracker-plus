@@ -12,7 +12,7 @@ struct PrivacyView: View {
                 row("Your messages", detail: "What you type in the coach chat", systemImage: "bubble.left")
                 row("Workouts", detail: "Exercises, sets, reps, load, depth, tempo, fatigue, form scores", systemImage: "figure.strengthtraining.traditional")
                 row("Meals", detail: "Food names, calories, protein, carbs, fat", systemImage: "fork.knife")
-                row("Body and goal", detail: "Weight and body fat history, calorie targets, age, height, training level", systemImage: "scalemass")
+                row("Body and goal", detail: "Weight and body fat history, calorie targets, sex, age, height, training level", systemImage: "scalemass")
                 row("Skeleton drawings", detail: "Stick figures of your best and worst reps", systemImage: "figure.stand")
                 row("Exercises you teach", detail: "Name, two stick figures and joint angles of your demonstration", systemImage: "figure.cooldown")
                 row("Meal photos", detail: "Only when you log a meal with a photo", systemImage: "camera")

@@ -194,6 +194,8 @@ describe("voice transcribe", () => {
 
   it("has its own daily budget", async () => {
     const { h, token } = await setup();
+    // Raise the cross-feature token total so only the per-feature budgets are under test.
+    h.env.TOKEN_DAILY_REQUESTS = String(VOICE_DAILY_REQUESTS + 1);
     for (let i = 0; i < VOICE_DAILY_REQUESTS; i += 1) {
       assert.equal((await transcribe(h, token, form(wav(2044)))).status, 200, `request ${i + 1}`);
     }

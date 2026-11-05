@@ -1,5 +1,5 @@
 import { HttpError } from "./http.ts";
-import { ledgerCall } from "./ledger.ts";
+import { cap, ledgerCall, totalKeyFor } from "./ledger.ts";
 import type { Ctx } from "./types.ts";
 
 const DAY_MS = 86_400_000;
@@ -87,7 +87,10 @@ export async function reserveBudget(ctx: Ctx, scope: string, limit: number): Pro
   const id = Array.from(ctx.deps.randomBytes(16), (byte) => byte.toString(16).padStart(2, "0")).join("");
   const durable = await ledgerCall(ctx, { op: "reserve", key, ttl: ttlSeconds, limit, id });
   if (durable) return { key, ttlSeconds, ledgerID: id };
+  // Same cross-feature total as the durable ledger; food is excluded.
+  const totalKey = totalKeyFor(key);
   const stored = parseCount(await ctx.env.PROXY_KV.get(key));
+  const storedTotal = totalKey ? parseCount(await ctx.env.PROXY_KV.get(totalKey)) : 0;
   const now = ctx.deps.now();
   const untilMidnight = secondsToUtcMidnight(now);
   const used = Math.max(stored, localCount(ctx, key, now));
@@ -99,8 +102,22 @@ export async function reserveBudget(ctx: Ctx, scope: string, limit: number): Pro
       { "retry-after": String(untilMidnight) },
     );
   }
+  const totalUsed = totalKey ? Math.max(storedTotal, localCount(ctx, totalKey, now)) : 0;
+  if (totalKey) {
+    const totalLimit = cap(ctx.env.TOKEN_DAILY_REQUESTS, 100);
+    if (totalUsed >= totalLimit) {
+      throw new HttpError(
+        429,
+        "daily_budget_exceeded",
+        `The daily limit of ${totalLimit} requests was reached; it resets at 00:00 UTC`,
+        { "retry-after": String(untilMidnight) },
+      );
+    }
+  }
   setLocalCount(ctx, key, used + 1, now + ttlSeconds * 1000);
+  if (totalKey) setLocalCount(ctx, totalKey, totalUsed + 1, now + ttlSeconds * 1000);
   await storeCount(ctx, key, used + 1, ttlSeconds);
+  if (totalKey) await storeCount(ctx, totalKey, totalUsed + 1, ttlSeconds);
   return { key, ttlSeconds };
 }
 
@@ -112,15 +129,18 @@ export async function refundBudget(ctx: Ctx, reservation: Reservation): Promise<
     try { await ledgerCall(ctx, { op: "refund", id: reservation.ledgerID }); } catch { /* Conservative: keep the debit. */ }
     return;
   }
-  try {
-    const stored = parseCount(await ctx.env.PROXY_KV.get(reservation.key));
-    const now = ctx.deps.now();
-    const current = Math.max(stored, localCount(ctx, reservation.key, now));
-    if (current > 0) {
-      setLocalCount(ctx, reservation.key, current - 1, now + reservation.ttlSeconds * 1000);
-      await storeCount(ctx, reservation.key, current - 1, reservation.ttlSeconds);
+  const totalKey = totalKeyFor(reservation.key);
+  for (const key of totalKey ? [reservation.key, totalKey] : [reservation.key]) {
+    try {
+      const stored = parseCount(await ctx.env.PROXY_KV.get(key));
+      const now = ctx.deps.now();
+      const current = Math.max(stored, localCount(ctx, key, now));
+      if (current > 0) {
+        setLocalCount(ctx, key, current - 1, now + reservation.ttlSeconds * 1000);
+        await storeCount(ctx, key, current - 1, reservation.ttlSeconds);
+      }
+    } catch {
+      // Best effort.
     }
-  } catch {
-    // Best effort.
   }
 }

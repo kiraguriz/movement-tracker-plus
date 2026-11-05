@@ -592,7 +592,7 @@ struct SetRow: View {
                 if set.partialReps > 0 {
                     Text(verbatim: "+\(set.partialReps)")
                         .font(TraceTheme.numeral(20))
-                        .foregroundStyle(TraceTheme.amber)
+                        .foregroundStyle(TraceTheme.amberInk)
                 }
             }
             if let score = set.averageScore {

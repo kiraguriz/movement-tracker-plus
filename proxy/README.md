@@ -14,7 +14,7 @@ All errors are JSON: `{ "error": { "code": "...", "message": "..." } }`.
 | Route | Auth | What it does |
 | --- | --- | --- |
 | `GET /v1/health` | none | `{ "ok": true, "killSwitch": false }`. Always answers, even when paused. |
-| `POST /v1/install` | none | Returns `201 { token, expiresAt }`. Token is 256 random bits, base64url (43 chars). At most 5 per hour per network: per IPv4 address, per IPv6 /64, keyed on Cloudflare's `cf-connecting-ip` (forwarding headers are ignored). |
+| `POST /v1/install` | none | Returns `201 { token, expiresAt }`. Token is 256 random bits, base64url (43 chars). At most 5 per hour per network: per IPv4 address, per IPv6 /56, keyed on Cloudflare's `cf-connecting-ip` (forwarding headers are ignored). |
 | `POST /v1/coach/responses` | Bearer | Forwards to `{MUSE_BASE_URL}/responses` with the server key. Needs header `X-Coach-Feature`. |
 | `POST /v1/voice/transcribe` | Bearer | Multipart (`request` + `audio`) to `{MUSE_BASE_URL}/asr/transcribe`. Whole body at most 2 MiB. |
 | `GET /v1/food/search?q=&page=` | Bearer | USDA search, normalized, edge-cached for a day. At most 300 USDA calls per token per UTC day (cache hits are free). |
@@ -43,8 +43,9 @@ The text cap is the body minus inline image data. Text is billed per token, so a
 otherwise fill a multi-MiB image allowance with text (about 0.6 USD per request at 2 MiB). Over it is
 `413 payload_too_large`.
 
-Voice has its own budget of 100 requests per token per day, and food search 300 (USDA calls only). The
-budget unit is requests, counted before the upstream call. The request is given back when the failure is
+Voice has its own budget of 100 requests per token per day, and food search 300 (USDA calls only). On top
+of these, each token has 100 requests a day in total across the coach features and voice
+(`TOKEN_DAILY_REQUESTS`); food search does not count toward it. The budget unit is requests, counted before the upstream call. The request is given back when the failure is
 ours or upstream's (timeouts, unreachable, 401/402/403/404/429/5xx) but not when upstream rejects it as
 invalid (400, 413, 422): refunding those would turn a loop of bad requests into free calls that eat Meta's
 shared team rate limit. Exhaustion is `429 daily_budget_exceeded` with `Retry-After` set to the seconds
@@ -190,11 +191,12 @@ editors only (`noEmit`).
 ## Durable limits and operational boundaries
 
 - **Authoritative counters use one named SQLite Durable Object.** Each reservation atomically checks
-  the feature/token budget and the global budget; all Worker isolates share it. Refunds are idempotent.
+  the feature budget, the token's daily total and the global pool; all Worker isolates share it. Refunds are idempotent.
   Expired counter/receipt rows are pruned on subsequent traffic. KV is no longer written per paid call.
-- **Global defaults per UTC day:** `GLOBAL_DAILY_REQUESTS=500` accepted upstream reservations,
-  `GLOBAL_DAILY_INSTALLS=200` installations and `GLOBAL_DAILY_ATTEMPTS=2000` upstream attempts.
-  Refundable upstream failures restore the first limit, but never the attempt limit. Limits can be lowered
+- **Global defaults per UTC day:** `GLOBAL_DAILY_REQUESTS=500` accepted Muse reservations,
+  `GLOBAL_DAILY_INSTALLS=200` installations and `GLOBAL_DAILY_ATTEMPTS=2000` Muse upstream attempts.
+  USDA food search uses its own pool, `GLOBAL_DAILY_FOOD=2000`, so search cannot use up the Muse pool.
+  Refundable upstream failures restore the reservation limits, but never the attempt limit. Limits can be lowered
   through Worker vars. They are request caps; actual provider charges still depend on token usage.
 - **Installs remain anonymous.** Five per network/hour plus the global install cap bound token issuance;
   App Attest remains a later feature. The shared ledger is intentionally one coordinator for demo scale.

@@ -25,7 +25,10 @@ enum TodayPlanText {
     static func reason(_ reason: TodayReason) -> String {
         switch reason {
         case .firstSession: String(localized: "A gentle first session")
-        case .rested(let bucket): String(localized: "\(bucketName(bucket)) rested")
+        case .rested(.lower): String(localized: "Legs rested")
+        case .rested(.push): String(localized: "Push muscles rested")
+        case .rested(.pull): String(localized: "Pull muscles rested")
+        case .rested(.core): String(localized: "Core rested")
         case .progress: String(localized: "Last time went well: add a rep")
         case .weekDone: String(localized: "This week's target is done")
         case .notRecovered: String(localized: "Muscles still recovering")

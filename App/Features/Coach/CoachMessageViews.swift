@@ -11,6 +11,8 @@ extension AttributedString {
         var options = AttributedString.MarkdownParsingOptions()
         options.interpretedSyntax = .inlineOnlyPreservingWhitespace
         self = (try? AttributedString(markdown: text, options: options)) ?? AttributedString(text)
+        // Links in a model reply stay plain text, so a reply cannot send the user anywhere.
+        for run in runs where run.link != nil { self[run.range].link = nil }
     }
 }
 

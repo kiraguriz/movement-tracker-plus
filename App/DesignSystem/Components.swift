@@ -21,7 +21,7 @@ enum Macro: CaseIterable, Identifiable {
     var color: Color {
         switch self {
         case .protein: TraceTheme.blue
-        case .carbs: TraceTheme.sky
+        case .carbs: TraceTheme.carbs
         case .fat: TraceTheme.amber
         }
     }

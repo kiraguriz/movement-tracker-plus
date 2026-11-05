@@ -171,11 +171,6 @@ struct OnboardingView: View {
                 .accessibilityIdentifier(AccessibilityID.onboardingFinish)
                 .frame(maxWidth: wide ? 480 : .infinity)
                 .frame(maxWidth: .infinity)
-                Text("You can change your plan in Me.")
-                    .font(.footnote)
-                    .foregroundStyle(TraceTheme.secondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: 1040)
             .frame(maxWidth: .infinity)

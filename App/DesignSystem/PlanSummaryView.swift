@@ -172,7 +172,7 @@ struct PlanSummaryView: View {
             HStack(spacing: 2) {
                 Rectangle().fill(TraceTheme.blue)
                     .frame(width: max(0, (geometry.size.width - 4) * Double(plan.proteinG * 4) / total))
-                Rectangle().fill(TraceTheme.sky)
+                Rectangle().fill(TraceTheme.carbs)
                     .frame(width: max(0, (geometry.size.width - 4) * Double(plan.carbsG * 4) / total))
                 Rectangle().fill(TraceTheme.amber)
             }

@@ -5,6 +5,7 @@ import Foundation
 /// "Log weight": saves a weight taken now, without opening the app.
 struct LogWeightIntent: AppIntent {
     static let title: LocalizedStringResource = "Log weight"
+    static let authenticationPolicy: IntentAuthenticationPolicy = .requiresAuthentication
 
     @Parameter(title: "Weight")
     var weight: Measurement<UnitMass>

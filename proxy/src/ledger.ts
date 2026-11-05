@@ -6,7 +6,7 @@ export interface LedgerStorage {
   transactionSync<T>(body: () => T): T;
 }
 
-function cap(raw: string | undefined, fallback: number): number {
+export function cap(raw: string | undefined, fallback: number): number {
   if (!raw || !/^\d+$/.test(raw)) return fallback;
   return Math.max(1, Math.min(100_000, Number(raw)));
 }
@@ -15,6 +15,20 @@ function limited(code: string): HttpError {
   return new HttpError(429, code, "The service usage limit was reached; try again after the UTC day resets", {
     "retry-after": String(Math.max(1, Math.ceil((86_400_000 - Date.now() % 86_400_000) / 1000))),
   });
+}
+
+// Budget keys are `bud:<tokenId>:<scope>:<YYYYMMDD>` (budget.ts). Every scope except food also counts
+// against the token's cross-feature total, `bud:<tokenId>:total:<YYYYMMDD>`.
+const BUDGET_KEY = /^bud:([^:]+):([a-z_]+):(\d{8})$/;
+
+export function totalKeyFor(key: string): string | null {
+  const match = BUDGET_KEY.exec(key);
+  if (!match || match[2] === "food" || match[2] === "total") return null;
+  return `bud:${match[1]}:total:${match[3]}`;
+}
+
+function isFoodKey(key: string): boolean {
+  return BUDGET_KEY.exec(key)?.[2] === "food";
 }
 
 /// One named object serializes all budget reservations across Worker isolates and edge locations.
@@ -44,6 +58,7 @@ export class BudgetLedger {
       const global = `global:requests:${day}`;
       const attempts = `global:attempts:${day}`;
       const installs = `global:installs:${day}`;
+      const food = `global:food:${day}`;
       const sql = this.storage.sql;
       const count = (key: string): number => sql.exec<{ used: number }>("SELECT used FROM counters WHERE key = ?", key).toArray()[0]?.used ?? 0;
       const set = (key: string, used: number, expires: number): void => {
@@ -57,7 +72,10 @@ export class BudgetLedger {
           const receipt = sql.exec<{ key: string }>("SELECT key FROM receipts WHERE id = ?", body.id).toArray()[0];
           if (receipt) {
             sql.exec("DELETE FROM receipts WHERE id = ?", body.id);
-            sql.exec("UPDATE counters SET used = MAX(0, used - 1) WHERE key = ? OR key = ?", receipt.key, global);
+            // Decrement exactly the counters reserve incremented; the hard attempt cap is never refunded.
+            const pool = isFoodKey(receipt.key) ? food : global;
+            const total = totalKeyFor(receipt.key) ?? receipt.key;
+            sql.exec("UPDATE counters SET used = MAX(0, used - 1) WHERE key IN (?, ?, ?)", receipt.key, pool, total);
           }
           return { ok: true };
         }
@@ -78,13 +96,24 @@ export class BudgetLedger {
           }
           if (sql.exec("SELECT id FROM receipts WHERE id = ?", body.id).toArray().length) return { id: body.id };
           if (current >= body.limit) throw limited("daily_budget_exceeded");
-          const used = count(global);
-          if (used >= cap(this.env.GLOBAL_DAILY_REQUESTS, 500)) throw limited("global_budget_exceeded");
-          const attempted = count(attempts);
-          // Refunding an upstream outage never refunds this hard attempt cap.
-          if (attempted >= cap(this.env.GLOBAL_DAILY_ATTEMPTS, 2000)) throw limited("global_attempt_limit");
-          set(global, used + 1, expiry);
-          set(attempts, attempted + 1, expiry);
+          const total = totalKeyFor(body.key);
+          const totalUsed = total ? count(total) : 0;
+          if (total && totalUsed >= cap(this.env.TOKEN_DAILY_REQUESTS, 100)) throw limited("daily_budget_exceeded");
+          if (isFoodKey(body.key)) {
+            // Food search has its own pool, so search-as-you-type cannot starve the Muse features.
+            const used = count(food);
+            if (used >= cap(this.env.GLOBAL_DAILY_FOOD, 2000)) throw limited("global_budget_exceeded");
+            set(food, used + 1, expiry);
+          } else {
+            const used = count(global);
+            if (used >= cap(this.env.GLOBAL_DAILY_REQUESTS, 500)) throw limited("global_budget_exceeded");
+            const attempted = count(attempts);
+            // Refunding an upstream outage never refunds this hard attempt cap.
+            if (attempted >= cap(this.env.GLOBAL_DAILY_ATTEMPTS, 2000)) throw limited("global_attempt_limit");
+            set(global, used + 1, expiry);
+            set(attempts, attempted + 1, expiry);
+          }
+          if (total) set(total, totalUsed + 1, now + body.ttl * 1000);
           sql.exec("INSERT INTO receipts (id, key, day) VALUES (?, ?, ?)", body.id, body.key, day);
         } else {
           throw new HttpError(400, "invalid_ledger_request", "Unknown operation");

@@ -40,7 +40,7 @@ struct WeeklyGoalRow: View {
         if progress.streakWeeks > 0 {
             HStack(spacing: 4) {
                 Image(systemName: "flame.fill")
-                    .foregroundStyle(TraceTheme.amber)
+                    .foregroundStyle(TraceTheme.amberInk)
                 Text(progress.streakWeeks, format: .number)
                     .font(.subheadline.weight(.bold))
                     .monospacedDigit()

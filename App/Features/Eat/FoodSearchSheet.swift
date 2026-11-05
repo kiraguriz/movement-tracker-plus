@@ -159,7 +159,14 @@ struct FoodSearchSheet: View {
             ProgressView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .searching, .done:
-            if model.results.isEmpty {
+            if model.results.isEmpty, model.trimmedQuery.unicodeScalars.contains(where: Self.isCJK) {
+                ContentUnavailableView {
+                    Label("No Results for “\(model.trimmedQuery)”", systemImage: "magnifyingglass")
+                } description: {
+                    Text("Food search uses USDA names in English.")
+                }
+                .accessibilityIdentifier(AccessibilityID.foodSearchEmpty)
+            } else if model.results.isEmpty {
                 ContentUnavailableView.search(text: model.trimmedQuery)
                     .accessibilityIdentifier(AccessibilityID.foodSearchEmpty)
             } else {
@@ -266,6 +273,14 @@ struct FoodSearchSheet: View {
         }
     }
 
+    /// Han, Hiragana, Katakana or Hangul: text USDA's English names will not match.
+    private static func isCJK(_ scalar: Unicode.Scalar) -> Bool {
+        switch scalar.value {
+        case 0x1100...0x11FF, 0x3040...0x30FF, 0x3130...0x318F, 0x31F0...0x31FF, 0x3400...0x4DBF, 0x4E00...0x9FFF,
+             0xAC00...0xD7AF, 0xF900...0xFAFF, 0xFF66...0xFF9F, 0x20000...0x323AF: true
+        default: false
+        }
+    }
 }
 
 // MARK: - Rows

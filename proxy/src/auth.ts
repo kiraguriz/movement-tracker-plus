@@ -15,8 +15,9 @@ const TOKEN_CACHE_MAX_ENTRIES = 2000;
 
 export const INSTALL_LIMIT_PER_HOUR = 5;
 
-// The install limit is keyed per network, not per address: one IPv6 subscriber controls a whole /64
-// (2^64 addresses), so counting full addresses would make the limit meaningless for them.
+// The install limit is keyed per network, not per address. IPv6 is keyed per /56: residential
+// allocations are typically a /56 (256 /64s), so a /64 key would let one subscriber mint 256x the
+// tokens, while a /48 would lump unrelated mobile users together.
 export function networkKey(ip: string): string {
   const raw = ip.trim().toLowerCase();
   if (!raw.includes(":")) return raw;
@@ -28,14 +29,16 @@ export function networkKey(ip: string): string {
   const groups = (part: string | undefined) => (part ? part.split(":") : []);
   const head = groups(halves[0]);
   const tail = groups(halves[1]);
-  // An embedded IPv4 tail fills the last two groups, which are never part of the /64 prefix.
+  // An embedded IPv4 tail fills the last two groups, which are never part of the /56 prefix.
   const fill = (list: string[]) => list.flatMap((g) => (g.includes(".") ? ["0", "0"] : [g]));
   const all =
     halves.length === 2
       ? [...fill(head), ...Array<string>(Math.max(0, 8 - fill(head).length - fill(tail).length)).fill("0"), ...fill(tail)]
       : fill(head);
   if (all.length !== 8 || !all.every((g) => /^[0-9a-f]{1,4}$/.test(g))) return raw;
-  return `${all.slice(0, 4).map((g) => Number.parseInt(g, 16).toString(16)).join(":")}::/64`;
+  const prefix = all.slice(0, 4).map((g) => Number.parseInt(g, 16));
+  prefix[3] = (prefix[3] ?? 0) & 0xff00;
+  return `${prefix.map((n) => n.toString(16)).join(":")}::/56`;
 }
 
 function unauthorized(code: "missing_token" | "invalid_token", message: string): HttpError {

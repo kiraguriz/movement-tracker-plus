@@ -10,6 +10,8 @@ final class SessionSummaryModel {
     enum Debrief {
         /// No coach, or the user has not opted in: the sets are the whole summary.
         case off
+        /// The coach exists but the user has not opted in: the consent card is shown.
+        case needsConsent
         case streaming(JSONValue)
         case finished(InsightResult<SessionDebrief>)
         case failed(String)
@@ -19,6 +21,7 @@ final class SessionSummaryModel {
     private(set) var debrief = Debrief.off
     private(set) var isSaving = false
     var errorMessage: String?
+    let consent: AIConsent
 
     @ObservationIgnored private let environment: AppEnvironment
     @ObservationIgnored private let train: TrainModel
@@ -39,6 +42,7 @@ final class SessionSummaryModel {
         self.level = level
         self.goal = goal
         self.unitSystem = unitSystem
+        consent = AIConsent(environment: environment)
     }
 
     var workout: Workout { context.workout }
@@ -91,13 +95,26 @@ final class SessionSummaryModel {
         debriefTask = Task { await runDebrief() }
     }
 
+    /// Runs the debrief once the user opts in from the consent card.
+    func consentGranted() {
+        guard case .needsConsent = debrief, !isSaving else { return }
+        debriefTask?.cancel()
+        debriefTask = Task {
+            await TrainCoachAccess.awaitStoredConsent(in: environment)
+            await runDebrief()
+        }
+    }
+
     func cancel() {
         debriefTask?.cancel()
         voice.stop()
     }
 
     private func runDebrief() async {
-        guard let coach = await TrainCoachAccess.coach(in: environment) else { return }
+        guard let coach = await TrainCoachAccess.coach(in: environment) else {
+            if await TrainCoachAccess.needsConsent(in: environment), !Task.isCancelled { debrief = .needsConsent }
+            return
+        }
         debrief = .streaming(.null)
         let input = await makeInput()
         do {

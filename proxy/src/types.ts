@@ -16,6 +16,8 @@ export interface Env {
   GLOBAL_DAILY_REQUESTS?: string;
   GLOBAL_DAILY_INSTALLS?: string;
   GLOBAL_DAILY_ATTEMPTS?: string;
+  GLOBAL_DAILY_FOOD?: string;
+  TOKEN_DAILY_REQUESTS?: string;
   KILL_SWITCH?: string;
   MUSE_BASE_URL?: string;
   // Secrets: never committed, never logged.

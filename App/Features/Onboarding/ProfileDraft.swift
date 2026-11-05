@@ -30,6 +30,8 @@ final class ProfileDraft {
     var museChoice: Bool?
 
     private let currentYear: Int
+    /// The weight text `prefill` took from Health, so a setup that keeps it does not log it as a new weigh-in.
+    @ObservationIgnored private var healthWeightText: String?
 
     /// An empty draft for first launch.
     init(unitSystem: UnitSystem, currentYear: Int) {
@@ -86,6 +88,7 @@ final class ProfileDraft {
         }
         if weightText.isEmpty, let weight = health.weight {
             weightText = NumberInput.text((weight.value(in: unitSystem) * 10).rounded() / 10)
+            healthWeightText = weightText
         }
     }
 
@@ -272,8 +275,10 @@ final class ProfileDraft {
         attemptIDs = ids
 
         let weightChanged = latestWeight.map { abs($0.kilograms - weight.kilograms) > 0.05 } ?? true
+        // Health's own value, kept unchanged during setup, is not the user's entry and is not exported back to Health.
+        let source: BodyMeasurementSource = existing == nil && weightText == healthWeightText ? .health : .app
         let measurement = weightChanged
-            ? BodyMeasurement(id: ids.measurement, kind: .weight, value: weight.kilograms, measuredAt: now, timeZone: timeZone, source: .app)
+            ? BodyMeasurement(id: ids.measurement, kind: .weight, value: weight.kilograms, measuredAt: now, timeZone: timeZone, source: source)
             : nil
         let goal = plan.makeGoal(id: ids.goal, startDay: LocalDay(now, in: timeZone), createdAt: now)
         let profile = Profile(

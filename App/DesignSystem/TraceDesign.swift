@@ -8,6 +8,9 @@ enum TraceTheme {
     static let blue = Color.accentColor
     static let sky = Color("TraceSky")
     static let amber = Color("TraceAmber")
+    /// Amber for text and glyphs on paper or card; the plain amber is too light to read there in light mode.
+    static let amberInk = Color("TraceAmberInk")
+    static let carbs = Color("TraceCarbs")
     static let vermilion = Color("TraceVermilion")
     static let secondary = Color("TraceSecondary")
     static let line = Color("TraceLine")

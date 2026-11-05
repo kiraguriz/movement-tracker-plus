@@ -613,7 +613,7 @@ private struct FailedStep: View {
         PaperStep(close: close) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.title.weight(.medium))
-                .foregroundStyle(TraceTheme.amber)
+                .foregroundStyle(TraceTheme.amberInk)
                 .frame(width: 64, height: 64)
                 .background(TraceTheme.amber.opacity(0.16), in: .circle)
                 .accessibilityHidden(true)

@@ -285,7 +285,7 @@ private struct MealRow: View {
             GeometryReader { geometry in
                 HStack(spacing: 1) {
                     Rectangle().fill(TraceTheme.blue).frame(width: max(0, geometry.size.width - 2) * protein * 4 / energy)
-                    Rectangle().fill(TraceTheme.sky).frame(width: max(0, geometry.size.width - 2) * carbs * 4 / energy)
+                    Rectangle().fill(TraceTheme.carbs).frame(width: max(0, geometry.size.width - 2) * carbs * 4 / energy)
                     Rectangle().fill(TraceTheme.amber).frame(width: max(0, geometry.size.width - 2) * fat * 9 / energy)
                 }
             }

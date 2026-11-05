@@ -46,7 +46,6 @@ final class RestAlertScheduler {
     }
 
     func cancel() {
-        guard scheduled != nil else { return }
         scheduled = nil
         center.removePendingNotificationRequests(withIdentifiers: [RestReminder.identifier])
     }
